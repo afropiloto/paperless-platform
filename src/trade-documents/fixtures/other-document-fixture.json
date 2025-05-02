@@ -1,0 +1,10 @@
+{
+  "documentReference": "OTHER-001",
+  "documentType": "other",
+  "dataUrl": "some data url",
+  "otherDocumentContent": {
+    "title": "My Certification",
+    "issueDate": "2025-04-19T00:00:00",
+    "expiryDate": "2026-04-19T00:00:00"
+  }
+}

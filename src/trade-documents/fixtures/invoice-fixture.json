@@ -1,0 +1,51 @@
+{
+  "documentReference": "New001",
+  "documentType": "invoice",
+  "dataUrl": "string",
+  "invoiceContent": {
+    "invoiceNumber": "INV-001",
+    "invoiceDate": "2025-04-19T00:00:00",
+    "dueDate": "2025-05-19T00:00:00",
+    "terms": "",
+    "currencyCode": "GBP",
+    "billFrom": {
+      "companyName": "Bill From Company",
+      "streetAddress": "Bill from street address",
+      "city": "stafford",
+      "postalCode": "ST18 9HJ",
+      "contactNumber": "01785",
+      "contactEmail": "bob@targettesting.co.uk"
+    },
+    "billTo": {
+      "companyName": "Bill To Company",
+      "streetAddress": "Bill To street address",
+      "city": "Newmarket",
+      "postalCode": "CB8 9HJ",
+      "contactNumber": "0212",
+      "contactEmail": "jane@targettesting.co.uk"
+    },
+    "billableItems": [
+      {
+        "description": "Toys",
+        "quantity": 1000,
+        "unitPrice": 12.23,
+        "amount": 1012.23
+      }
+    ],
+    "subTotal": 100.00,
+    "tax": 10.12,
+    "total": 110.12
+  },
+  "claimants": {
+    "holder": {
+      "walletAddress": "123",
+      "name": "",
+      "contactEmail": ""
+    },
+    "beneficiary": {
+      "walletAddress": "123",
+      "name": "",
+      "contactEmail": ""
+    }
+  }
+}
