@@ -5,7 +5,7 @@ import {
   Delete,
   Get,
   HttpException,
-  HttpStatus,
+  HttpStatus, Inject,
   Logger,
   NotFoundException,
   Param,
@@ -35,9 +35,10 @@ import {
 import { TradeDocumentStatus } from '../types/trade-documents.types';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { GeneralResponseDto } from '../common/common-dto';
-import { isValidAccountIdFormat } from '../common/common-validation';
 import { TRADE_DOCUMENT_SUMMARY_INCLUDE_FIELDS } from './trade-document.constants';
 import { SearchQueryDto } from './dtos/search-trade-documents.dto';
+import { FileStorageService } from '../file-storage/file-storage.interface';
+import { FILE_STORAGE_SERVICE } from '../file-storage/file-storage.constants';
 
 @ApiTags('Trade Documents')
 @Controller('trade-documents')
@@ -46,6 +47,8 @@ export class TradeDocumentsController {
   constructor(
     private readonly tradeDocumentsService: TradeDocumentsService,
     private readonly accountService: AccountsService,
+    @Inject(FILE_STORAGE_SERVICE)
+    private readonly fileStorageService: FileStorageService,
   ) {}
 
   // *******************************************************************************************************************

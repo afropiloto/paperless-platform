@@ -7,12 +7,14 @@ import { BullModule } from '@nestjs/bullmq';
 import { DATA_EXTRACTION_QUEUE_NAME } from '../constants/app.constants';
 import { TradeDocumentsRepository } from './trade-documents.repository';
 import { AccountsModule } from '../accounts/accounts.module';
+import { FileStorageModule } from '../file-storage/file-storage.module';
 
 @Module({
   imports: [
     MongooseModule.forFeature([{ name: TradeDocument.name, schema: TradeDocumentSchema }]),
     BullModule.registerQueue({name: DATA_EXTRACTION_QUEUE_NAME}),
-    AccountsModule
+    AccountsModule,
+    FileStorageModule
   ],
   controllers: [TradeDocumentsController],
   providers: [TradeDocumentsService, TradeDocumentsRepository],

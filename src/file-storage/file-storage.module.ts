@@ -1,20 +1,23 @@
 import { Module } from '@nestjs/common';
-import { LocalFileStorageService } from './local-file-storage.service';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { LocalFileStorageService } from './local-file-storage.service';
+import { FILE_STORAGE_SERVICE } from './file-storage.constants';
 
 @Module({
   imports: [ConfigModule],
   providers: [
     {
-      provide: LocalFileStorageService,
+      provide: FILE_STORAGE_SERVICE,
       inject: [ConfigService],
-      useFactory: (configService: ConfigService) => {
+      useFactory: (configService: ConfigService,
+                   local: LocalFileStorageService) => {
         return configService.get('NODE_ENV') === 'production'
-        ? new LocalFileStorageService(configService) // ToDo: Need to provide a Production version of the service
-          : new LocalFileStorageService(configService);
+        ? local // ToDo: Need to provide a Production version of the service
+          : local;
       }
-    }
+    },
+    LocalFileStorageService,
   ],
-  exports: [LocalFileStorageService],
+  exports: [FILE_STORAGE_SERVICE],
 })
 export class FileStorageModule {}

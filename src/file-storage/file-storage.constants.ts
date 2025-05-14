@@ -1,0 +1,1 @@
+export const FILE_STORAGE_SERVICE = Symbol('FILE_STORAGE_SERVICE');
