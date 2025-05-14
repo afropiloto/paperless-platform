@@ -1,17 +1,28 @@
 import QRCode from "qrcode";
 import {PDFDocument, PDFImage, rgb, StandardFonts} from "pdf-lib";
 import crypto from 'crypto';
+import { Logger } from '@nestjs/common';
 /*
   Set of functions to generate trade documents for issuing
  */
 
+const logger = new Logger('document-generation')
 
-async function generateQRCode(documentTrackingUrl: string, width: number): Promise<string> {
-  const qrCodeDataUrl = QRCode.toDataURL(documentTrackingUrl, {
-    width: width,
-    margin: 0
-  });
-  return qrCodeDataUrl.split(",")[1];
+async function generateQRCode(content: string): Promise<Uint8Array<ArrayBuffer>> {
+  try {
+    // Generate QR code as PNG buffer
+    const qrCodeBuffer = await QRCode.toBuffer(content, {
+      type: 'png',
+      margin: 1,
+      scale: 8,
+      errorCorrectionLevel: 'H'
+    });
+
+    return new Uint8Array(qrCodeBuffer);
+  } catch (error) {
+    logger.error('Error generating QR code:', error);
+    throw error;
+  }
 }
 
 
