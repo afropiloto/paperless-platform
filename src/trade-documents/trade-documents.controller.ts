@@ -11,14 +11,14 @@ import {
   Param,
   ParseFilePipeBuilder,
   Post,
-  Put,
+  Put, Query,
   UploadedFile,
   UseInterceptors,
 } from '@nestjs/common';
 import {
   ApiBody,
   ApiConsumes,
-  ApiOperation,
+  ApiOperation, ApiQuery,
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
@@ -35,6 +35,9 @@ import {
 import { TradeDocumentStatus } from '../types/trade-documents.types';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { GeneralResponseDto } from '../common/common-dto';
+import { isValidAccountIdFormat } from '../common/common-validation';
+import { TRADE_DOCUMENT_SUMMARY_INCLUDE_FIELDS } from './trade-document.constants';
+import { SearchQueryDto } from './dtos/search-trade-documents.dto';
 
 @ApiTags('Trade Documents')
 @Controller('trade-documents')
@@ -174,6 +177,35 @@ export class TradeDocumentsController {
       documentId,
     );
   }
+
+  @Get(':accountId/')
+  @ApiOperation({
+    summary: 'Retrieves summary information about existing trade document for an account based on a search criteria.',
+  })
+  @ApiResponse({ status: 200, description: 'Trade Documents retrieved' })
+  @ApiResponse({
+    status: 400,
+    description: 'Account details or search parameters are invalid',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Account not found',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Not authorized to retrieve Trade Document details',
+  })
+  @ApiQuery({type: SearchQueryDto})
+  // ToDo: This is failing with errors from the DTO
+  async getTradeDocumentsForAccount(@Param('accountId') accountId: string,
+                                    @Query() searchParams: SearchQueryDto
+
+  ){
+    //if (!isValidAccountIdFormat(accountId)) {throw new NotFoundException("Account not found")}
+    this.logger.debug({accountId, searchParams})
+    return this.tradeDocumentsService.searchTradeDocumentsByAccountId(accountId, searchParams, TRADE_DOCUMENT_SUMMARY_INCLUDE_FIELDS);
+  }
+
 
   @Delete(':accountId/:documentId')
   @ApiOperation({

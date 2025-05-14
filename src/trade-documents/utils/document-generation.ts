@@ -1,14 +1,18 @@
-import QRCode from "qrcode";
-import {PDFDocument, PDFImage, rgb, StandardFonts} from "pdf-lib";
 import crypto from 'crypto';
 import { Logger } from '@nestjs/common';
+import QRCode from "qrcode";
+
+import { PDFDocument, PDFImage, PDFPage, rgb, StandardFonts } from 'pdf-lib';
+import path from 'path';
+import fs from 'fs/promises';
 /*
   Set of functions to generate trade documents for issuing
  */
 
-const logger = new Logger('document-generation')
 
-async function generateQRCode(content: string): Promise<Uint8Array<ArrayBuffer>> {
+const logger = new Logger('documentGeneration');
+
+export async function generateQRCode(content: string): Promise<Uint8Array<ArrayBuffer>> {
   try {
     // Generate QR code as PNG buffer
     const qrCodeBuffer = await QRCode.toBuffer(content, {
@@ -26,160 +30,253 @@ async function generateQRCode(content: string): Promise<Uint8Array<ArrayBuffer>>
 }
 
 
-export interface HeaderConfiguration {
-  qrCodeWidth: number;
-  fontSize: number;
-}
+export async function generateVerifiablePDF(
+  dataUrl: string,
+  accountName: string,
+  documentTrackingId: string,
+  qrCode: Uint8Array
+): Promise<string> {
+  try {
+    // Create a new PDF document
+    const pdfDoc = await PDFDocument.create();
+    const page = pdfDoc.addPage();
+    const { width, height } = page.getSize();
 
-async function generateVerifiablePDF(tradeDocumentDataUrl: string, accountName: string, documentTrackingId: string, qrCode: any, fileType: string, headerConfiguration: HeaderConfiguration) {
-  // Extract the base64 data from the dataurl
-  const base64Data = tradeDocumentDataUrl.split(",")[1];
-  const buffer = Buffer.from(base64Data, "base64");
+    // Define header and footer dimensions
+    const headerHeight = 75; // Reduced header height
+    const footerHeight = 50;
+    const contentHeight = height - headerHeight - footerHeight;
 
-  const currentDate = new Date().toLocaleString();
-  const headerText = `Issued by Voy Finance via Paiperless`;
-  const registeredByText = `Registered by: ${accountName}`
-  const dateText = `Date: ${currentDate}`;
-  const footerText = `Document Tracking ID: ${documentTrackingId}`;
-  let pdfDoc: PDFDocument;
+    // Load and embed the logo
+    const logoPath = path.join(process.cwd(), 'src', 'images', 'paiperless-logo-horizontal.png');
+    const logoBytes = await fs.readFile(logoPath);
+    const logo = await pdfDoc.embedPng(logoBytes);
 
-  const addHeaderWithQR = async (page: any) => {
-    const helveticaFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
-    const qrCodeImage = await pdfDoc.embedPng(Buffer.from(qrCode, "base64"));
-    const qrDimensions = headerConfiguration.qrCodeWidth;
+    // Calculate logo dimensions (maintain aspect ratio)
+    const logoWidth = 150; // Reduced logo width
+    const logoHeight = (logo.height * logoWidth) / logo.width;
 
-    // Draw text on the left
-    const pageWidth = page.getWidth()
-    const pageHeight = page.getHeight()
-    const headerSectionWidth = pageWidth / 4
+    // Embed QR code
+    const qrCodeImage = await pdfDoc.embedPng(qrCode);
+    const qrSize = 80; // Reduced QR code size
 
-    page.drawText(headerText, {
-      x: 50,
-      y: pageHeight - 20,
-      size: headerConfiguration.fontSize,
-      font: helveticaFont,
-      color: rgb(0.3, 0.3, 0.3),
-    });
-    page.drawText(registeredByText, {
-      // x: 50 + headerSectionWidth,
-      // y: pageHeight - 40,
-      x: 50,
-      y: pageHeight - 40,
-      size: headerConfiguration.fontSize,
-      font: helveticaFont,
-      color: rgb(0.3, 0.3, 0.3),
-    });
-    page.drawText(dateText, {
-      // x: 50 + (headerSectionWidth * 2),
-      // y: pageHeight - 40,
-      x: 50,
-      y: pageHeight - 60,
-      size: headerConfiguration.fontSize,
-      font: helveticaFont,
-      color: rgb(0.3, 0.3, 0.3),
-    });
+    // Process the data URL
+    const base64Data = dataUrl.split(',')[1];
+    const binaryData = Buffer.from(base64Data, 'base64');
 
-    // Draw QR code on the right
-    page.drawImage(qrCodeImage, {
-      x: pageWidth - qrDimensions - 50,
-      y: pageHeight - qrDimensions - 20,
-      width: qrDimensions,
-      height: qrDimensions,
-    });
+    // Check if the data URL is a PDF
+    if (dataUrl.startsWith('data:application/pdf')) {
+      const existingPdfDoc = await PDFDocument.load(binaryData);
+      const existingPages = await pdfDoc.copyPages(existingPdfDoc, existingPdfDoc.getPageIndices());
 
-    // Draw footer with document ID at the bottom of the page
-    page.drawText(footerText, {
-      x: 50,
-      y: 30,
-      size: headerConfiguration.fontSize,
-      font: helveticaFont,
-      color: rgb(0.3, 0.3, 0.3),
-    });
-  };
+      // Remove the initial page we created
+      pdfDoc.removePage(0);
+      // Add each page from the existing PDF with proper scaling
+      for (let i = 0; i < existingPages.length; i++) {
+        const existingPage = existingPages[i];
+        const newPage = pdfDoc.addPage();
+        const { width: pageWidth, height: pageHeight } = newPage.getSize();
 
-  if (fileType === "application/pdf") {
-    // ToDo: Need to test this out with different Documents - may need to convert pages into images, scale and insert
-    //  these to ensure the Paiperless header doesn't overwrite the original document headers.
-    // If it's already a PDF, load it and add headers
-    pdfDoc = await PDFDocument.load(buffer);
+        // Embed the existing page
+        const embeddedPage = await pdfDoc.embedPdf(existingPdfDoc, [i]);
+        const embeddedPageObj = embeddedPage[0];
 
-    // Add header to each page
-    const pages = pdfDoc.getPages();
-    for (const page of pages) {
-      await addHeaderWithQR(page);
-    }
-  } else if (fileType.startsWith("image/")) {
-    // Create a new PDF and embed the image
-    pdfDoc = await PDFDocument.create();
-    const page = pdfDoc.addPage([612, 792]); // US Letter size
+        // Calculate scaling factor to fit content within available space
+        const scaleX = (pageWidth - 80) / embeddedPageObj.width;
+        const scaleY = (contentHeight - 80) / embeddedPageObj.height;
+        const scale = Math.min(scaleX, scaleY);
 
-    // Add header with QR code
-    await addHeaderWithQR(page);
+        // Calculate centered position
+        const scaledWidth = embeddedPageObj.width * scale;
+        const scaledHeight = embeddedPageObj.height * scale;
+        const x = (pageWidth - scaledWidth) / 2;
+        const y = (contentHeight - scaledHeight) / 2 + footerHeight;
 
-    let image: PDFImage;
-    if (fileType === "image/jpeg") {
-      image = await pdfDoc.embedJpg(buffer);
-    } else if (fileType === "image/png") {
-      image = await pdfDoc.embedPng(buffer);
+        // Draw the existing page content with scaling and positioning
+        newPage.drawPage(embeddedPageObj, {
+          x,
+          y,
+          width: scaledWidth,
+          height: scaledHeight,
+        });
+
+        // Add header and footer to each page
+        await addHeaderAndFooter(newPage, accountName, documentTrackingId, qrCodeImage, logo);
+      }
     } else {
-      throw new Error("Unsupported image format");
+      // Handle non-PDF content (images, text, etc.)
+      const { width: pageWidth, height: pageHeight } = page.getSize();
+
+      if (dataUrl.startsWith('data:image/')) {
+        // Handle image content
+        const imageType = dataUrl.split(';')[0].split('/')[1];
+        let image;
+
+        switch (imageType) {
+          case 'jpeg':
+          case 'jpg':
+            image = await pdfDoc.embedJpg(binaryData);
+            break;
+          case 'png':
+            image = await pdfDoc.embedPng(binaryData);
+            break;
+          default:
+            throw new Error(`Unsupported image type: ${imageType}`);
+        }
+
+        // Calculate scaling factor to fit image within available space
+        const scaleX = (pageWidth - 100) / image.width;
+        const scaleY = (contentHeight - 100) / image.height;
+        const scale = Math.min(scaleX, scaleY);
+
+        // Calculate centered position
+        const scaledWidth = image.width * scale;
+        const scaledHeight = image.height * scale;
+        const x = (pageWidth - scaledWidth) / 2;
+        const y = (contentHeight - scaledHeight) / 2 + footerHeight;
+
+        // Draw the image with scaling and positioning
+        page.drawImage(image, {
+          x,
+          y,
+          width: scaledWidth,
+          height: scaledHeight,
+        });
+      } else if (dataUrl.startsWith('data:text/')) {
+        // Handle text content
+        const text = Buffer.from(binaryData).toString('utf-8');
+        const textFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
+
+        // Calculate text dimensions and position
+        const fontSize = 12;
+        const lineHeight = fontSize * 1.2;
+        const maxWidth = pageWidth - 100;
+        const maxHeight = contentHeight - 100;
+
+        // Split text into lines that fit within maxWidth
+        const words = text.split(' ');
+        const lines: string[] = [];
+        let currentLine = '';
+
+        for (const word of words) {
+          const testLine = currentLine ? `${currentLine} ${word}` : word;
+          const testWidth = textFont.widthOfTextAtSize(testLine, fontSize);
+
+          if (testWidth <= maxWidth) {
+            currentLine = testLine;
+          } else {
+            lines.push(currentLine);
+            currentLine = word;
+          }
+        }
+        if (currentLine) {
+          lines.push(currentLine);
+        }
+
+        // Draw text lines
+        let y = pageHeight - headerHeight - 50; // Start below header
+        for (const line of lines) {
+          if (y < footerHeight + 50) break; // Stop if we reach footer area
+
+          const textWidth = textFont.widthOfTextAtSize(line, fontSize);
+          const x = (pageWidth - textWidth) / 2;
+
+          page.drawText(line, {
+            x,
+            y,
+            size: fontSize,
+            font: textFont,
+            color: rgb(0, 0, 0),
+          });
+
+          y -= lineHeight;
+        }
+      } else {
+        throw new Error(`Unsupported content type: ${dataUrl.split(';')[0]}`);
+      }
+
+      // Add header and footer to the first page
+      await addHeaderAndFooter(page, accountName, documentTrackingId, qrCodeImage, logo);
     }
 
-    const { width, height } = image.scale(1);
-    const aspectRatio = width / height;
-
-    // Calculate dimensions to fit the page while maintaining aspect ratio
-    const maxWidth = 500;
-    const maxHeight = 620;
-    let drawWidth = maxWidth;
-    let drawHeight = drawWidth / aspectRatio;
-
-    if (drawHeight > maxHeight) {
-      drawHeight = maxHeight;
-      drawWidth = drawHeight * aspectRatio;
-    }
-
-    // Center the image on the page
-    const x = (page.getWidth() - drawWidth) / 2;
-    const y = (page.getHeight() - drawHeight - 80) / 2;
-
-    page.drawImage(image, {
-      x,
-      y,
-      width: drawWidth,
-      height: drawHeight,
-    });
-  } else if (fileType === "text/plain") {
-    // Create a new PDF with the text content
-    pdfDoc = await PDFDocument.create();
-    const page = pdfDoc.addPage([612, 792]);
-    const helveticaFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
-    const text = buffer.toString("utf-8");
-
-    // Add header with QR code
-    await addHeaderWithQR(page);
-
-    // Draw the text content below the header
-    page.drawText(text, {
-      x: 50,
-      y: page.getHeight() - 100,
-      size: 12,
-      font: helveticaFont,
-      color: rgb(0, 0, 0),
-      lineHeight: 16,
-      maxWidth: page.getWidth() - 100,
-    });
-  } else {
-    throw new Error("Unsupported file type");
+    // Save the PDF
+    const pdfBytes = await pdfDoc.save();
+    return `data:application/pdf;base64,${Buffer.from(pdfBytes).toString("base64")}`;
+  } catch (error) {
+    logger.error('Error generating verifiable PDF:', error);
+    throw error;
   }
-
-  // Save the PDF to a buffer
-  const pdfBytes = await pdfDoc.save();
-
-  // Convert to base64 and create data URL
-  return `data:application/pdf;base64,${Buffer.from(pdfBytes).toString("base64")}`
 }
 
+async function addHeaderAndFooter(
+  page: PDFPage,
+  accountName: string,
+  documentTrackingId: string,
+  qrCodeImage: PDFImage,
+  logo: PDFImage
+): Promise<void> {
+  const { width, height } = page.getSize();
+  const smallFont = await page.doc.embedFont(StandardFonts.Helvetica);
+
+  // Calculate column widths
+  const columnWidth = width / 3;
+  const startY = height - 20; // Start 20 points from top
+  const logoWidth = 150;
+  const logoHeight = (logo.height * logoWidth) / logo.width;
+  const qrSize = 75;
+
+  // Column 1: Logo and "Issued by" text
+  page.drawImage(logo, {
+    x: 50,
+    y: startY - logoHeight,
+    width: logoWidth,
+    height: logoHeight,
+  });
+
+  page.drawText('Verifiable on Paiperless', {
+    x: 50,
+    y: startY - logoHeight - 15,
+    size: 8,
+    font: smallFont,
+    color: rgb(0, 0, 0),
+  });
+
+  // Column 2: Company name and issue date
+  const centerX = columnWidth + (columnWidth / 2);
+  page.drawText(`Issued by: ${accountName}`, {
+    x: centerX - 50,
+    y: startY - 20,
+    size: 8,
+    font: smallFont,
+    color: rgb(0, 0, 0),
+  });
+
+  const issueDate = new Date().toLocaleString();
+  page.drawText(`Issued on: ${issueDate}`, {
+    x: centerX - 50,
+    y: startY - 35,
+    size: 8,
+    font: smallFont,
+    color: rgb(0, 0, 0),
+  });
+
+  // Column 3: QR code
+  page.drawImage(qrCodeImage, {
+    x: width - qrSize - 50,
+    y: startY - qrSize,
+    width: qrSize,
+    height: qrSize,
+  });
+
+  // Add footer
+  page.drawText(`Document Tracking ID: ${documentTrackingId}`, {
+    x: 50,
+    y: 30,
+    size: 8,
+    font: smallFont,
+    color: rgb(0, 0, 0),
+  });
+}
 
 const computeVerifiableHash = (dataUrl: string) => {
   return crypto.createHash("sha256").update(dataUrl.replace(/(\r\n|\r|\n)/g, "")).digest("hex")
@@ -189,14 +286,14 @@ export interface VerifiableTradeDocument {
   dataUrl: string;
   documentHash: string;
 }
-export async function generateVerifiableDocument(documentTrackingId: string, accountName: string, fileType: string, dataUrl: string,headerConfiguration: HeaderConfiguration) {
+export async function generateVerifiableDocument(documentTrackingId: string, accountName: string, dataUrl: string) {
 
   // Generate QR code
-  const qrCodeBase64 = await generateQRCode(documentTrackingId, headerConfiguration.qrCodeWidth);
+  const qrCodeBase64 = await generateQRCode(documentTrackingId);
 
 
   // Embed verification information and document into new PDF
-  const verifiableDataUrl = await generateVerifiablePDF(dataUrl, accountName, documentTrackingId, qrCodeBase64, fileType, headerConfiguration)
+  const verifiableDataUrl = await generateVerifiablePDF(dataUrl, accountName, documentTrackingId, qrCodeBase64)
 
   // Compute Hash
   const documentHash = computeVerifiableHash(verifiableDataUrl)

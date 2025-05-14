@@ -127,6 +127,9 @@ export class TradeTrustProcessor extends WorkerHost {
       throw new Error('Trade Document does not have any content');
     }
 
+    // ToDO: Need to create verifiable document and store this before wrapping
+
+
     // Wrap document and store wrapped content and merkle root
     const tradeTrustDocumentType =
       getTradeTrustDocumentClass(job.data.documentType);

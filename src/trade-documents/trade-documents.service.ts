@@ -16,6 +16,8 @@ import { TradeDocumentsRepository } from './trade-documents.repository';
 import { GeneralResponseDto } from '../common/common-dto';
 import { AuditService } from '../audit/audit.service';
 import { AuditEventType } from '../audit/audit-event-type.enum';
+import { plainToInstance } from 'class-transformer';
+import { SearchQueryDto, SortDirection, TradeDocumentsSearchResultsDto } from './dtos/search-trade-documents.dto';
 
 @Injectable()
 export class TradeDocumentsService {
@@ -131,7 +133,9 @@ export class TradeDocumentsService {
       throw new NotFoundException('Trade Document not found for this account');
     } else {
       await this.auditService.log({
-        eventType: AuditEventType.DOCUMENT_UPDATED, accountId, documentId
+        eventType: AuditEventType.DOCUMENT_UPDATED,
+        accountId,
+        documentId,
       });
       return updatedDocument;
     }
@@ -221,7 +225,9 @@ export class TradeDocumentsService {
       });
     }
     await this.auditService.log({
-      eventType: AuditEventType.DOCUMENT_FILE_UPDATED, accountId, documentId
+      eventType: AuditEventType.DOCUMENT_FILE_UPDATED,
+      accountId,
+      documentId,
     });
   }
 
@@ -230,14 +236,35 @@ export class TradeDocumentsService {
     documentId: string,
     newStatus: TradeDocumentStatus,
   ) {
-    const updatedDocument =  await this.tradeDocumentsRepo.updateTradeDocumentStatus(
+    const updatedDocument =
+      await this.tradeDocumentsRepo.updateTradeDocumentStatus(
+        accountId,
+        documentId,
+        newStatus,
+      );
+    await this.auditService.log({
+      eventType: AuditEventType.DOCUMENT_STATE_UPDATED,
       accountId,
       documentId,
-      newStatus,
-    );
-    await this.auditService.log({
-      eventType: AuditEventType.DOCUMENT_STATE_UPDATED, accountId, documentId, details: {newState: newStatus}
-    })
+      details: { newState: newStatus },
+    });
     return updatedDocument;
+  }
+
+  async searchTradeDocumentsByAccountId(
+    accountId: string,
+    searchParams: SearchQueryDto,
+    includes: string[] = [],
+    excludes: string[] = [],
+  ) {
+    this.logger.debug({searchParams, includes, excludes})
+    const results =
+      await this.tradeDocumentsRepo.retrieveTradeDocumentsByAccountId(
+        accountId,
+        searchParams,
+        includes,
+        excludes,
+      );
+    return plainToInstance(TradeDocumentsSearchResultsDto, results);
   }
 }

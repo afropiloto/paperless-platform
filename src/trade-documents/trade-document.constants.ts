@@ -1,0 +1,1 @@
+export const TRADE_DOCUMENT_SUMMARY_INCLUDE_FIELDS = ['documentReference', 'documentType', 'status', 'createdAt', 'updatedAt'];

@@ -17,7 +17,6 @@ import {
   InvoicePartyDetails, OtherDocumentContent, PromissoryNoteContent,
 } from '../schema/document-content.schema';
 import { LoanPeriodUnit, TradeDocumentType } from '../../types/trade-documents.types';
-import { Prop } from '@nestjs/mongoose';
 import { TradeTrustDocumentClass } from '../../trade-trust/trade-trust.types';
 
 // *****************************************************************************

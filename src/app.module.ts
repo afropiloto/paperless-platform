@@ -14,6 +14,8 @@ import { IssueTradeDocumentModule } from './issue-trade-document/issue-trade-doc
 import { LookupModule } from './lookup/lookup.module';
 import { TradeTrustModule } from './trade-trust/trade-trust.module';
 import { AuditModule } from './audit/audit.module';
+import { AnalyticsModule } from './analytics/analytics.module';
+import { FileStorageModule } from './file-storage/file-storage.module';
 
 @Module({
   imports: [
@@ -53,6 +55,8 @@ import { AuditModule } from './audit/audit.module';
     LookupModule,
     TradeTrustModule,
     AuditModule,
+    AnalyticsModule,
+    FileStorageModule,
   ],
   controllers: [],
   providers: [],

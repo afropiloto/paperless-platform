@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { TradeDocument, TradeDocumentFile } from './schema/trade-document.schema';
-import { Model } from 'mongoose';
+import { Model, PipelineStage } from 'mongoose';
 import {
   IssueDetailsDto,
   TradeDocumentDto,
@@ -11,6 +11,7 @@ import {
 import { TradeDocumentFileDetails, TradeDocumentStatus } from '../types/trade-documents.types';
 import { getUnsets } from './utils/trade-document.utils';
 import { plainToInstance } from 'class-transformer';
+import { SearchQueryDto } from './dtos/search-trade-documents.dto';
 
 @Injectable()
 export class TradeDocumentsRepository {
@@ -134,5 +135,79 @@ export class TradeDocumentsRepository {
       { returnDocument: 'after' }
     );
     return plainToInstance(TradeDocumentDto, updatedDocument);
+  }
+
+  async retrieveTradeDocumentsByAccountId(accountId: string, searchParams: SearchQueryDto, includes: string[], excludes: string[]) {
+
+
+    const includesProjection = {createdAt: 1, updatedAt: 1}
+    includes.forEach(include => {includesProjection[include] = 1})
+
+    const excludesProjection = {__v: 0}
+    excludes.forEach(exclude => {excludesProjection[exclude] = 0})
+
+    const dataFacet = []
+    if (searchParams.orderBy !== undefined && searchParams.orderBy.length > 0) {
+      dataFacet.push({
+        $sort: {[searchParams.orderBy]: searchParams.orderDirection === 'desc' ? -1 : 1}
+      })
+    }
+    dataFacet.push({$skip: (searchParams.page - 1) * searchParams.limit})
+    dataFacet.push({$limit: searchParams.limit})
+    const searchableFields = ["status", "documentType", "documentReference"]
+
+    const aggregationPipeline: PipelineStage[] = [];
+    // Add filter to restrict data to the account wallet address
+
+    aggregationPipeline.push(
+      {$match: {"accountId": accountId}},
+      {$project: includesProjection},
+      {$project: excludesProjection},
+    )
+    // Add filter criteria if a query term is provided
+    if (searchParams.queryTerm !== undefined && searchParams.queryTerm.length > 0) {
+      aggregationPipeline.push({
+        $match: {
+          $or: searchableFields.map(field => ({
+            [field]: {$regex: searchParams.queryTerm, $options: "i"},
+          }))
+        }
+      })
+    }
+    aggregationPipeline.push({
+      $sort: {lastModified: -1}
+    })
+    aggregationPipeline.push({
+      $facet: {
+        metadata: [
+          {
+            $count: 'totalDocuments',
+          },
+          {
+            $addFields: {
+              page: searchParams.page,
+              totalPages: {$ceil: {$divide: ["$totalDocuments", searchParams.limit]}},
+              limit: searchParams.limit,
+            }
+          }
+        ],
+        data: dataFacet
+      }
+    })
+
+    try {
+      let result = await this.tradeDocumentModel.aggregate(aggregationPipeline)
+      result = result[0]
+      result["metadata"] = {...result["metadata"][0]}
+      return result;
+
+    } catch (error) {
+      this.logger.error({msg: "Failed to retrieve Trade Documents for account", details: error.message, accountWallet: accountId, searchParams});
+      throw new Error("We encountered an problem retrieving your trade documents. We have logged this issue please try again later");
+    }
+
+
+
+
   }
 }
