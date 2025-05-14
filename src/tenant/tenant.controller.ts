@@ -3,6 +3,9 @@ import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { ProviderInfoDto, TenantAppConfigDto, TenantChainConfigDto } from './dtos/tenantAppConfigDto';
 import { plainToInstance } from 'class-transformer';
 import { ConfigService } from '@nestjs/config';
+import * as fs from 'fs/promises';
+import * as path from 'path';
+import { DidDto } from './dtos/DidDto';
 
 
 @ApiTags('Tenant')
@@ -35,5 +38,27 @@ export class TenantController {
     config.tokenRegistryAddress= this.configService.get<string>('tenant.tokenRegistryAddress');
     config.documentStoreAddress = this.configService.get<string>('tenant.documentStoreAddress');
     return plainToInstance(TenantChainConfigDto, config)
+  }
+  
+  @Get('/did')
+  @ApiOperation({summary: 'Returns the DID JSON file for the tenant' })
+  @ApiResponse({status: 200, description: 'The DID JSON file for the tenant was returned' })
+  async getDidJson(): Promise<DidDto> {
+
+    const baseDir = process.env.NODE_ENV === 'production'
+      ? path.resolve(__dirname, '..', '..', 'static-files')
+      : path.resolve(process.cwd(), 'src', 'static-files');
+
+
+    const didJsonPath = path.resolve(baseDir, 'did.json');
+    this.logger.debug({baseDir, didJsonPath})
+    try {
+      const fileContents = await fs.readFile(didJsonPath, 'utf-8');
+      const didJson = JSON.parse(fileContents);
+      this.logger.debug({didJson})
+      return plainToInstance(DidDto, JSON.parse(fileContents));
+    } catch (error) {
+      this.logger.error({ message: `Failed to read DID file from ${didJsonPath.toString()}`, error: error.message });
+    }  
   }
 }
