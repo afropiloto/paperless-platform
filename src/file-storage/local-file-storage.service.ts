@@ -1,11 +1,11 @@
 import { Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
-import { FileStorageService } from './file-storage.interface';
+import { FileStorageService, StoredFileDetails } from './file-storage.interface';
 import { ConfigService } from '@nestjs/config';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import crypto from 'crypto';
-
+import {extension} from 'mime-types';
 
 @Injectable()
 export class LocalFileStorageService implements FileStorageService {
@@ -26,7 +26,9 @@ export class LocalFileStorageService implements FileStorageService {
     }
   }
 
-
+  public getStorageDetails() {
+    return {storageType: "local", storagePath: this.uploadDir}
+  }
   async deleteFile(filePathOrUrl: string): Promise<void> {
     try {
       // Overwrite file before deletion (cryptographic erase)
@@ -54,11 +56,11 @@ export class LocalFileStorageService implements FileStorageService {
     }
   }
 
-  async uploadFile(buffer: Buffer, filename: string, mimetype: string): Promise<string> {
-    const safeFilename = `${uuidv4()}-${filename}`;
+  async uploadFile(buffer: Buffer, filename: string, mimetype: string): Promise<StoredFileDetails> {
+    const safeFilename = `${uuidv4()}.${extension(mimetype)}`; // create a unique filename with the correct extension
     const filePath = path.join(this.uploadDir, safeFilename);
     await fs.writeFile(filePath, buffer);
-    return filePath;
+    return {storedFileName: safeFilename, storedFilePath: filePath};
   }
 
 }

@@ -6,9 +6,10 @@ import { FILE_STORAGE_SERVICE } from './file-storage.constants';
 @Module({
   imports: [ConfigModule],
   providers: [
+    LocalFileStorageService,
     {
       provide: FILE_STORAGE_SERVICE,
-      inject: [ConfigService],
+      inject: [ConfigService, LocalFileStorageService],
       useFactory: (configService: ConfigService,
                    local: LocalFileStorageService) => {
         return configService.get('NODE_ENV') === 'production'
@@ -16,7 +17,6 @@ import { FILE_STORAGE_SERVICE } from './file-storage.constants';
           : local;
       }
     },
-    LocalFileStorageService,
   ],
   exports: [FILE_STORAGE_SERVICE],
 })
