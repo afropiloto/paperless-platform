@@ -30,4 +30,9 @@ export class AccountsRepository {
     const updatedAccountDetails = await this.accountModel.findOneAndUpdate({_id: accountId}, updates, {returnDocument: "after"});
     return plainToInstance(AccountDetailsDto, updatedAccountDetails);
   }
+
+  async accountWithWalletAddressExists(accountWalletAddress: string) {
+    return (await this.accountModel.exists({walletAddress: accountWalletAddress})) !== null;
+
+  }
 }

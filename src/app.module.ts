@@ -16,6 +16,7 @@ import { TradeTrustModule } from './trade-trust/trade-trust.module';
 import { AuditModule } from './audit/audit.module';
 import { AnalyticsModule } from './analytics/analytics.module';
 import { FileStorageModule } from './file-storage/file-storage.module';
+import { RegistrationModule } from './registration/registration.module';
 
 @Module({
   imports: [
@@ -57,6 +58,7 @@ import { FileStorageModule } from './file-storage/file-storage.module';
     AuditModule,
     AnalyticsModule,
     FileStorageModule,
+    RegistrationModule,
   ],
   controllers: [],
   providers: [],

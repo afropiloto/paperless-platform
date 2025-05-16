@@ -17,7 +17,7 @@ import { GeneralResponseDto } from '../common/common-dto';
 import { AuditService } from '../audit/audit.service';
 import { AuditEventType } from '../audit/audit-event-type.enum';
 import { plainToInstance } from 'class-transformer';
-import { SearchQueryDto, SortDirection, TradeDocumentsSearchResultsDto } from './dtos/search-trade-documents.dto';
+import { SearchQueryDto, TradeDocumentsSearchResultsDto } from './dtos/search-trade-documents.dto';
 
 @Injectable()
 export class TradeDocumentsService {

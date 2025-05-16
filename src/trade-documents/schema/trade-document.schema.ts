@@ -8,7 +8,6 @@ import {
 } from './document-content.schema';
 import { TradeDocumentType } from '../../types/trade-documents.types';
 import { TradeTrustDocumentClass } from '../../trade-trust/trade-trust.types';
-import { TradeDocumentClaimantDetailsDto } from '../dtos/trade-document.dto';
 
 
 @Schema({_id: false, timestamps: false})

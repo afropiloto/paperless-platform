@@ -24,4 +24,8 @@ export class AccountsService {
   updateAccount(accountId: string, updates: AccountUpdateDto) {
     return this.accountsRepository.updateAccount(accountId, updates);
   }
+
+  accountForWalletAddressExists(accountWalletAddress: string) {
+    return this.accountsRepository.accountWithWalletAddressExists(accountWalletAddress);
+  }
 }
