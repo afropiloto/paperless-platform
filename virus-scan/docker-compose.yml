@@ -1,0 +1,12 @@
+services:
+  clamav:
+    image: clamav/clamav
+    container_name: clamav
+    restart: unless-stopped
+    ports:
+      - "3310:3310"
+    volumes:
+      - ${CLAMAV_DB_PATH}:/var/lib/clamav
+volumes:
+  clamav_db:
+    driver: local

@@ -1,0 +1,1 @@
+export interface FileStorageDetails {storageType: string, storagePath: string}

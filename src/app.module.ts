@@ -17,6 +17,9 @@ import { AuditModule } from './audit/audit.module';
 import { AnalyticsModule } from './analytics/analytics.module';
 import { FileStorageModule } from './file-storage/file-storage.module';
 import { RegistrationModule } from './registration/registration.module';
+import { VirusScanModule } from './virus-scan/virus-scan.module';
+import { AuthModule } from './auth/auth.module';
+import { SiweModule } from './siwe/siwe.module';
 
 @Module({
   imports: [
@@ -59,6 +62,9 @@ import { RegistrationModule } from './registration/registration.module';
     AnalyticsModule,
     FileStorageModule,
     RegistrationModule,
+    VirusScanModule,
+    AuthModule,
+    SiweModule,
   ],
   controllers: [],
   providers: [],

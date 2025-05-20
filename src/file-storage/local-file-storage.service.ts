@@ -2,6 +2,8 @@ import { Injectable, InternalServerErrorException, Logger } from '@nestjs/common
 import { FileStorageService, StoredFileDetails } from './file-storage.interface';
 import { ConfigService } from '@nestjs/config';
 import * as fs from 'fs/promises';
+import * as fsSync from 'fs';
+import { ReadStream } from 'fs';
 import * as path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import crypto from 'crypto';
@@ -25,6 +27,8 @@ export class LocalFileStorageService implements FileStorageService {
       throw new InternalServerErrorException(`Failed to initialize upload directory: ${err.message}`);
     }
   }
+
+
 
   public getStorageDetails() {
     return {storageType: "local", storagePath: this.uploadDir}
@@ -50,6 +54,16 @@ export class LocalFileStorageService implements FileStorageService {
 
     try {
       return await fs.readFile(fullPath);
+    } catch (err) {
+      this.logger.error({ message: `Failed to download the file ${filePathOrUrl}`, error: err.message })
+      throw new InternalServerErrorException(`Failed to read file: ${err.message}`);
+    }
+  }
+  streamFile(filePathOrUrl: string): ReadStream {
+    const fullPath = path.join(this.uploadDir, filePathOrUrl);
+
+    try {
+      return fsSync.createReadStream(fullPath);
     } catch (err) {
       this.logger.error({ message: `Failed to download the file ${filePathOrUrl}`, error: err.message })
       throw new InternalServerErrorException(`Failed to read file: ${err.message}`);

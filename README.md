@@ -56,4 +56,11 @@
 ## Redis Queue Deployment
 
 ## Virus Scan Deployment
+Currently the ClaimAV container requires an environment variable to be set
+``CLAMAV_DB_PATH``
+This is the path to persistent storage for the Virus Signatures DB
+
+__Note:__
+1. We may change this so that we have a base layer plus a Prod layer that allows the volume to be mapped to some persistent storage
+
 
