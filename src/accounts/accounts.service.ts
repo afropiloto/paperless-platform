@@ -28,4 +28,8 @@ export class AccountsService {
   accountForWalletAddressExists(accountWalletAddress: string) {
     return this.accountsRepository.accountWithWalletAddressExists(accountWalletAddress);
   }
+
+  async findByWalletAddress(walletAddress: string) {
+    return this.accountsRepository.findByWalletAddress(walletAddress);
+  }
 }

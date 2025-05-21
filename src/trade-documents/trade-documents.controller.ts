@@ -199,13 +199,10 @@ export class TradeDocumentsController {
     description: 'Not authorized to retrieve Trade Document details',
   })
   @ApiQuery({type: SearchQueryDto})
-  // ToDo: This is failing with errors from the DTO
   async getTradeDocumentsForAccount(@Param('accountId') accountId: string,
                                     @Query() searchParams: SearchQueryDto
 
   ){
-    //if (!isValidAccountIdFormat(accountId)) {throw new NotFoundException("Account not found")}
-    this.logger.debug({accountId, searchParams})
     return this.tradeDocumentsService.searchTradeDocumentsByAccountId(accountId, searchParams, TRADE_DOCUMENT_SUMMARY_INCLUDE_FIELDS);
   }
 

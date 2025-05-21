@@ -10,31 +10,14 @@ export class SiweService {
 
   async verifyMessage(message: string, signature: string) {
     try {
-      this.logger.debug('Verifying SIWE message', {
-        message,
-        signature
-      });
-
       if (!message || !signature) {
         throw new UnauthorizedException("Missing SIWE message or signature");
       }
 
       const siweMessage = new SiweMessage(message);
-      this.logger.debug('Parsed SIWE message', {
-        address: siweMessage.address,
-        domain: siweMessage.domain,
-        uri: siweMessage.uri,
-        version: siweMessage.version,
-        chainId: siweMessage.chainId,
-        nonce: siweMessage.nonce,
-        issuedAt: siweMessage.issuedAt,
-        expirationTime: siweMessage.expirationTime,
-        statement: siweMessage.statement,
-      });
 
       // EXPIRATION TIME CONTROLS before verifying signature
-
-      // 1. Verify expiration time exists
+     // 1. Verify expiration time exists
       if (!siweMessage.expirationTime) {
         throw new UnauthorizedException("Missing SIWE message expiration time");
       }
@@ -60,14 +43,6 @@ export class SiweService {
       }
 
       const verified = await siweMessage.verify({ signature });
-
-      this.logger.debug('SIWE verification result', {
-        verified,
-        success: verified.success,
-        error: verified.error,
-        recoveredAddress: verified.data?.address,
-        messageAddress: siweMessage.address
-      });
 
       if (!verified.success) {
         this.logger.warn('SIWE verification failed', {

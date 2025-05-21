@@ -139,7 +139,7 @@ export class TradeDocumentsRepository {
 
   async retrieveTradeDocumentsByAccountId(accountId: string, searchParams: SearchQueryDto, includes: string[], excludes: string[]) {
 
-
+    this.logger.debug({accountId, searchParams, includes, excludes})
     const includesProjection = {createdAt: 1, updatedAt: 1}
     includes.forEach(include => {includesProjection[include] = 1})
 

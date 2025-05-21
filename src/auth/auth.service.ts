@@ -20,7 +20,6 @@ export class AuthService {
 
   async login(loginDto: LoginDto): Promise<AuthResponseDto> {
     try {
-      this.logger.debug('Attempting login', { loginDto });
       
       if (!loginDto?.message || !loginDto?.signature) {
         throw new UnauthorizedException("Missing login credentials");
@@ -28,21 +27,19 @@ export class AuthService {
 
       const walletAddress = await this.siweService.verifyMessage(loginDto.message, loginDto.signature);
 
-      this.logger.debug('Checking account existence', { walletAddress });
-      const accountExists = await this.accountsService.accountForWalletAddressExists(walletAddress);
+      const accountDetails = await this.accountsService.findByWalletAddress(walletAddress) ;
       
-      if (!accountExists) {
+      if (!accountDetails) {
         this.logger.warn('Login attempt for unauthorized account', { walletAddress });
         throw new UnauthorizedException("Account not authorized");
       }
 
       // Generate JWT + Refresh Token
-      const payload = { wallet: walletAddress };
+      const payload = { accountId: accountDetails.id };
       const accessToken = this.jwtService.sign(payload, { expiresIn: this.configService.get<string>('jwt.expiresIn') });
       const refreshToken = this.jwtService.sign(payload, { expiresIn: this.configService.get<string>('refreshToken.expiresIn')});
 
-      this.logger.debug('Login successful', { walletAddress });
-      return plainToInstance(AuthResponseDto, { success: true, accessToken, refreshToken });
+      return plainToInstance(AuthResponseDto, { success: true, accessToken, refreshToken, accountId: accountDetails.id });
     } catch (error) {
       this.logger.error('Login failed', {
         error: error.message,

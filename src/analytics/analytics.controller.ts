@@ -1,13 +1,8 @@
 import {
-  BadRequestException,
   Controller,
-  Get,
-  Logger,
-  NotFoundException,
-  Param,
-  Query,
+  Logger
 } from '@nestjs/common';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {ApiTags } from '@nestjs/swagger';
 import { AnalyticsService } from './analytics.service';
 
 

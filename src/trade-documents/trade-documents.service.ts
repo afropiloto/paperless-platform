@@ -257,7 +257,6 @@ export class TradeDocumentsService {
     includes: string[] = [],
     excludes: string[] = [],
   ) {
-    this.logger.debug({searchParams, includes, excludes})
     const results =
       await this.tradeDocumentsRepo.retrieveTradeDocumentsByAccountId(
         accountId,
@@ -265,6 +264,7 @@ export class TradeDocumentsService {
         includes,
         excludes,
       );
-    return plainToInstance(TradeDocumentsSearchResultsDto, results);
+    this.logger.debug({results});
+    return results ? plainToInstance(TradeDocumentsSearchResultsDto, results) : [];
   }
 }

@@ -8,5 +8,7 @@ export class AuthResponseDto {
   accessToken: string;
   @Expose()
   refreshToken: string;
+  @Expose()
+  accountId: string;
 
 }

@@ -35,4 +35,9 @@ export class AccountsRepository {
     return (await this.accountModel.exists({walletAddress: accountWalletAddress})) !== null;
 
   }
+
+  async findByWalletAddress(walletAddress: string): Promise<AccountDetailsDto> {
+    const accountDetails = await this.accountModel.findOne({ walletAddress: walletAddress });
+    return accountDetails ? plainToInstance(AccountDetailsDto, accountDetails) : null;
+  }
 }

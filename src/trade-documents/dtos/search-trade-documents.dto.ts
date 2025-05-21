@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Expose } from 'class-transformer';
+import { Expose, Type } from 'class-transformer';
 import { TradeDocumentDto } from './trade-document.dto';
 import { IsEnum, IsNumber, IsOptional, IsString, Max, Min } from 'class-validator';
 
@@ -21,6 +21,7 @@ export class SearchQueryDto {
   @ApiPropertyOptional({default: 1})
   @IsOptional()
   @IsNumber()
+  @Type(() => Number)
   @Min(1, { message: 'Page number must be greater than 0' })
   page: number = 1;
 
@@ -28,6 +29,7 @@ export class SearchQueryDto {
   @ApiPropertyOptional({default: 5})
   @IsOptional()
   @IsNumber()
+  @Type(() => Number)
   @Min(1, { message: 'Page size limit must be greater than 0' })
   @Max(100, { message: 'Page limit size cannot be greater than 100' })
   limit: number = 5;
@@ -63,9 +65,11 @@ export class SearchResultsMetadata {
 export class TradeDocumentsSearchResultsDto {
   @ApiProperty({description: "List of matching trade documents"})
   @Expose()
+  @Type(() => TradeDocumentDto)
   data?: TradeDocumentDto[];
 
   @ApiProperty({description: "Search Results Metadata"})
   @Expose()
+  @Type(() => SearchResultsMetadata)
   metadata?: SearchResultsMetadata;
 }
