@@ -5,7 +5,8 @@ import { IsEmail, IsEthereumAddress, IsNotEmpty, IsOptional, IsString } from 'cl
 export class AccountDetailsDto {
   @ApiProperty({description: 'Unique Id for Account'})
   @Type(()=> String)
-  @Expose({name: '_id'})
+  @IsString()
+  @Expose()
   id: string;
 
   @ApiProperty({ description: 'Name for the Account' })

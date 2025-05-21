@@ -1,4 +1,16 @@
-import { Body, Controller, Delete, Get, HttpException, HttpStatus, Logger, Param, Patch, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpException,
+  HttpStatus,
+  Logger,
+  Param,
+  Patch,
+  Post,
+  Query,
+} from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { NamedWalletsService } from './named-wallets.service';
 import {
@@ -9,6 +21,8 @@ import {
 import mongoose from 'mongoose';
 import { AccountsService } from '../accounts/accounts.service';
 import { GeneralResponseDto } from '../common/common-dto';
+import { SearchQueryDto } from '../trade-documents/dtos/search-trade-documents.dto';
+import { NamedWalletsSearchResultsDto } from './dtos/named-wallets-search-results.dto';
 
 @ApiTags('Named Wallets')
 @Controller('named-wallets')
@@ -22,8 +36,9 @@ export class NamedWalletsController {
   @ApiResponse({ status: 200, description: 'Named Wallets for account returned successfully' })
   @ApiResponse({ status: 401, description: 'Not authorised to retrieve Named Wallets for Account' })
   @ApiResponse({ status: 404, description: 'Account not found' })
-  async getAccountNamedWallets(@Param('accountId') accountId: string): Promise<NamedWalletDto[]> {
-    return await this.namedWalletsService.getWalletsForAccountId(accountId);
+  async getAccountNamedWallets(@Param('accountId') accountId: string,
+                               @Query() searchParams: SearchQueryDto): Promise<NamedWalletsSearchResultsDto> {
+    return await this.namedWalletsService.getWalletsForAccountId(accountId, searchParams);
   }
 
   @Get(':accountId/:walletId')

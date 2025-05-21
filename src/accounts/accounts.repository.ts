@@ -1,9 +1,13 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Account } from './schemas/account.schema';
-import { Model } from 'mongoose';
+import { isValidObjectId, Model } from 'mongoose';
 import { AccountCreationDto, AccountDetailsDto, AccountUpdateDto } from './dtos/accounts.dto';
 import { plainToInstance } from 'class-transformer';
+import { ApiProperty } from '@nestjs/swagger';
+import { IsString } from 'class-validator';
+import { Transform } from 'class-transformer';
+import { Expose } from 'class-transformer';
 
 
 @Injectable()
@@ -13,8 +17,18 @@ export class AccountsRepository {
 
 
   async findAccountById(accountId: string): Promise<AccountDetailsDto> {
-    const accountDetails = await this.accountModel.findOne({accountId});
-    return accountDetails ? plainToInstance(AccountDetailsDto, accountDetails) : null;
+    const accountDetails = await this.accountModel.findById(accountId).lean().exec();
+    if (!accountDetails) return null;
+    
+    // Create a new object with id property
+    const transformedObject = {
+      id: accountDetails._id,
+      ...accountDetails
+    };
+    
+    return plainToInstance(AccountDetailsDto, transformedObject, { 
+      excludeExtraneousValues: true 
+    });
   }
 
   async createAccount(accountDetails: AccountCreationDto): Promise<AccountDetailsDto> {
@@ -23,6 +37,7 @@ export class AccountsRepository {
   }
 
   async accountExists(accountId: string): Promise<boolean> {
+    if (!isValidObjectId(accountId)) {throw new BadRequestException('Invalid account id provided');}
     return (await this.accountModel.exists({_id: accountId})) !== null;
   }
 

@@ -265,6 +265,14 @@ export class TradeDocumentsService {
         excludes,
       );
     this.logger.debug({results});
-    return results ? plainToInstance(TradeDocumentsSearchResultsDto, results) : [];
+    return results ? plainToInstance(TradeDocumentsSearchResultsDto, results) : {
+      metadata:  {
+        totalDocuments: 0,
+        page: searchParams.page,
+        totalPages: 0,
+        limit: searchParams.limit,
+      },
+      data : []
+    }
   }
 }

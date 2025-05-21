@@ -1,6 +1,9 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { CreateNamedWalletDto, NamedWalletDto, UpdateNamedWalletDto } from './dtos/named-wallets.dto';
 import { NamedWalletsRepository } from './named-wallet.repository';
+import { SearchQueryDto } from '../trade-documents/dtos/search-trade-documents.dto';
+import { plainToInstance } from 'class-transformer';
+import { NamedWalletsSearchResultsDto } from './dtos/named-wallets-search-results.dto';
 
 @Injectable()
 export class NamedWalletsService {
@@ -9,8 +12,11 @@ export class NamedWalletsService {
     private readonly namedWalletRepository: NamedWalletsRepository
   ) {}
 
-  async getWalletsForAccountId(accountId: string) {
-    return await this.namedWalletRepository.getAccountWallets(accountId);
+  async getWalletsForAccountId(accountId: string, searchParams: SearchQueryDto): Promise<NamedWalletsSearchResultsDto> {
+    const results = await this.namedWalletRepository.getAccountWallets(accountId, searchParams);
+    this.logger.debug({results})
+
+    return results ? plainToInstance(NamedWalletsSearchResultsDto, results) : undefined;
   }
   
   async getWalletForAccount(accountId: string, walletId: string) {

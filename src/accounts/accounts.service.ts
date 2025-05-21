@@ -1,6 +1,7 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, HttpException, HttpStatus, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { AccountCreationDto, AccountUpdateDto } from './dtos/accounts.dto';
 import { AccountsRepository } from './accounts.repository';
+import { isValidObjectId } from 'mongoose';
 
 @Injectable()
 export class AccountsService {
@@ -10,7 +11,14 @@ export class AccountsService {
   ) {}
 
   async findByAccountId(accountId: string) {
-    return await this.accountsRepository.findAccountById(accountId);
+    if (!isValidObjectId(accountId)) {
+      throw new BadRequestException("Invalid account id");
+    }
+    const account =  await this.accountsRepository.findAccountById(accountId);
+    if (!account) {
+      throw new NotFoundException('Account not found');
+    }
+    return account;
   }
 
   async createAccount(accountDto: AccountCreationDto) {
@@ -21,8 +29,15 @@ export class AccountsService {
     return this.accountsRepository.accountExists(accountId);
   }
 
-  updateAccount(accountId: string, updates: AccountUpdateDto) {
-    return this.accountsRepository.updateAccount(accountId, updates);
+  async updateAccount(accountId: string, updates: AccountUpdateDto) {
+    this.logger.debug({accountId, updates});
+
+    const exists = await this.accountExists(accountId);
+    if (!exists) {
+      throw new NotFoundException('Account not found');
+    }
+
+    return await this.accountsRepository.updateAccount(accountId, updates);
   }
 
   accountForWalletAddressExists(accountWalletAddress: string) {

@@ -2,8 +2,8 @@ import {
   Body,
   Controller,
   Get,
-  HttpException,
-  HttpStatus, Logger, NotFoundException, Param,
+  Logger,
+  Param,
   Patch,
   Post,
 } from '@nestjs/common';
@@ -28,10 +28,9 @@ export class AccountsController {
     description: 'Not authorized to retrieve account',
   })
   async getAccountById(@Param('accountId') accountId: string): Promise<AccountDetailsDto> {
-    const response = await this.accountsService.findByAccountId(accountId);
-    if (!response) {throw new NotFoundException('Account not found');}
-
-    return response;
+    const account =  await this.accountsService.findByAccountId(accountId);
+    this.logger.debug({account})
+    return account;
   }
 
   @Post()
@@ -48,14 +47,7 @@ export class AccountsController {
   @ApiResponse({status: 401, description: 'Not authorized to update this accounts'})
   @ApiResponse({status: 404, description: 'Account not found'})
   async updateAccount(@Param('id') accountId: string, @Body() accountDto: AccountUpdateDto) : Promise<AccountDetailsDto> {
-    return this.accountsService.accountExists(accountId)
-      .then(async accountExists => {
-        if (accountExists) {
-          return await this.accountsService.updateAccount(accountId, accountDto);
-        } else {
-          throw new HttpException('Account not found', HttpStatus.NOT_FOUND);
-        }
-      })
+    return await this.accountsService.updateAccount(accountId, accountDto)
 
   }
 }

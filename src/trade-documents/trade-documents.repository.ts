@@ -198,6 +198,18 @@ export class TradeDocumentsRepository {
     try {
       let result = await this.tradeDocumentModel.aggregate(aggregationPipeline)
       result = result[0]
+      this.logger.debug({result})
+      // Deal with no data
+      if (result["data"].length === 0) {
+        result["metadata"] = {
+          totalDocuments: 0,
+          page: searchParams.page,
+          totalPages: 0,
+          limit: searchParams.limit,
+        };
+        result["data"] = [];
+        return result;
+      }
       result["metadata"] = {...result["metadata"][0]}
       return result;
 
