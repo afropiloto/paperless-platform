@@ -84,12 +84,12 @@ export class NamedWalletsRepository {
     const results = await this.namedWalletModel.findOne({accountId, _id: walletId})
       .lean().exec();
 
-    return results ? plainToInstance(NamedWalletDto, results): null;
+    return results ? plainToInstance(NamedWalletDto, {id: results._id, ...results}, {excludeExtraneousValues: true} ): null;
   }
 
   async createNamedWallet(accountId: string, newWalletDetails: CreateNamedWalletDto) {
     const namedWallet =  await this.namedWalletModel.create({ accountId, ...newWalletDetails });
-    return plainToInstance(NamedWalletDto, namedWallet);
+    return plainToInstance(NamedWalletDto, {id: namedWallet._id, ...namedWallet}, {excludeExtraneousValues: true});
   }
 
   async updateNamedWallet(accountId: string, walletId: string, updates: UpdateNamedWalletDto) {
@@ -98,7 +98,7 @@ export class NamedWalletsRepository {
       _id: walletId
     }, { ...updates }, { returnDocument: "after" });
 
-    return plainToInstance(NamedWalletDto, updatedWalletDetails)
+    return plainToInstance(NamedWalletDto, {id: updatedWalletDetails._id, ...updatedWalletDetails}, {excludeExtraneousValues: true})
   }
 
 

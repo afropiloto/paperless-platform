@@ -6,7 +6,7 @@ import { IsEmail, IsEthereumAddress, IsNotEmpty, IsOptional, IsString } from 'cl
 export class NamedWalletDto {
   @ApiProperty({description: "Unique Wallet Id"})
   @Type(() => String)
-  @Expose({name: '_id'},)
+  @Expose()
   id: string;
 
   @ApiProperty({description: "Account Id"})

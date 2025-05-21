@@ -28,8 +28,7 @@ import { NamedWalletsSearchResultsDto } from './dtos/named-wallets-search-result
 @Controller('named-wallets')
 export class NamedWalletsController {
   private readonly logger = new Logger(NamedWalletsController.name);
-  constructor(private readonly namedWalletsService: NamedWalletsService,
-              private readonly accountService: AccountsService) {}
+  constructor(private readonly namedWalletsService: NamedWalletsService) {}
 
   @Get('/:accountId')
   @ApiOperation({ summary: 'Retrieves the Named Wallets for an account' })
@@ -47,9 +46,6 @@ export class NamedWalletsController {
   @ApiResponse({ status: 401, description: 'Not authorised to retrieve Named Wallets for Account' })
   @ApiResponse({ status: 404, description: 'Account or Wallet not found' })
   async getNamedWalletById(@Param('accountId') accountId: string, @Param('walletId') walletId: string): Promise<NamedWalletDto> {
-    if (!mongoose.isValidObjectId(walletId)) {
-      throw new HttpException("Account or Wallet not found", HttpStatus.NOT_FOUND);
-    }
     return await this.namedWalletsService.getWalletForAccount(accountId, walletId);
   }
 
@@ -60,16 +56,7 @@ export class NamedWalletsController {
   @ApiResponse({ status: 401, description: 'Not authorised to created Named Wallets for Account' })
   @ApiResponse({ status: 404, description: 'Account not found' })
   async createNamedWallet(@Param('accountId') accountId: string, @Body() createNamedWalletDto: CreateNamedWalletDto) :Promise<NamedWalletDto> {
-    // Check if the account id exists
-    const accountExists = await this.accountService.accountExists(accountId);
-    if (!accountExists) {
-      throw new HttpException('Account not found', HttpStatus.NOT_FOUND);
-    }
-    // Check if the Wallet address exists for the account
-    const walletExists = await this.namedWalletsService.walletAddressExistsForAccount(accountId, createNamedWalletDto.walletAddress);
-    if (walletExists) {
-      throw new HttpException('Wallet Address already assigned to a Named Wallet for this Account', HttpStatus.BAD_REQUEST);
-    }
+
     // Create the named Wallet
     return await this.namedWalletsService.createNamedWallet(accountId, createNamedWalletDto);
 
@@ -81,17 +68,10 @@ export class NamedWalletsController {
   @ApiResponse({ status: 401, description: 'Not authorised to update Named Wallets for Account' })
   @ApiResponse({ status: 404, description: 'Account or wallet not found' })
   async updateNamedWallet(@Param('accountId') accountId: string, @Param('walletId') walletId: string, @Body() updateNamedWalletDto: UpdateNamedWalletDto) :Promise<NamedWalletDto> {
-    if (!mongoose.isValidObjectId(walletId)) {
-      throw new HttpException("Account or Wallet not found", HttpStatus.NOT_FOUND);
-    }
-    // Check if the account id exists
-    const accountExists = await this.accountService.accountExists(accountId);
-    if (!accountExists) {
-      throw new HttpException('Account or Wallet not found', HttpStatus.NOT_FOUND);
-    }
-
-    // Update the named Wallet
-    return await this.namedWalletsService.updateNamedWallet(accountId, walletId, updateNamedWalletDto);
+    this.logger.debug({accountId, walletId, updateNamedWalletDto});
+    const response =  await this.namedWalletsService.updateNamedWallet(accountId, walletId, updateNamedWalletDto);
+    this.logger.debug({response})
+    return response;
   }
 
 
