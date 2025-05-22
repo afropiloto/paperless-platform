@@ -5,12 +5,8 @@ import { FileStorageService } from '../file-storage/file-storage.interface';
 import { FILE_STORAGE_SERVICE } from '../file-storage/file-storage.constants';
 import { RegistrationDetailsDto } from './dtos/registration-details.dto';
 import { UploadRegistrationDocumentDto } from './dtos/upload-registration-document.dto';
-import { plainToInstance } from 'class-transformer';
-import { GeneralResponseDto } from '../common/common-dto';
-import { Error } from 'mongoose';
 import { AccountsService } from '../accounts/accounts.service';
 import { RegistrationDocumentFileDetails } from './models/registration-document-file-details';
-import { RegistrationDocumentType } from './enums/document-type.enum';
 
 @Injectable()
 export class RegistrationService {

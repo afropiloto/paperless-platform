@@ -1,28 +1,39 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { TradeDocument, TradeDocumentFile } from './schema/trade-document.schema';
-import { Model, PipelineStage } from 'mongoose';
+import { isValidObjectId, Model, PipelineStage } from 'mongoose';
 import {
   IssueDetailsDto,
   TradeDocumentDto,
   TradeDocumentFileDTO,
   UpsertTradeDocumentDto,
 } from './dtos/trade-document.dto';
-import { TradeDocumentFileDetails, TradeDocumentStatus } from '../types/trade-documents.types';
+import {  TradeDocumentStatus } from '../types/trade-documents.types';
 import { getUnsets } from './utils/trade-document.utils';
 import { plainToInstance } from 'class-transformer';
 import { SearchQueryDto } from './dtos/search-trade-documents.dto';
+import { TradeDocumentFileVariant } from './trade-document-file.types';
+import { TradeDocumentFileDetails } from '../../dist/types/trade-documents.types';
 
 @Injectable()
 export class TradeDocumentsRepository {
-
   private readonly logger = new Logger(TradeDocumentsRepository.name);
 
-  constructor( @InjectModel(TradeDocument.name)
-               private tradeDocumentModel: Model<TradeDocument>) {}
+  constructor(
+    @InjectModel(TradeDocument.name)
+    private tradeDocumentModel: Model<TradeDocument>,
+  ) {}
 
-  async createTradeDocument(accountId: string, createTradeDocumentDto: UpsertTradeDocumentDto, initialStatus: TradeDocumentStatus) {
-    const response =  this.tradeDocumentModel.create({accountId, status: initialStatus, ...createTradeDocumentDto})
+  async createTradeDocument(
+    accountId: string,
+    createTradeDocumentDto: UpsertTradeDocumentDto,
+    initialStatus: TradeDocumentStatus,
+  ) {
+    const response = this.tradeDocumentModel.create({
+      accountId,
+      status: initialStatus,
+      ...createTradeDocumentDto,
+    });
     return plainToInstance(TradeDocumentDto, response);
   }
 
@@ -33,8 +44,6 @@ export class TradeDocumentsRepository {
   ) {
     const filter = { accountId: accountId, _id: documentId };
     const unsets = getUnsets(tradeDocument.documentType);
-
-    this.logger.debug({ accountId, documentId, tradeDocument, unsets });
 
     const updatedDocument = await this.tradeDocumentModel.findOneAndUpdate(
       filter,
@@ -50,51 +59,84 @@ export class TradeDocumentsRepository {
     return plainToInstance(TradeDocumentDto, updatedDocument);
   }
 
-  async updateTradeDocumentStatus(accountId: string, documentId: string, newStatus: TradeDocumentStatus) {
+  async updateTradeDocumentStatus(
+    accountId: string,
+    documentId: string,
+    newStatus: TradeDocumentStatus,
+  ) {
     const updatedDocument = await this.tradeDocumentModel.updateOne(
       { _id: documentId, accountId },
       {
-        $set: {status: newStatus}
+        $set: { status: newStatus },
       },
-      { returnDocument: 'after' }
+      { returnDocument: 'after' },
     );
     return plainToInstance(TradeDocumentDto, updatedDocument);
   }
 
-  async updateTradeDocumentFileById(accountId: string, documentId: string, tradeDocumentFile: TradeDocumentFileDetails) {
-    const updatedDocument =  this.tradeDocumentModel.updateOne(
+  async updateTradeDocumentFileById(
+    accountId: string,
+    documentId: string,
+    fileVariant: TradeDocumentFileVariant,
+    tradeDocumentFile: TradeDocumentFileDetails,
+  ) {
+    const variantField = this.getFileVariantField(fileVariant);
+    const updatedDocument = this.tradeDocumentModel.updateOne(
       { _id: documentId, accountId },
       {
-        $set: {tradeDocumentFile}
+        $set: { [variantField]: tradeDocumentFile },
       },
-      { returnDocument: 'after' }
+      { returnDocument: 'after' },
     );
     return plainToInstance(TradeDocumentDto, updatedDocument);
   }
 
   private getSelections(includes: string[] = [], excludes: string[] = []) {
-    return `${includes.length > 0 ? includes.join(" "): ''} ${excludes.length > 0 ? '-' + excludes.join(" -"): ''}`
+    return `${includes.length > 0 ? includes.join(' ') : ''} ${excludes.length > 0 ? '-' + excludes.join(' -') : ''}`;
   }
-  async getDocumentById(accountId: string, documentId: string, includes: string[] = [], excludes: string[] = []): Promise<TradeDocumentDto> {
-    const selections = this.getSelections(includes, excludes)
-    this.logger.debug({selections });
-    const document = await this.tradeDocumentModel.findOne({
-      accountId: accountId,
-      _id: documentId,
-    }).select(selections).lean().exec();
-    return document ? plainToInstance(TradeDocumentDto, {id: document._id, ...document}): null;
+  async getDocumentById(
+    accountId: string,
+    documentId: string,
+    includes: string[] = [],
+    excludes: string[] = [],
+  ): Promise<TradeDocumentDto> {
+    const selections = this.getSelections(includes, excludes);
+
+    const document = await this.tradeDocumentModel
+      .findOne({
+        accountId: accountId,
+        _id: documentId,
+      })
+      .select(selections)
+      .lean()
+      .exec();
+    return document
+      ? plainToInstance(TradeDocumentDto, { id: document._id, ...document })
+      : null;
   }
 
-  async getDocumentsByType(accountId: string, documentType: DocumentType, includes: string[] = [], excludes: string[] = []): Promise<TradeDocumentDto[]> {
-    const selections = this.getSelections(includes, excludes)
-    const documents = await this.tradeDocumentModel.find({
-      accountId,
-      documentType,
-    }).select(selections).lean().exec();
+  async getDocumentsByType(
+    accountId: string,
+    documentType: DocumentType,
+    includes: string[] = [],
+    excludes: string[] = [],
+  ): Promise<TradeDocumentDto[]> {
+    const selections = this.getSelections(includes, excludes);
+    const documents = await this.tradeDocumentModel
+      .find({
+        accountId,
+        documentType,
+      })
+      .select(selections)
+      .lean()
+      .exec();
     return plainToInstance(TradeDocumentDto, documents);
   }
 
-  async deleteDocumentById(accountId: string, documentId: string): Promise<boolean> {
+  async deleteDocumentById(
+    accountId: string,
+    documentId: string,
+  ): Promise<boolean> {
     const result = await this.tradeDocumentModel.deleteOne({
       accountId: accountId,
       _id: documentId,
@@ -102,81 +144,142 @@ export class TradeDocumentsRepository {
     return result.deletedCount !== 0;
   }
 
-  async getDocumentFileById(accountId: string, documentId: string) {
-    const result = await this.tradeDocumentModel.findOne({
-      accountId: accountId,
-      _id: documentId,
-    }).select("tradeDocumentFile").lean().exec();
-
-    return result ? plainToInstance(TradeDocumentFile, result.tradeDocumentFile) : null;
+  private getFileVariantField(fileVariant: TradeDocumentFileVariant) {
+    switch (fileVariant) {
+      case TradeDocumentFileVariant.ISSUED:
+        return "issuedFile";
+      case TradeDocumentFileVariant.ORIGINAL:
+        return "originalFile";
+      case TradeDocumentFileVariant.TRADE_TRUST:
+        return "tradeTrustFile"
+      default:
+        return "originalFile";
+    }
   }
 
-  async getDocumentByTrackingId(trackingId: string, includes: string[] = [], excludes: string[] = []): Promise<TradeDocumentDto> {
-    const selections = this.getSelections(includes, excludes)
-    const document = await this.tradeDocumentModel.findOne({
-      documentTrackingId: trackingId
-    }).select(selections).lean().exec();
+  async getDocumentFileById (
+    accountId: string,
+    documentId: string,
+    fileVariant: TradeDocumentFileVariant,
+  ) : Promise<TradeDocumentFile> {
+    const variantField = this.getFileVariantField(fileVariant);
+
+    const result = await this.tradeDocumentModel
+      .findOne({
+        accountId: accountId,
+        _id: documentId,
+      })
+      .select(variantField)
+      .lean()
+      .exec();
+
+    return result
+      ? plainToInstance(TradeDocumentFile, result[variantField])
+      : null;
+  }
+
+  async getDocumentByTrackingId(
+    trackingId: string,
+    includes: string[] = [],
+    excludes: string[] = [],
+  ): Promise<TradeDocumentDto> {
+    const selections = this.getSelections(includes, excludes);
+    const document = await this.tradeDocumentModel
+      .findOne({
+        documentTrackingId: trackingId,
+      })
+      .select(selections)
+      .lean()
+      .exec();
     return plainToInstance(TradeDocumentDto, document);
   }
 
-  async getDocumentFileDetailsByTrackingId(trackingId: string) {
-    const document = await this.tradeDocumentModel.findOne({
-      documentTrackingId: trackingId
-    }).select('accountId tradeDocumentFile').lean().exec();
-    return plainToInstance(TradeDocumentFileDTO, {trackingId, accountId: document.accountId, _id: document._id, ...document.tradeDocumentFile});
+  async getDocumentFileDetailsByTrackingId(trackingId: string, fileVariant: TradeDocumentFileVariant) {
+    const variantField = this.getFileVariantField(fileVariant);
+    const document = await this.tradeDocumentModel
+      .findOne({
+        documentTrackingId: trackingId,
+      })
+      .select(`accountId ${variantField}`)
+      .lean()
+      .exec();
+    return plainToInstance(TradeDocumentFileDTO, {
+      trackingId,
+      accountId: document.accountId,
+      _id: document._id,
+      ...document[variantField]
+
+    });
   }
 
-  async updateTradeDocumentIssueDetailsById(accountId: string, documentId: string, issueDetails: IssueDetailsDto) {
-    const updatedDocument =  this.tradeDocumentModel.updateOne(
+  async updateTradeDocumentIssueDetailsById(
+    accountId: string,
+    documentId: string,
+    issueDetails: IssueDetailsDto,
+  ) {
+    const updatedDocument = this.tradeDocumentModel.updateOne(
       { _id: documentId, accountId },
       {
-        $set: {issueDetails}
+        $set: { issueDetails },
       },
-      { returnDocument: 'after' }
+      { returnDocument: 'after' },
     );
     return plainToInstance(TradeDocumentDto, updatedDocument);
   }
 
-  async retrieveTradeDocumentsByAccountId(accountId: string, searchParams: SearchQueryDto, includes: string[], excludes: string[]) {
+  async retrieveTradeDocumentsByAccountId(
+    accountId: string,
+    searchParams: SearchQueryDto,
+    includes: string[],
+    excludes: string[],
+  ) {
+    const includesProjection = { createdAt: 1, updatedAt: 1 };
+    includes.forEach((include) => {
+      includesProjection[include] = 1;
+    });
 
-    this.logger.debug({accountId, searchParams, includes, excludes})
-    const includesProjection = {createdAt: 1, updatedAt: 1}
-    includes.forEach(include => {includesProjection[include] = 1})
+    const excludesProjection = { __v: 0 };
+    excludes.forEach((exclude) => {
+      excludesProjection[exclude] = 0;
+    });
 
-    const excludesProjection = {__v: 0}
-    excludes.forEach(exclude => {excludesProjection[exclude] = 0})
-
-    const dataFacet = []
+    const dataFacet = [];
     if (searchParams.orderBy !== undefined && searchParams.orderBy.length > 0) {
       dataFacet.push({
-        $sort: {[searchParams.orderBy]: searchParams.orderDirection === 'desc' ? -1 : 1}
-      })
+        $sort: {
+          [searchParams.orderBy]:
+            searchParams.orderDirection === 'desc' ? -1 : 1,
+        },
+      });
     }
-    dataFacet.push({$skip: (searchParams.page - 1) * searchParams.limit})
-    dataFacet.push({$limit: searchParams.limit})
-    const searchableFields = ["status", "documentType", "documentReference"]
+    dataFacet.push({ $skip: (searchParams.page - 1) * searchParams.limit });
+    dataFacet.push({ $limit: searchParams.limit });
+    const searchableFields = ['status', 'documentType', 'documentReference'];
 
     const aggregationPipeline: PipelineStage[] = [];
     // Add filter to restrict data to the account wallet address
 
     aggregationPipeline.push(
-      {$match: {"accountId": accountId}},
-      {$project: includesProjection},
-      {$project: excludesProjection},
-    )
+      { $match: { accountId: accountId } },
+      { $project: includesProjection },
+      { $project: excludesProjection },
+    );
     // Add filter criteria if a query term is provided
-    if (searchParams.queryTerm !== undefined && searchParams.queryTerm.length > 0) {
+    if (
+      searchParams.queryTerm !== undefined &&
+      searchParams.queryTerm.length > 0
+    ) {
       aggregationPipeline.push({
         $match: {
-          $or: searchableFields.map(field => ({
-            [field]: {$regex: searchParams.queryTerm, $options: "i"},
-          }))
-        }
-      })
+          $or: searchableFields.map((field) => ({
+            [field]: { $regex: searchParams.queryTerm, $options: 'i' },
+          })),
+        },
+      });
     }
     aggregationPipeline.push({
-      $sort: {lastModified: -1}
-    })
+      $sort: { lastModified: -1 },
+    });
     aggregationPipeline.push({
       $facet: {
         metadata: [
@@ -186,40 +289,55 @@ export class TradeDocumentsRepository {
           {
             $addFields: {
               page: searchParams.page,
-              totalPages: {$ceil: {$divide: ["$totalDocuments", searchParams.limit]}},
+              totalPages: {
+                $ceil: { $divide: ['$totalDocuments', searchParams.limit] },
+              },
               limit: searchParams.limit,
-            }
-          }
+            },
+          },
         ],
-        data: dataFacet
-      }
-    })
+        data: dataFacet,
+      },
+    });
 
     try {
-      let result = await this.tradeDocumentModel.aggregate(aggregationPipeline)
-      result = result[0]
-      this.logger.debug({result})
+      let result = await this.tradeDocumentModel.aggregate(aggregationPipeline);
+      result = result[0];
       // Deal with no data
-      if (result["data"].length === 0) {
-        result["metadata"] = {
+      if (result['data'].length === 0) {
+        result['metadata'] = {
           totalDocuments: 0,
           page: searchParams.page,
           totalPages: 0,
           limit: searchParams.limit,
         };
-        result["data"] = [];
+        result['data'] = [];
         return result;
       }
-      result["metadata"] = {...result["metadata"][0]}
+      result['metadata'] = { ...result['metadata'][0] };
       return result;
-
     } catch (error) {
-      this.logger.error({msg: "Failed to retrieve Trade Documents for account", details: error.message, accountWallet: accountId, searchParams});
-      throw new Error("We encountered an problem retrieving your trade documents. We have logged this issue please try again later");
+      this.logger.error({
+        msg: 'Failed to retrieve Trade Documents for account',
+        details: error.message,
+        accountWallet: accountId,
+        searchParams,
+      });
+      throw new Error(
+        'We encountered an problem retrieving your trade documents. We have logged this issue please try again later',
+      );
     }
+  }
 
-
-
-
+  async tradeDocumentExists(accountId: string, tradeDocumentId: string) {
+    if (!isValidObjectId(accountId) || !isValidObjectId(tradeDocumentId)) {
+      throw new BadRequestException('Invalid trade document identifier');
+    }
+    return (
+      (await this.tradeDocumentModel.exists({
+        _id: tradeDocumentId,
+        accountId,
+      })) !== null
+    );
   }
 }

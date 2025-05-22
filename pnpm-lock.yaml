@@ -104,6 +104,9 @@ importers:
       qrcode:
         specifier: ^1.5.4
         version: 1.5.4
+      rxjs:
+        specifier: ^7.8.2
+        version: 7.8.2
       siwe:
         specifier: ^2.1.4
         version: 2.3.2(ethers@5.8.0)

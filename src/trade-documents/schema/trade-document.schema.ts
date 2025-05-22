@@ -8,6 +8,7 @@ import {
 } from './document-content.schema';
 import { TradeDocumentType } from '../../types/trade-documents.types';
 import { TradeTrustDocumentClass } from '../../trade-trust/trade-trust.types';
+import { TradeDocumentFileStatus } from '../trade-document-file.types';
 
 
 @Schema({_id: false, timestamps: false})
@@ -56,16 +57,22 @@ export class IssueDetails {
 @Schema({timestamps: false, _id: false})
 export class TradeDocumentFile {
   @Prop({required: true})
-  dataUrl: string;
+  storedFileName: string;
 
   @Prop({required: true})
-  fileName: string;
+  storedFilePath: string;
+
+  @Prop({required: true})
+  originalFileName: string;
 
   @Prop({required: true})
   mimeType: string;
 
   @Prop({required: true})
-  fileSize: string;
+  size: number;
+
+  @Prop({required: true, enum: TradeDocumentFileStatus})
+  status: TradeDocumentFileStatus;
 }
 
 @Schema({ timestamps: true })
@@ -86,8 +93,14 @@ export class TradeDocument {
   @Prop({required: false})
   dateIssued: Date;
 
-  @Prop({type: TradeDocumentFile, required: false})
-  tradeDocumentFile: TradeDocumentFile;
+  @Prop({required: false, type: TradeDocumentFile, })
+  originalFile: TradeDocumentFile;
+
+  @Prop({required: false, type: TradeDocumentFile, })
+  issuedFile: TradeDocumentFile;
+
+  @Prop({required: false, type: TradeDocumentFile, })
+  tradeTrustFile: TradeDocumentFile;
 
   @Prop({type: InvoiceContent, required: false})
   invoiceContent?: InvoiceContent;
@@ -125,27 +138,27 @@ TradeDocumentSchema.pre('validate', function (next) {
 
   switch (doc.documentType) {
     case TradeDocumentType.INVOICE:
-      if (!doc.invoiceContent) {
-        return next(new Error('Invoice documents require invoiceContent'));
+      if (doc.promissoryNoteContent || doc.billOfExchangeContent || doc.otherDocumentContent) {
+        return next(new Error('Invoice documents should not contain promissoryNoteContent, billOfExchangeContent or otherDocumentContent'));
       }
       break;
     case TradeDocumentType.PROMISSORY_NOTE:
-      if (!doc.promissoryNoteContent) {
+      if (doc.invoiceContent || doc.billOfExchangeContent || doc.otherDocumentContent) {
         return next(
-          new Error('Promissory note documents require promissoryNoteContent'),
+          new Error('Promissory note documents should not contain invoiceContent, billOfExchangeContent or otherDocumentContent'),
         );
       }
       break;
     case TradeDocumentType.BILL_OF_EXCHANGE:
-      if (!doc.billOfExchangeContent) {
+      if (doc.invoiceContent || doc.promissoryNoteContent || doc.otherDocumentContent) {
         return next(
-          new Error('Bill of exchange documents require billOfExchangeContent'),
+          new Error('Bill of exchange documents should not contain invoiceContent, promissoryNoteContent or otherDocumentContent'),
         );
       }
       break;
     case TradeDocumentType.OTHER:
-      if (!doc.otherDocumentContent) {
-        return next(new Error('Other documents require otherDocumentContent'));
+      if (doc.invoiceContent || doc.promissoryNoteContent || doc.billOfExchangeContent) {
+        return next(new Error('Other documents require should not contain invoiceContent, promissoryNoteContent or billOfExchangeContent'));
       }
       break;
     default:

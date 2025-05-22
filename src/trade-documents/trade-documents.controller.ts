@@ -5,7 +5,7 @@ import {
   Delete,
   Get,
   HttpException,
-  HttpStatus, Inject,
+  HttpStatus,
   Logger,
   NotFoundException,
   Param,
@@ -24,9 +24,9 @@ import {
 } from '@nestjs/swagger';
 import { TradeDocumentsService } from './trade-documents.service';
 import mongoose from 'mongoose';
-import { AccountsService } from '../accounts/accounts.service';
 import { plainToInstance } from 'class-transformer';
 import {
+  CreateTradeDocumentFromFileDto,
   TradeDocumentDto,
   TradeDocumentFileDTO,
   UpsertTradeDocumentDto,
@@ -37,24 +37,19 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { GeneralResponseDto } from '../common/common-dto';
 import { TRADE_DOCUMENT_SUMMARY_INCLUDE_FIELDS } from './trade-document.constants';
 import { SearchQueryDto } from './dtos/search-trade-documents.dto';
-import { FileStorageService } from '../file-storage/file-storage.interface';
-import { FILE_STORAGE_SERVICE } from '../file-storage/file-storage.constants';
 
 @ApiTags('Trade Documents')
 @Controller('trade-documents')
 export class TradeDocumentsController {
   private readonly logger = new Logger(TradeDocumentsController.name);
   constructor(
-    private readonly tradeDocumentsService: TradeDocumentsService,
-    private readonly accountService: AccountsService,
-    @Inject(FILE_STORAGE_SERVICE)
-    private readonly fileStorageService: FileStorageService,
+    private readonly tradeDocumentsService: TradeDocumentsService
   ) {}
 
   // *******************************************************************************************************************
   // Trade Document File endpoints
   // *******************************************************************************************************************
-  @Get(':accountId/:documentId/file')
+  @Get('/file/:accountId/:documentId')
   @ApiOperation({
     summary:
       'Retrieves the trade document file content an account by document Id',
@@ -96,7 +91,7 @@ export class TradeDocumentsController {
     });
   }
 
-  @Put(':accountId/:documentId/file')
+  @Put('/file/:accountId/:documentId')
   @UseInterceptors(FileInterceptor('file'))
   @ApiConsumes('multipart/form-data')
   @ApiBody({ type: UpsertTradeDocumentFileDto })
@@ -142,6 +137,93 @@ export class TradeDocumentsController {
       file,
     );
     return {success: true, message: "Trade Document file uploaded"} as GeneralResponseDto
+  }
+
+
+  @Post('file/:accountId')
+  @UseInterceptors(FileInterceptor('file'))
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        file: {
+          type: 'string',
+          format: 'binary',
+          description: 'The file to upload (jpg, jpeg, png, pdf, doc, docx)'
+        },
+        documentReference: {
+          type: 'string',
+          description: 'Reference identifier for the document'
+        },
+        documentType: {
+          type: 'string',
+          enum: ['invoice', 'bill of exchange', 'promissory note', 'other'],
+          description: 'Type of trade document'
+        }
+      },
+      required: ['file', 'documentReference', 'documentType']
+    }
+  })
+  @ApiOperation({
+    summary: 'Creates a new trade document with an uploaded file',
+    description: 'Upload a file and provide metadata to create a new trade document'
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Trade document created successfully with file'
+  })
+  @ApiResponse({
+    status: 422,
+    description: 'File type not supported or file too large'
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Missing required fields or invalid data'
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Account not found'
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Not authorized to access Trade Document'
+  })
+  async createTradeDocumentFromFile(
+    @Param('accountId') accountId: string,
+    @Body() createFromFile: CreateTradeDocumentFromFileDto,
+    @UploadedFile(
+      new ParseFilePipeBuilder()
+        .addFileTypeValidator({
+          fileType: /(jpg|jpeg|png|pdf|doc|docx)$/,
+        })
+        .addMaxSizeValidator({
+          maxSize: 10 * 1024 * 1024, // 10MB
+        })
+        .build({
+          errorHttpStatusCode: HttpStatus.UNPROCESSABLE_ENTITY,
+        }),
+    )
+      file: Express.Multer.File,
+  ) {
+    this.logger.debug({
+      message: 'Received file upload request',
+      accountId,
+      createFromFile,
+      fileName: file?.originalname,
+      fileMimeType: file?.mimetype,
+      fileSize: file?.size
+    });
+    
+    if (!file) {
+      throw new BadRequestException('No file uploaded');
+    }
+    
+    if (!createFromFile.documentReference || !createFromFile.documentType) {
+      throw new BadRequestException('Missing required fields: documentReference and documentType are required');
+    }
+
+    return await this.tradeDocumentsService.createTradeDocumentFromFile(accountId, file, createFromFile);
   }
 
   // *******************************************************************************************************************
@@ -326,10 +408,6 @@ export class TradeDocumentsController {
     @Param('accountId') accountId: string,
     @Body() content: UpsertTradeDocumentDto,
   ): Promise<TradeDocumentDto> {
-    if (!(await this.accountService.accountExists(accountId))) {
-      throw new HttpException('Invalid Account', HttpStatus.BAD_REQUEST);
-    }
-
     return await this.tradeDocumentsService.createTradeDocument(
       accountId,
       content,

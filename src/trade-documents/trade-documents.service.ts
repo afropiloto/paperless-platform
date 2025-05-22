@@ -1,7 +1,9 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { UpsertTradeDocumentDto } from './dtos/trade-document.dto';
+import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import {
-  TradeDocumentFileDetails,
+  CreateTradeDocumentFromFileDto,
+  UpsertTradeDocumentDto,
+} from './dtos/trade-document.dto';
+import {
   TradeDocumentStatus,
   TradeDocumentType,
 } from '../types/trade-documents.types';
@@ -17,7 +19,18 @@ import { GeneralResponseDto } from '../common/common-dto';
 import { AuditService } from '../audit/audit.service';
 import { AuditEventType } from '../audit/audit-event-type.enum';
 import { plainToInstance } from 'class-transformer';
-import { SearchQueryDto, TradeDocumentsSearchResultsDto } from './dtos/search-trade-documents.dto';
+import {
+  SearchQueryDto,
+  TradeDocumentsSearchResultsDto,
+} from './dtos/search-trade-documents.dto';
+import { AccountsService } from '../accounts/accounts.service';
+import { TradeDocumentFile } from './schema/trade-document.schema';
+import {
+  TradeDocumentFileVariant,
+  TradeDocumentFileStatus,
+} from './trade-document-file.types';
+import { FileStorageService } from '../file-storage/file-storage.interface';
+import { FILE_STORAGE_SERVICE } from '../file-storage/file-storage.constants';
 
 @Injectable()
 export class TradeDocumentsService {
@@ -25,7 +38,10 @@ export class TradeDocumentsService {
 
   constructor(
     private readonly tradeDocumentsRepo: TradeDocumentsRepository,
+    private readonly accountService: AccountsService,
     private readonly auditService: AuditService,
+    @Inject(FILE_STORAGE_SERVICE)
+    private readonly fileStorageService: FileStorageService,
     @InjectQueue(DATA_EXTRACTION_QUEUE_NAME)
     private readonly dataExtractionQueue: Queue,
   ) {}
@@ -43,24 +59,14 @@ export class TradeDocumentsService {
     }
   }
 
-  private extractFileDetails(
-    file: Express.Multer.File,
-  ): TradeDocumentFileDetails {
-    const base64 = file.buffer.toString('base64');
-    const dataUrl = `data:${file.mimetype};base64,${base64}`;
-
-    return {
-      fileName: file.originalname,
-      fileSize: file.size,
-      dataUrl,
-      mimeType: file.mimetype,
-    };
-  }
-
   async createTradeDocument(
     accountId: string,
     tradeDocument: UpsertTradeDocumentDto,
   ) {
+    if (!(await this.accountService.accountExists(accountId))) {
+      throw new NotFoundException('Account not found');
+    }
+
     const newDocument = await this.tradeDocumentsRepo.createTradeDocument(
       accountId,
       tradeDocument,
@@ -167,10 +173,11 @@ export class TradeDocumentsService {
     }
   }
 
-  async getDocumentFileById(accountId: string, documentId: string) {
+  async getDocumentFileById(accountId: string, documentId: string, fileVariant: TradeDocumentFileVariant ) {
     const fileDetails = await this.tradeDocumentsRepo.getDocumentFileById(
       accountId,
       documentId,
+      fileVariant
     );
     if (!fileDetails) {
       throw new NotFoundException(
@@ -183,22 +190,45 @@ export class TradeDocumentsService {
 
   async updateTradeDocumentFileById(
     accountId: string,
-    documentId: string,
+    tradeDocumentId: string,
     file: Express.Multer.File,
   ) {
-    const tradeDocumentFile = this.extractFileDetails(file);
-
-    const tradeDocument =
-      await this.tradeDocumentsRepo.updateTradeDocumentFileById(
+    const tradeDocumentExists =
+      await this.tradeDocumentsRepo.tradeDocumentExists(
         accountId,
-        documentId,
-        tradeDocumentFile,
+        tradeDocumentId,
+      );
+    if (!tradeDocumentExists) {
+      throw new NotFoundException('Trade document does not exist');
+    }
+    
+    const { storedFileName, storedFilePath } =
+      await this.fileStorageService.uploadFile(
+        file.buffer,
+        file.originalname,
+        file.mimetype,
       );
 
-    if (!tradeDocument) {
-      throw new NotFoundException('Trade document not found for this account');
+    // Store File details
+    const tradeDocumentFileDetails: TradeDocumentFile = {
+      storedFileName: storedFileName,
+      storedFilePath: storedFilePath,
+      mimeType: file.mimetype,
+      originalFileName: file.originalname,
+      size: file.size,
+      status: TradeDocumentFileStatus.AWAITING_VIRUS_SCAN,
+    };
+
+    const currentFileDetails = await this.tradeDocumentsRepo.getDocumentFileById(accountId, tradeDocumentId, TradeDocumentFileVariant.ORIGINAL);
+    if (currentFileDetails && currentFileDetails.storedFileName) {
+      // ToDo: If a Trade Document File already exists then delete the file. Record Audit Trail
+      this.logger.debug({message: "File deletion required", currentFileDetails});
     }
 
+    // Store file details
+    const tradeDocument = await this.tradeDocumentsRepo.updateTradeDocumentFileById(accountId, tradeDocumentId, TradeDocumentFileVariant.ORIGINAL, tradeDocumentFileDetails)
+
+    // Check if Data Extract is required or not
     const performDataExtraction = this.canPerformDataExtraction(
       tradeDocument.documentType,
     );
@@ -207,27 +237,30 @@ export class TradeDocumentsService {
       : (tradeDocument.status as TradeDocumentStatus);
     await this.tradeDocumentsRepo.updateTradeDocumentStatus(
       accountId,
-      documentId,
+      tradeDocumentId,
       currentStatus,
     );
 
     if (performDataExtraction) {
       const jobId = await this.submitForDataExtraction(
         accountId,
-        documentId,
+        tradeDocumentId,
         tradeDocument.documentType,
       );
       this.logger.log({
         message: 'Submitted for Document Data Extraction',
         accountId,
-        documentId,
+        documentId: tradeDocumentId,
         jobId,
       });
     }
+
+    // Write Audit Log
     await this.auditService.log({
       eventType: AuditEventType.DOCUMENT_FILE_UPDATED,
       accountId,
-      documentId,
+      documentId: tradeDocumentId,
+      details: {originalFileName: file.originalname, fileType: file.mimetype, fileSize: file.size},
     });
   }
 
@@ -264,15 +297,46 @@ export class TradeDocumentsService {
         includes,
         excludes,
       );
-    this.logger.debug({results});
-    return results ? plainToInstance(TradeDocumentsSearchResultsDto, results) : {
-      metadata:  {
-        totalDocuments: 0,
-        page: searchParams.page,
-        totalPages: 0,
-        limit: searchParams.limit,
-      },
-      data : []
+
+    return results
+      ? plainToInstance(TradeDocumentsSearchResultsDto, results)
+      : {
+          metadata: {
+            totalDocuments: 0,
+            page: searchParams.page,
+            totalPages: 0,
+            limit: searchParams.limit,
+          },
+          data: [],
+        };
+  }
+
+  async createTradeDocumentFromFile(
+    accountId: string,
+    file: Express.Multer.File,
+    createFromFile: CreateTradeDocumentFromFileDto,
+  ) {
+    const accountExists = await this.accountService.accountExists(accountId);
+    if (!accountExists) {
+      throw new NotFoundException('Account not found');
     }
+    const tradeDocument: UpsertTradeDocumentDto = {
+      documentType: createFromFile.documentType,
+      documentReference: createFromFile.documentReference,
+    };
+    // Create the trade document
+    const newDocument = await this.createTradeDocument(
+      accountId,
+      tradeDocument,
+    );
+
+    // Add the file to the trade document
+    await this.updateTradeDocumentFileById(accountId, newDocument.id, file);
+
+    await this.auditService.log({
+      eventType: AuditEventType.DOCUMENT_CREATED,
+      accountId,
+      documentId: newDocument.id,
+    });
   }
 }

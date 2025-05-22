@@ -21,12 +21,6 @@ export enum LoanPeriodUnit {
   YEAR = 'year',
 }
 
-export class TradeDocumentFileDetails {
-  dataUrl?: string;
-  fileName?: string;
-  mimeType?: string;
-  fileSize?: number;
-}
 
 // *****************************************************************************
 // Bill of Exchange Document Content

@@ -13,12 +13,6 @@ export class AuditEvent extends Document {
   @Prop()
   documentId?: string;
 
-  @Prop({ required: true })
-  originator: string;
-
-  @Prop({ required: true })
-  timestamp: Date;
-
   @Prop({ type: Object, default: {} })
   details: Record<string, any>;
 }

@@ -4,6 +4,7 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ClassSerializerInterceptor, ValidationPipe } from '@nestjs/common';
 import { MongoExceptionFilter } from './filters/mongooseException.filter';
 import * as bodyParser from 'body-parser';
+import { LoggingInterceptor } from './interceptors/request-logger.interceptor';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -21,6 +22,7 @@ async function bootstrap() {
       excludeExtraneousValues: true
     })
   )
+  app.useGlobalInterceptors(new LoggingInterceptor());
 
   app.useGlobalFilters(new MongoExceptionFilter());
 

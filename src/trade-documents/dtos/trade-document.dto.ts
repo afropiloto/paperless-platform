@@ -565,11 +565,21 @@ export class TradeDocumentDto {
   documentTrackingId: string;
 }
 
-
-
 // *****************************************************************************
 // Create/Update Trade Document DTO
 // *****************************************************************************
+
+export class CreateTradeDocumentFromFileDto {
+  @ApiProperty({description: "Trade Document Reference"})
+  @IsString()
+  @IsNotEmpty()
+  documentReference: string;
+
+  @ApiProperty({description: "Trade Document Type"})
+  @IsEnum(TradeDocumentType)
+  @IsNotEmpty()
+  documentType: TradeDocumentType;
+}
 export class UpsertTradeDocumentFileDto {
   @ApiProperty({description: "Trade Document File", type: 'string', format: 'binary'})
   @Expose()

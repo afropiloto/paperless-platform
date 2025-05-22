@@ -1,5 +1,4 @@
 import {
-  BadRequestException,
   Body,
   Controller, FileTypeValidator, Get, Logger, MaxFileSizeValidator, Param,
   ParseFilePipe,
