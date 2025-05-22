@@ -15,3 +15,9 @@ export interface WrappedDocumentDetails {
   merkleRoot: string,
   wrappedContent: string
 }
+
+export interface TradeTrustFileDetails {
+  fileName: string,
+  mimeType: string,
+  dataUrl: string,
+}

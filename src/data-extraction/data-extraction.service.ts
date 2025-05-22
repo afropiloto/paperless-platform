@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios, { AxiosResponse } from 'axios';
 import {
@@ -19,6 +19,9 @@ import {
   PromissoryNoteContent, TradeDocumentType,
 } from '../types/trade-documents.types';
 import { GraipDataExtractionSubmitResponse } from './types/graip.types';
+import { TradeDocumentFileDTO } from '../trade-documents/dtos/trade-document-file.dto';
+import { FILE_STORAGE_SERVICE } from '../file-storage/file-storage.constants';
+import { FileStorageService } from '../file-storage/file-storage.interface';
 
 @Injectable()
 export class DataExtractionService {
@@ -28,6 +31,8 @@ export class DataExtractionService {
     private readonly configService: ConfigService,
     @InjectQueue(DATA_EXTRACTION_QUEUE_NAME)
     private readonly dataExtractionCallbackQueue: Queue,
+    @Inject(FILE_STORAGE_SERVICE)
+    private readonly fileStorageService: FileStorageService
   ) {}
 
   private getFlowId(documentType: string): string {
@@ -100,7 +105,7 @@ export class DataExtractionService {
     documentTitle: string,
     accountId: string,
     documentId: string,
-    dataUrl: string,
+    tradeDocumentFile:  TradeDocumentFileDTO,
   ): Promise<DataExtractionResponse> {
     const flowId = this.getFlowId(documentType);
     if (flowId.length === 0) {
@@ -113,6 +118,11 @@ export class DataExtractionService {
       });
       return;
     }
+
+    const file = await this.fileStorageService.downloadFile(tradeDocumentFile.storedFileName);
+    const base64String = file.toString("base64")
+    const dataUrl = `data:${tradeDocumentFile.mimeType};base64,${base64String}`;
+
     const response = await this.sendToGraip(flowId, documentTitle, dataUrl);
     if (response.success) {
       // Successful so add callback information to queue

@@ -13,6 +13,13 @@ export function fileToDataUrl(file: Express.Multer.File): string {
   return `data:${file.mimetype};base64,${base64}`;
 }
 
+export function fileBufferToDataUrl(fileBuffer: Buffer, mimeType: string): string {
+  const base64 = fileBuffer.toString('base64');
+
+  return `data:${mimeType};base64,${base64}`;
+}
+
+
 export function computeDocumentHashFromDataUrl(dataUrl: string): string {
   try {
     // Parse the data URL to extract the base64-encoded data

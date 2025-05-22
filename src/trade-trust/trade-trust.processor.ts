@@ -10,14 +10,11 @@ import {
   TRADE_TRUST_PREPARE_ISSUE_EVENT,
   TRADE_TRUST_QUEUE_NAME,
 } from '../constants/app.constants';
-import { Logger } from '@nestjs/common';
+import { Inject, Logger } from '@nestjs/common';
 import { Job, Queue } from 'bullmq';
+import { TradeDocumentFileDetails, TradeDocumentStatus } from '../types/trade-documents.types';
 import {
-  TradeDocumentFileDetails,
-  TradeDocumentStatus,
-} from '../types/trade-documents.types';
-import {
-  TradeTrustDocumentClass,
+  TradeTrustDocumentClass, TradeTrustFileDetails,
   TradeTrustIssueJob,
   WrappedDocumentDetails,
 } from './trade-trust.types';
@@ -28,6 +25,10 @@ import { IssueDetailsDto } from '../trade-documents/dtos/trade-document.dto';
 import { AuditService } from '../audit/audit.service';
 import { AuditEventType } from '../audit/audit-event-type.enum';
 import { getTradeTrustDocumentClass } from './trade-trust-utils';
+import { TradeDocumentFileVariant } from '../trade-documents/trade-document-file.types';
+import { fileBufferToDataUrl } from '../utils/document-utils';
+import { FileStorageService } from '../file-storage/file-storage.interface';
+import { FILE_STORAGE_SERVICE } from '../file-storage/file-storage.constants';
 
 @Processor(TRADE_TRUST_QUEUE_NAME)
 export class TradeTrustProcessor extends WorkerHost {
@@ -38,6 +39,8 @@ export class TradeTrustProcessor extends WorkerHost {
     private readonly tradeTrustQueue: Queue,
     private readonly tradeDocumentsRepository: TradeDocumentsRepository,
     private readonly tradeTrustService: TradeTrustService,
+    @Inject(FILE_STORAGE_SERVICE)
+    private readonly fileStorageService: FileStorageService,
     private readonly auditService: AuditService,
   ) {
     super();
@@ -108,13 +111,16 @@ export class TradeTrustProcessor extends WorkerHost {
       await this.tradeDocumentsRepository.getDocumentById(
         accountId,
         documentId,
-        [contentField],
+        [contentField, "originalFile"],
       );
     const tradeDocumentFile =
       await this.tradeDocumentsRepository.getDocumentFileById(
         accountId,
         documentId,
+        TradeDocumentFileVariant.ORIGINAL,
       );
+    const fileBuffer = await this.fileStorageService.downloadFile(tradeDocumentFile.storedFileName)
+    const dataUrl = fileBufferToDataUrl(fileBuffer, tradeDocumentFile.mimeType)
 
     if (!tradeDocumentContent[contentField]) {
       this.logger.error({
@@ -129,16 +135,16 @@ export class TradeTrustProcessor extends WorkerHost {
 
     // ToDO: Need to create verifiable document and store this before wrapping
 
-
     // Wrap document and store wrapped content and merkle root
-    const tradeTrustDocumentType =
-      getTradeTrustDocumentClass(job.data.documentType);
+    const tradeTrustDocumentType = getTradeTrustDocumentClass(
+      job.data.documentType,
+    );
     const attachments = [
       {
-        fileName: tradeDocumentFile.fileName,
+        fileName: tradeDocumentFile.originalFileName,
         mimeType: tradeDocumentFile.mimeType,
-        dataUrl: tradeDocumentFile.dataUrl,
-      } as TradeDocumentFileDetails,
+        dataUrl: dataUrl,
+      } as TradeTrustFileDetails,
     ];
 
     const documentContent = { ...tradeDocumentContent[contentField]._doc };
@@ -149,8 +155,7 @@ export class TradeTrustProcessor extends WorkerHost {
         documentContent,
       );
     // Save the merkleRoot and wrappedContent to the database
-    const documentClass =
-      getTradeTrustDocumentClass(documentType);
+    const documentClass = getTradeTrustDocumentClass(documentType);
     const issueDetails: IssueDetailsDto = {
       documentClass,
       wrappedContent,
@@ -162,7 +167,12 @@ export class TradeTrustProcessor extends WorkerHost {
       documentId,
       issueDetails,
     );
-    await this.auditService.log({ eventType: AuditEventType.DOCUMENT_WRAPPED, accountId, documentId, details: {message: "Document signed and wrapped ready for issue"} });
+    await this.auditService.log({
+      eventType: AuditEventType.DOCUMENT_WRAPPED,
+      accountId,
+      documentId,
+      details: { message: 'Document signed and wrapped ready for issue' },
+    });
 
     // Add event to Mint or issue the trade document
     const issueJobDetails = { accountId, documentId, documentType };
@@ -237,7 +247,12 @@ export class TradeTrustProcessor extends WorkerHost {
       TradeDocumentStatus.ISSUED,
     );
 
-    await this.auditService.log({ eventType: AuditEventType.DOCUMENT_ISSUED, accountId, documentId, details: {message: "Verifiable Document Issued", ...issueDetails} });
+    await this.auditService.log({
+      eventType: AuditEventType.DOCUMENT_ISSUED,
+      accountId,
+      documentId,
+      details: { message: 'Verifiable Document Issued', ...issueDetails },
+    });
   }
 
   private async processMintTransferableDocumentEvent(
@@ -283,6 +298,11 @@ export class TradeTrustProcessor extends WorkerHost {
       TradeDocumentStatus.ISSUED,
     );
 
-    await this.auditService.log({ eventType: AuditEventType.DOCUMENT_ISSUED, accountId, documentId, details: {message: "Transferable Document Issued", ...issueDetails} });
+    await this.auditService.log({
+      eventType: AuditEventType.DOCUMENT_ISSUED,
+      accountId,
+      documentId,
+      details: { message: 'Transferable Document Issued', ...issueDetails },
+    });
   }
 }

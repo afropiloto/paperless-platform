@@ -24,7 +24,8 @@ import {
   VerifyTradeDocumentFileDto,
 } from './dtos/verify-trade-document.dto';
 import { plainToInstance } from 'class-transformer';
-import { TradeDocumentFileDTO } from '../trade-documents/dtos/trade-document.dto';
+
+import { TradeDocumentFileDTO } from '../trade-documents/dtos/trade-document-file.dto';
 
 @Controller('verify/trade-document/')
 @ApiTags('Verify Trade Document')

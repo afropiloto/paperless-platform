@@ -12,8 +12,6 @@ yarn-debug.log*
 yarn-error.log*
 lerna-debug.log*
 
-/virus-scan/clamav-db
-
 # OS
 .DS_Store
 

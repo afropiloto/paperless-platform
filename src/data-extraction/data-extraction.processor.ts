@@ -10,13 +10,13 @@ import {
   DataExtractionJob,
   GraipDataExtractionCallBackJob,
 } from './data-extraction.types';
-import { isValidDataUrl } from '../utils/document-utils';
 import { ConfigService } from '@nestjs/config';
 import { DataExtractionService } from './data-extraction.service';
 import { TradeDocumentStatus } from '../types/trade-documents.types';
 import { AuditService } from '../audit/audit.service';
 import { AuditEventType } from '../audit/audit-event-type.enum';
 import { TradeDocumentsService } from '../trade-documents/trade-documents.service';
+import { TradeDocumentFileVariant } from '../trade-documents/trade-document-file.types';
 
 @Processor(DATA_EXTRACTION_QUEUE_NAME)
 export class DataExtractionProcessor extends WorkerHost {
@@ -58,8 +58,20 @@ export class DataExtractionProcessor extends WorkerHost {
 
     // Extract account id and document id from job data and update document to in progress
     const { accountId, documentId } = job.data;
-    await this.tradeDocumentsService.updateTradeDocumentStatus(accountId, documentId, TradeDocumentStatus.IN_PROGRESS);
-    await this.auditService.log({ eventType: AuditEventType.PROCESSING_ERROR, accountId, documentId, details: {message: "Failed to extract data from trade document", error: error.message} });
+    await this.tradeDocumentsService.updateTradeDocumentStatus(
+      accountId,
+      documentId,
+      TradeDocumentStatus.IN_PROGRESS,
+    );
+    await this.auditService.log({
+      eventType: AuditEventType.PROCESSING_ERROR,
+      accountId,
+      documentId,
+      details: {
+        message: 'Failed to extract data from trade document',
+        error: error.message,
+      },
+    });
   }
 
   private async processNewDataExtractionEvent(job: Job<DataExtractionJob>) {
@@ -79,28 +91,17 @@ export class DataExtractionProcessor extends WorkerHost {
     }
 
     // Get the dataUrl for the document
-    const { documentType, documentReference } = await this.tradeDocumentsService.getDocumentById(accountId, documentId, ['documentType', 'documentReference']);
-    const tradeDocumentFile = await this.tradeDocumentsService.getDocumentFileById(accountId, documentId)
-
-    if (!tradeDocumentFile.dataUrl) {
-      this.logger.error({
-        message: 'Failed to retrieve the dataUrl for the trade document.',
+    const { documentType, documentReference } =
+      await this.tradeDocumentsService.getDocumentById(accountId, documentId, [
+        'documentType',
+        'documentReference',
+      ]);
+    const tradeDocumentFile =
+      await this.tradeDocumentsService.getDocumentFileDetailsById(
         accountId,
         documentId,
-        jobId: job.id,
-      });
-      return;
-    }
-
-    if (!isValidDataUrl(tradeDocumentFile.dataUrl)) {
-      this.logger.log({
-        message: `Retrieved dataUrl for the trade document is not valid.`,
-        accountId,
-        documentId,
-        jobId: job.id,
-      });
-      return;
-    }
+        TradeDocumentFileVariant.ORIGINAL,
+      );
 
     this.logger.debug({
       message: `Processing Data Extraction Job ${job.id}`,
@@ -113,7 +114,7 @@ export class DataExtractionProcessor extends WorkerHost {
       documentReference,
       accountId,
       documentId,
-      tradeDocumentFile.dataUrl,
+      tradeDocumentFile,
     );
     if (!response.success) {
       this.logger.error({
@@ -129,7 +130,12 @@ export class DataExtractionProcessor extends WorkerHost {
       accountId,
       documentId,
     });
-    await this.auditService.log({ eventType: AuditEventType.DOCUMENT_DATA_EXTRACTION, accountId, documentId, details: {message: "Document Data Extraction Initiated"} });
+    await this.auditService.log({
+      eventType: AuditEventType.DOCUMENT_DATA_EXTRACTION,
+      accountId,
+      documentId,
+      details: { message: 'Document Data Extraction Initiated' },
+    });
   }
 
   private async processDataExtractionCallbackCheck(
@@ -158,9 +164,24 @@ export class DataExtractionProcessor extends WorkerHost {
         requestId,
       });
       // Handle update to document
-      await this.tradeDocumentsService.updateTradeDocumentById(accountId, documentId, extractionResponse.data);
-      await this.tradeDocumentsService.updateTradeDocumentStatus(accountId, documentId, TradeDocumentStatus.IN_PROGRESS);
-      await this.auditService.log({ eventType: AuditEventType.DOCUMENT_DATA_EXTRACTION, accountId, documentId, details: {message: "Document Data Extraction Completed. Trade Document Updated"} });
+      await this.tradeDocumentsService.updateTradeDocumentById(
+        accountId,
+        documentId,
+        extractionResponse.data,
+      );
+      await this.tradeDocumentsService.updateTradeDocumentStatus(
+        accountId,
+        documentId,
+        TradeDocumentStatus.IN_PROGRESS,
+      );
+      await this.auditService.log({
+        eventType: AuditEventType.DOCUMENT_DATA_EXTRACTION,
+        accountId,
+        documentId,
+        details: {
+          message: 'Document Data Extraction Completed. Trade Document Updated',
+        },
+      });
 
       return;
     } else {

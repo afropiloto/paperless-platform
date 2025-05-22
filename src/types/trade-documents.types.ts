@@ -1,4 +1,8 @@
 import { Prop, Schema } from '@nestjs/mongoose';
+import { IsEnum, IsString } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
+import { Expose, Type } from 'class-transformer';
+import { TradeDocumentFileStatus } from '../trade-documents/trade-document-file.types';
 
 export enum TradeDocumentStatus {
   IN_PROGRESS="In Progress",
@@ -21,6 +25,14 @@ export enum LoanPeriodUnit {
   YEAR = 'year',
 }
 
+export interface TradeDocumentFileDetails {
+  storedFileName: string,
+  storedFilePath: string,
+  mimeType: string,
+  originalFileName: string,
+  size: number,
+  status: TradeDocumentFileStatus
+}
 
 // *****************************************************************************
 // Bill of Exchange Document Content

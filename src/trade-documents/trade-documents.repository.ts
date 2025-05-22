@@ -1,11 +1,10 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { TradeDocument, TradeDocumentFile } from './schema/trade-document.schema';
+import { TradeDocument } from './schema/trade-document.schema';
 import { isValidObjectId, Model, PipelineStage } from 'mongoose';
 import {
   IssueDetailsDto,
   TradeDocumentDto,
-  TradeDocumentFileDTO,
   UpsertTradeDocumentDto,
 } from './dtos/trade-document.dto';
 import {  TradeDocumentStatus } from '../types/trade-documents.types';
@@ -13,7 +12,7 @@ import { getUnsets } from './utils/trade-document.utils';
 import { plainToInstance } from 'class-transformer';
 import { SearchQueryDto } from './dtos/search-trade-documents.dto';
 import { TradeDocumentFileVariant } from './trade-document-file.types';
-import { TradeDocumentFileDetails } from '../../dist/types/trade-documents.types';
+import { TradeDocumentFileDTO } from './dtos/trade-document-file.dto';
 
 @Injectable()
 export class TradeDocumentsRepository {
@@ -78,7 +77,7 @@ export class TradeDocumentsRepository {
     accountId: string,
     documentId: string,
     fileVariant: TradeDocumentFileVariant,
-    tradeDocumentFile: TradeDocumentFileDetails,
+    tradeDocumentFile: TradeDocumentFileDTO,
   ) {
     const variantField = this.getFileVariantField(fileVariant);
     const updatedDocument = this.tradeDocumentModel.updateOne(
@@ -161,8 +160,12 @@ export class TradeDocumentsRepository {
     accountId: string,
     documentId: string,
     fileVariant: TradeDocumentFileVariant,
-  ) : Promise<TradeDocumentFile> {
+  ) : Promise<TradeDocumentFileDTO> {
     const variantField = this.getFileVariantField(fileVariant);
+
+    if (!isValidObjectId(documentId) || !isValidObjectId(accountId)) {
+      throw new BadRequestException("Invalid document file request");
+    }
 
     const result = await this.tradeDocumentModel
       .findOne({
@@ -174,7 +177,7 @@ export class TradeDocumentsRepository {
       .exec();
 
     return result
-      ? plainToInstance(TradeDocumentFile, result[variantField])
+      ? plainToInstance(TradeDocumentFileDTO, result[variantField])
       : null;
   }
 

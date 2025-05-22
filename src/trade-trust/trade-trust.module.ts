@@ -8,6 +8,7 @@ import { BullModule } from '@nestjs/bullmq';
 import { TradeTrustProcessor } from './trade-trust.processor';
 import { TradeDocumentsRepository } from '../trade-documents/trade-documents.repository';
 import { AuditModule } from '../audit/audit.module';
+import { FileStorageModule } from '../file-storage/file-storage.module';
 
 
 @Module({
@@ -17,6 +18,7 @@ import { AuditModule } from '../audit/audit.module';
     BullModule.registerQueue({name: TRADE_TRUST_QUEUE_NAME}),
     ConfigModule,
     AuditModule,
+    FileStorageModule
   ],
   providers: [TradeTrustService, TradeTrustProcessor, TradeDocumentsRepository]
 

@@ -24,13 +24,13 @@ import {
   TradeDocumentsSearchResultsDto,
 } from './dtos/search-trade-documents.dto';
 import { AccountsService } from '../accounts/accounts.service';
-import { TradeDocumentFile } from './schema/trade-document.schema';
 import {
   TradeDocumentFileVariant,
   TradeDocumentFileStatus,
 } from './trade-document-file.types';
 import { FileStorageService } from '../file-storage/file-storage.interface';
 import { FILE_STORAGE_SERVICE } from '../file-storage/file-storage.constants';
+import { TradeDocumentFileDTO } from './dtos/trade-document-file.dto';
 
 @Injectable()
 export class TradeDocumentsService {
@@ -173,7 +173,7 @@ export class TradeDocumentsService {
     }
   }
 
-  async getDocumentFileById(accountId: string, documentId: string, fileVariant: TradeDocumentFileVariant ) {
+  async getDocumentFileDetailsById(accountId: string, documentId: string, fileVariant: TradeDocumentFileVariant ) {
     const fileDetails = await this.tradeDocumentsRepo.getDocumentFileById(
       accountId,
       documentId,
@@ -210,7 +210,7 @@ export class TradeDocumentsService {
       );
 
     // Store File details
-    const tradeDocumentFileDetails: TradeDocumentFile = {
+    const tradeDocumentFileDetails: TradeDocumentFileDTO = {
       storedFileName: storedFileName,
       storedFilePath: storedFilePath,
       mimeType: file.mimetype,
@@ -223,6 +223,16 @@ export class TradeDocumentsService {
     if (currentFileDetails && currentFileDetails.storedFileName) {
       // ToDo: If a Trade Document File already exists then delete the file. Record Audit Trail
       this.logger.debug({message: "File deletion required", currentFileDetails});
+      this.fileStorageService.deleteFile(currentFileDetails.storedFileName)
+        .then(()=> {
+          this.auditService.log({
+            eventType: AuditEventType.DOCUMENT_FILE_REPLACED,
+            accountId,
+            documentId: tradeDocumentId,
+            details: {originalFile: {fileName: currentFileDetails.originalFileName, fileType: currentFileDetails.mimeType, fileSize: currentFileDetails.size},
+            updatedFile: {fileName: tradeDocumentFileDetails.originalFileName, fileType: tradeDocumentFileDetails.mimeType, fileSize: tradeDocumentFileDetails.size}},
+          })
+        })
     }
 
     // Store file details
@@ -338,5 +348,19 @@ export class TradeDocumentsService {
       accountId,
       documentId: newDocument.id,
     });
+  }
+
+  async getTradeDocumentFileStream(accountId: string, documentId: string, fileVariant: TradeDocumentFileVariant) {
+    const fileDetails = await this.getDocumentFileDetailsById(accountId, documentId, fileVariant);
+    if (!fileDetails || !fileDetails.storedFileName) {
+      throw new NotFoundException("Trade Document File Not Found");
+    }
+    return {
+      stream: this.fileStorageService.streamFile(fileDetails.storedFilePath),
+      headers: {
+        'Content-Disposition': `attachment; filename="${fileDetails.originalFileName || 'download'}"`,
+        'Content-Type': fileDetails.mimeType || 'application/octet-stream',
+      }
+    };
   }
 }

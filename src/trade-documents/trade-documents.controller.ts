@@ -11,7 +11,7 @@ import {
   Param,
   ParseFilePipeBuilder,
   Post,
-  Put, Query,
+  Put, Query, Res,
   UploadedFile,
   UseInterceptors,
 } from '@nestjs/common';
@@ -28,7 +28,6 @@ import { plainToInstance } from 'class-transformer';
 import {
   CreateTradeDocumentFromFileDto,
   TradeDocumentDto,
-  TradeDocumentFileDTO,
   UpsertTradeDocumentDto,
   UpsertTradeDocumentFileDto,
 } from './dtos/trade-document.dto';
@@ -37,6 +36,9 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { GeneralResponseDto } from '../common/common-dto';
 import { TRADE_DOCUMENT_SUMMARY_INCLUDE_FIELDS } from './trade-document.constants';
 import { SearchQueryDto } from './dtos/search-trade-documents.dto';
+import { TradeDocumentFileVariant } from './trade-document-file.types';
+import {Response} from 'express';
+import { TradeDocumentFileDTO } from './dtos/trade-document-file.dto';
 
 @ApiTags('Trade Documents')
 @Controller('trade-documents')
@@ -49,7 +51,7 @@ export class TradeDocumentsController {
   // *******************************************************************************************************************
   // Trade Document File endpoints
   // *******************************************************************************************************************
-  @Get('/file/:accountId/:documentId')
+  @Get('/:accountId/:documentId/file/:fileVariant')
   @ApiOperation({
     summary:
       'Retrieves the trade document file content an account by document Id',
@@ -70,25 +72,14 @@ export class TradeDocumentsController {
   async getTradeDocumentFileById(
     @Param('accountId') accountId: string,
     @Param('documentId') documentId: string,
-  ): Promise<TradeDocumentFileDTO> {
-    if (!mongoose.Types.ObjectId.isValid(documentId)) {
-      throw new HttpException(
-        'The documentId is invalid',
-        HttpStatus.BAD_REQUEST,
-      );
-    }
-    const result = await this.tradeDocumentsService.getDocumentFileById(
-      accountId,
-      documentId,
-    );
-    return plainToInstance(TradeDocumentFileDTO, {
-      accountId,
-      documentId,
-      fileName: result.fileName,
-      dataUrl: result.dataUrl,
-      fileSize: result.fileSize,
-      mimeType: result.mimeType,
-    });
+    @Param('fileVariant') fileVariant: TradeDocumentFileVariant,
+    @Res() res: Response
+  ) {
+
+    const {stream, headers} = await this.tradeDocumentsService.getTradeDocumentFileStream(accountId, documentId, fileVariant);
+    res.set(headers);
+
+    return stream.pipe(res);
   }
 
   @Put('/file/:accountId/:documentId')

@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import {
-  TradeTrustDocumentClass,
+  TradeTrustDocumentClass, TradeTrustFileDetails,
   WrappedDocumentDetails,
 } from './trade-trust.types';
 import {
@@ -99,7 +99,7 @@ export class TradeTrustService {
   }
 
   async wrapDocument(tradeTrustDocumentType: TradeTrustDocumentClass,
-                     attachments: TradeDocumentFileDetails[],
+                     attachments: TradeTrustFileDetails[],
                      documentContent:
                        | InvoiceContent
                        | BillOfExchangeContent
