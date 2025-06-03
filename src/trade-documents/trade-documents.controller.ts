@@ -10,6 +10,7 @@ import {
   NotFoundException,
   Param,
   ParseFilePipeBuilder,
+  Patch,
   Post,
   Put, Query, Res,
   UploadedFile,
@@ -24,21 +25,19 @@ import {
 } from '@nestjs/swagger';
 import { TradeDocumentsService } from './trade-documents.service';
 import mongoose from 'mongoose';
-import { plainToInstance } from 'class-transformer';
 import {
   CreateTradeDocumentFromFileDto,
   TradeDocumentDto,
   UpsertTradeDocumentDto,
   UpsertTradeDocumentFileDto,
 } from './dtos/trade-document.dto';
-import { TradeDocumentStatus } from '../types/trade-documents.types';
+import { TradeDocumentStatus, TradeDocumentType } from '../types/trade-documents.types';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { GeneralResponseDto } from '../common/common-dto';
 import { TRADE_DOCUMENT_SUMMARY_INCLUDE_FIELDS } from './trade-document.constants';
 import { SearchQueryDto } from './dtos/search-trade-documents.dto';
 import { TradeDocumentFileVariant } from './trade-document-file.types';
 import {Response} from 'express';
-import { TradeDocumentFileDTO } from './dtos/trade-document-file.dto';
 
 @ApiTags('Trade Documents')
 @Controller('trade-documents')
@@ -82,7 +81,7 @@ export class TradeDocumentsController {
     return stream.pipe(res);
   }
 
-  @Put('/file/:accountId/:documentId')
+  @Put('/:accountId/:documentId/file')
   @UseInterceptors(FileInterceptor('file'))
   @ApiConsumes('multipart/form-data')
   @ApiBody({ type: UpsertTradeDocumentFileDto })
@@ -131,7 +130,7 @@ export class TradeDocumentsController {
   }
 
 
-  @Post('file/:accountId')
+  @Post('/:accountId/file')
   @UseInterceptors(FileInterceptor('file'))
   @ApiConsumes('multipart/form-data')
   @ApiBody({
@@ -149,7 +148,7 @@ export class TradeDocumentsController {
         },
         documentType: {
           type: 'string',
-          enum: ['invoice', 'bill of exchange', 'promissory note', 'other'],
+          enum: Object.values(TradeDocumentType),
           description: 'Type of trade document'
         }
       },
@@ -214,11 +213,13 @@ export class TradeDocumentsController {
       throw new BadRequestException('Missing required fields: documentReference and documentType are required');
     }
 
-    return await this.tradeDocumentsService.createTradeDocumentFromFile(accountId, file, createFromFile);
+    const newDocument = await this.tradeDocumentsService.createTradeDocumentFromFile(accountId, file, createFromFile);
+    this.logger.debug({newDocument})
+    return newDocument
   }
 
   // *******************************************************************************************************************
-  // Trade Document Content endpoints
+  // Trade Document endpoints
   // *******************************************************************************************************************
   @Get(':accountId/:documentId')
   @ApiOperation({
@@ -241,17 +242,13 @@ export class TradeDocumentsController {
     @Param('accountId') accountId: string,
     @Param('documentId') documentId: string,
   ): Promise<TradeDocumentDto> {
-    if (!mongoose.Types.ObjectId.isValid(documentId)) {
-      throw new HttpException(
-        'The documentId is invalid',
-        HttpStatus.BAD_REQUEST,
-      );
-    }
 
-    return await this.tradeDocumentsService.getDocumentById(
+    const result = await this.tradeDocumentsService.getDocumentById(
       accountId,
       documentId,
     );
+    this.logger.debug({result})
+    return result
   }
 
   @Get(':accountId/')
@@ -301,40 +298,16 @@ export class TradeDocumentsController {
     @Param('accountId') accountId: string,
     @Param('documentId') documentId: string,
   ) {
-    if (!mongoose.Types.ObjectId.isValid(documentId)) {
-      this.logger.debug({
-        message: 'Invalid Object Id',
-        accountId,
-        documentId,
-      });
-      throw new BadRequestException('The documentId is invalid');
-    }
-    const document = await this.tradeDocumentsService.getDocumentById(
-      accountId,
-      documentId, [], ['wrappedContent', 'tradeDocumentFile', 'merkleRoot']
-    );
-    if (!document) {
-      throw new NotFoundException('The document not found for account');
-    }
-    // Check if the document is in a deletable state
-    if (!this.documentIsDeletable(document.status)) {
-      this.logger.debug({
-        message: 'Document not deletable',
-        accountId,
-        documentId,
-        status: document.status,
-      });
-      throw new BadRequestException('The document could not be deleted');
-    }
+
     // Proceed to delete document
     await this.tradeDocumentsService.deleteDocumentById(accountId, documentId);
     return {
-      status: 200,
-      description: 'Successfully deleted document',
+      success: true,
+      message: 'Successfully deleted document',
     };
   }
 
-  @Put(':accountId/:documentId')
+  @Patch(':accountId/:documentId')
   @ApiOperation({
     summary: 'Updates an existing trade document for an account',
   })
@@ -356,20 +329,7 @@ export class TradeDocumentsController {
     @Param('documentId') documentId: string,
     @Body() tradeDocument: UpsertTradeDocumentDto,
   ): Promise<TradeDocumentDto> {
-    if (!mongoose.Types.ObjectId.isValid(documentId)) {
-      throw new BadRequestException('The documentId is invalid');
-    }
-    const document = await this.tradeDocumentsService.getDocumentById(
-      accountId,
-      documentId, [], ['wrappedContent', 'tradeDocumentFile', 'merkleRoot']
-    );
-    if (!document) {
-      throw new NotFoundException('The document not found for account');
-    }
-    // Check if the document is in an updatable state
-    if (!this.documentIsUpdatable(document.status)) {
-      throw new BadRequestException('The document could not be updated');
-    }
+
     // Proceed to update document
     return await this.tradeDocumentsService.updateTradeDocumentById(
       accountId,
@@ -405,25 +365,6 @@ export class TradeDocumentsController {
     );
   }
 
-  private documentIsDeletable(status: string) {
-    switch (status.toLowerCase()) {
-      case TradeDocumentStatus.IN_PROGRESS.toLowerCase():
-        return true;
-      case TradeDocumentStatus.ISSUED.toLowerCase():
-        return false;
-      default:
-        return false;
-    }
-  }
-
-  private documentIsUpdatable(status: string) {
-    switch (status.toLowerCase()) {
-      case TradeDocumentStatus.IN_PROGRESS.toLowerCase():
-        return true;
-      case TradeDocumentStatus.ISSUED.toLowerCase():
-        return false;
-      default:
-        return false;
-    }
-  }
 }
+
+

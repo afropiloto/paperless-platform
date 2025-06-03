@@ -54,7 +54,7 @@ export class IssueDetails {
 
 }
 
-@Schema({timestamps: false, _id: false})
+@Schema({timestamps: true, _id: false})
 export class TradeDocumentFile {
   @Prop({required: true})
   storedFileName: string;
@@ -102,18 +102,8 @@ export class TradeDocument {
   @Prop({required: false, type: TradeDocumentFile, })
   tradeTrustFile: TradeDocumentFile;
 
-  @Prop({type: InvoiceContent, required: false})
-  invoiceContent?: InvoiceContent;
-
-  @Prop({type: BillOfExchangeContent, required: false})
-  billOfExchangeContent?: BillOfExchangeContent;
-
-  @Prop({type: PromissoryNoteContent, required: false})
-  promissoryNoteContent?: PromissoryNoteContent;
-
-  @Prop({type: OtherDocumentContent, required: false})
-  otherDocumentContent?: OtherDocumentContent;
-
+  @Prop({ type: Object, required: false })
+  documentContent: object;
 
   @Prop({type: IssueDetails, required: false})
   issueDetails?: IssueDetails
@@ -131,39 +121,3 @@ export class TradeDocument {
 
 export type TradeDocumentDocument = TradeDocument & Document;
 export const TradeDocumentSchema = SchemaFactory.createForClass(TradeDocument);
-
-// Add validation to ensure the correct details are provided based on documentType
-TradeDocumentSchema.pre('validate', function (next) {
-  const doc = this as TradeDocumentDocument;
-
-  switch (doc.documentType) {
-    case TradeDocumentType.INVOICE:
-      if (doc.promissoryNoteContent || doc.billOfExchangeContent || doc.otherDocumentContent) {
-        return next(new Error('Invoice documents should not contain promissoryNoteContent, billOfExchangeContent or otherDocumentContent'));
-      }
-      break;
-    case TradeDocumentType.PROMISSORY_NOTE:
-      if (doc.invoiceContent || doc.billOfExchangeContent || doc.otherDocumentContent) {
-        return next(
-          new Error('Promissory note documents should not contain invoiceContent, billOfExchangeContent or otherDocumentContent'),
-        );
-      }
-      break;
-    case TradeDocumentType.BILL_OF_EXCHANGE:
-      if (doc.invoiceContent || doc.promissoryNoteContent || doc.otherDocumentContent) {
-        return next(
-          new Error('Bill of exchange documents should not contain invoiceContent, promissoryNoteContent or otherDocumentContent'),
-        );
-      }
-      break;
-    case TradeDocumentType.OTHER:
-      if (doc.invoiceContent || doc.promissoryNoteContent || doc.billOfExchangeContent) {
-        return next(new Error('Other documents require should not contain invoiceContent, promissoryNoteContent or billOfExchangeContent'));
-      }
-      break;
-    default:
-      return next(new Error('Invalid document type'));
-  }
-
-  next();
-});

@@ -167,7 +167,7 @@ export class DataExtractionProcessor extends WorkerHost {
       await this.tradeDocumentsService.updateTradeDocumentById(
         accountId,
         documentId,
-        extractionResponse.data,
+        {documentContent: extractionResponse.documentContent},
       );
       await this.tradeDocumentsService.updateTradeDocumentStatus(
         accountId,

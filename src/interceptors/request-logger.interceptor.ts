@@ -8,11 +8,20 @@ export class LoggingInterceptor implements NestInterceptor {
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     const request = context.switchToHttp().getRequest();
-    const { method, url } = request;
+    const { method, url, headers, body, files, fields } = request;
     const controller = context.getClass().name;
     const handler = context.getHandler().name;
 
-    this.logger.log(`Incoming Request: ${method} ${url} -> Controller: ${controller}, Handler: ${handler}`);
+    const isMultipart = headers['content-type']?.includes('multipart/form-data');
+
+    this.logger.log({message: 'Incoming Request', method: method, url: url, controller: controller, handler: handler, headers: headers,
+      ...(isMultipart ? {
+        files: files,
+        fields: fields
+      } : {
+        body
+      })});
+
 
 
     return next.handle().pipe(

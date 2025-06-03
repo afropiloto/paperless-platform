@@ -10,5 +10,9 @@ export class AuthResponseDto {
   refreshToken: string;
   @Expose()
   accountId: string;
+  @Expose()
+  accountName: string;
+  @Expose()
+  accountEmail: string;
 
 }

@@ -1,18 +1,25 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { TradeDocument } from './schema/trade-document.schema';
-import { isValidObjectId, Model, PipelineStage } from 'mongoose';
+import { FlattenMaps, isValidObjectId, Model, PipelineStage } from 'mongoose';
 import {
   IssueDetailsDto,
   TradeDocumentDto,
   UpsertTradeDocumentDto,
 } from './dtos/trade-document.dto';
-import {  TradeDocumentStatus } from '../types/trade-documents.types';
+import {
+  BillOfExchangeContent,
+  InvoiceContent, OtherDocumentContent,
+  PromissoryNoteContent,
+  TradeDocumentStatus,
+} from '../types/trade-documents.types';
 import { getUnsets } from './utils/trade-document.utils';
 import { plainToInstance } from 'class-transformer';
 import { SearchQueryDto } from './dtos/search-trade-documents.dto';
 import { TradeDocumentFileVariant } from './trade-document-file.types';
 import { TradeDocumentFileDTO } from './dtos/trade-document-file.dto';
+import { TradeDocumentType } from '../types/trade-documents.types';
+
 
 @Injectable()
 export class TradeDocumentsRepository {
@@ -43,7 +50,7 @@ export class TradeDocumentsRepository {
   ) {
     const filter = { accountId: accountId, _id: documentId };
     const unsets = getUnsets(tradeDocument.documentType);
-
+    this.logger.debug({filter, unsets, tradeDocument})
     const updatedDocument = await this.tradeDocumentModel.findOneAndUpdate(
       filter,
       {
@@ -98,8 +105,16 @@ export class TradeDocumentsRepository {
     documentId: string,
     includes: string[] = [],
     excludes: string[] = [],
-  ): Promise<TradeDocumentDto> {
-    const selections = this.getSelections(includes, excludes);
+  ): Promise<any> {
+    if (!isValidObjectId(documentId) || !isValidObjectId(accountId)) {
+      throw new BadRequestException('Invalid document identifier');
+    }
+
+    // If includes is empty, we want all fields except those in excludes
+    // If includes has values, we want those fields plus the content fields
+    const contentFields = ['invoiceContent', 'billOfExchangeContent', 'promissoryNoteContent', 'otherDocumentContent'];
+    const allIncludes = includes.length > 0 ? [...new Set([...includes, ...contentFields])] : [];
+    const selections = this.getSelections(allIncludes, excludes);
 
     const document = await this.tradeDocumentModel
       .findOne({
@@ -109,9 +124,48 @@ export class TradeDocumentsRepository {
       .select(selections)
       .lean()
       .exec();
-    return document
-      ? plainToInstance(TradeDocumentDto, { id: document._id, ...document })
-      : null;
+    this.logger.debug({ document });
+    
+    if (!document) {
+      return null;
+    }
+
+    // Return raw document with _id mapped to id
+    return {
+      id: document._id,
+      ...document,
+    };
+  }
+
+  private getContentFieldForType(documentType: string): string {
+    switch (documentType?.toLowerCase()) {
+      case TradeDocumentType.INVOICE.toLowerCase():
+        return 'invoiceContent';
+      case TradeDocumentType.BILL_OF_EXCHANGE.toLowerCase():
+        return 'billOfExchangeContent';
+      case TradeDocumentType.PROMISSORY_NOTE.toLowerCase():
+        return 'promissoryNoteContent';
+      case TradeDocumentType.OTHER.toLowerCase():
+        return 'otherDocumentContent';
+      default:
+        return 'otherDocumentContent';
+    }
+  }
+
+  extractDocumentContent(
+    documentType: string,
+    document: TradeDocument) {
+    switch (documentType.toLowerCase()) {
+      case 'invoice':
+        return document.invoiceContent as InvoiceContent;
+      case "bill of exchange":
+        return document.billOfExchangeContent as BillOfExchangeContent;
+      case "promissory note":
+        return document.promissoryNoteContent as PromissoryNoteContent;
+      case "other":
+        return document.otherDocumentContent as OtherDocumentContent;
+    }
+    return {};
   }
 
   async getDocumentsByType(
@@ -146,25 +200,25 @@ export class TradeDocumentsRepository {
   private getFileVariantField(fileVariant: TradeDocumentFileVariant) {
     switch (fileVariant) {
       case TradeDocumentFileVariant.ISSUED:
-        return "issuedFile";
+        return 'issuedFile';
       case TradeDocumentFileVariant.ORIGINAL:
-        return "originalFile";
+        return 'originalFile';
       case TradeDocumentFileVariant.TRADE_TRUST:
-        return "tradeTrustFile"
+        return 'tradeTrustFile';
       default:
-        return "originalFile";
+        return 'originalFile';
     }
   }
 
-  async getDocumentFileById (
+  async getDocumentFileById(
     accountId: string,
     documentId: string,
     fileVariant: TradeDocumentFileVariant,
-  ) : Promise<TradeDocumentFileDTO> {
+  ): Promise<TradeDocumentFileDTO> {
     const variantField = this.getFileVariantField(fileVariant);
 
     if (!isValidObjectId(documentId) || !isValidObjectId(accountId)) {
-      throw new BadRequestException("Invalid document file request");
+      throw new BadRequestException('Invalid document file request');
     }
 
     const result = await this.tradeDocumentModel
@@ -197,7 +251,10 @@ export class TradeDocumentsRepository {
     return plainToInstance(TradeDocumentDto, document);
   }
 
-  async getDocumentFileDetailsByTrackingId(trackingId: string, fileVariant: TradeDocumentFileVariant) {
+  async getDocumentFileDetailsByTrackingId(
+    trackingId: string,
+    fileVariant: TradeDocumentFileVariant,
+  ) {
     const variantField = this.getFileVariantField(fileVariant);
     const document = await this.tradeDocumentModel
       .findOne({
@@ -210,8 +267,7 @@ export class TradeDocumentsRepository {
       trackingId,
       accountId: document.accountId,
       _id: document._id,
-      ...document[variantField]
-
+      ...document[variantField],
     });
   }
 
@@ -236,12 +292,12 @@ export class TradeDocumentsRepository {
     includes: string[],
     excludes: string[],
   ) {
-    const includesProjection = { createdAt: 1, updatedAt: 1 };
+    const includesProjection = { id: '$_id', createdAt: 1, updatedAt: 1 };
     includes.forEach((include) => {
       includesProjection[include] = 1;
     });
 
-    const excludesProjection = { __v: 0 };
+    const excludesProjection = { __v: 0, _id: 0 };
     excludes.forEach((exclude) => {
       excludesProjection[exclude] = 0;
     });

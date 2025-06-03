@@ -26,6 +26,11 @@ import { CreateAuditEventDto } from '../audit/dtos/create-audit-event.dto';
 import { TradeDocumentDto } from '../trade-documents/dtos/trade-document.dto';
 import { getTradeTrustDocumentClass } from '../trade-trust/trade-trust-utils';
 import { isAddress } from 'ethers-v6';
+import {
+  BillOfExchangeContent,
+  InvoiceContent, OtherDocumentContent,
+  PromissoryNoteContent,
+} from '../trade-documents/schema/document-content.schema';
 
 @Injectable()
 export class IssueTradeDocumentService {
@@ -62,23 +67,23 @@ export class IssueTradeDocumentService {
     }
     switch (tradeDocument.documentType.toLowerCase()) {
       case TradeDocumentType.INVOICE.toLowerCase():
-        if (!tradeDocument.invoiceContent) {
-          return {readyToIssue: false, message: 'Invoice Trade Documents must have valid invoiceContent'};
+        if (!tradeDocument.documentContent || !(tradeDocument.documentContent instanceof InvoiceContent)) {
+          return {readyToIssue: false, message: 'Invoice Trade Documents must have valid Invoice content'};
         }
         break;
       case TradeDocumentType.PROMISSORY_NOTE.toLowerCase():
-        if (!tradeDocument.promissoryNoteContent) {
-          return {readyToIssue: false, message: 'Promissory Note Trade Documents must have valid promissoryNoteContent'};
+        if (!tradeDocument.documentContent || !(tradeDocument.documentContent instanceof PromissoryNoteContent)) {
+          return {readyToIssue: false, message: 'Promissory Note Trade Documents must have valid Promissory Note content'};
         }
         break;
       case TradeDocumentType.BILL_OF_EXCHANGE.toLowerCase():
-        if (!tradeDocument.billOfExchangeContent) {
-          return {readyToIssue: false, message: 'Invoice Trade Documents must have valid billOfExchangeContent'};
+        if (!tradeDocument.documentContent || !(tradeDocument.documentContent instanceof BillOfExchangeContent)) {
+          return {readyToIssue: false, message: 'Invoice Trade Documents must have valid Bill Of Exchange content'};
         }
         break;
       case TradeDocumentType.OTHER.toLowerCase():
-        if (!tradeDocument.otherDocumentContent) {
-          return {readyToIssue: false, message: 'Invoice Trade Documents must have valid otherDocumentContent'};
+        if (!tradeDocument.documentContent || !(tradeDocument.documentContent instanceof OtherDocumentContent)) {
+          return {readyToIssue: false, message: 'Invoice Trade Documents must have valid Other Document content'};
         }
         break;
     }

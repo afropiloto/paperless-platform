@@ -36,6 +36,7 @@ export class DataExtractionService {
   ) {}
 
   private getFlowId(documentType: string): string {
+    if (!documentType) return '';
     switch (documentType.toLowerCase()) {
       case 'invoice':
         return this.configService.get<string>('GRAIP_INVOICE_FLOW_ID');
@@ -191,7 +192,7 @@ export class DataExtractionService {
         if (response.status === 200) {
           return {
             success: true,
-            data: response.data,
+            documentContent: response.data,
           } as DataExtractionResponse;
         } else {
           return { success: false } as DataExtractionResponse;
@@ -286,7 +287,7 @@ export class DataExtractionService {
       // Extraction complete so extract data and map to type
       return {
         success: true,
-        data: this.mapData(documentType, results.data),
+       ...this.mapData(documentType, results.documentContent),
       };
 
       // Todo: Store the extracted data so that we can use this for Due Diligence checks and better training for models

@@ -1,13 +1,9 @@
-import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Account } from './schemas/account.schema';
 import { isValidObjectId, Model } from 'mongoose';
 import { AccountCreationDto, AccountDetailsDto, AccountUpdateDto } from './dtos/accounts.dto';
 import { plainToInstance } from 'class-transformer';
-import { ApiProperty } from '@nestjs/swagger';
-import { IsString } from 'class-validator';
-import { Transform } from 'class-transformer';
-import { Expose } from 'class-transformer';
 
 
 @Injectable()

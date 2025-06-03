@@ -39,7 +39,7 @@ export class AuthService {
       const accessToken = this.jwtService.sign(payload, { expiresIn: this.configService.get<string>('jwt.expiresIn') });
       const refreshToken = this.jwtService.sign(payload, { expiresIn: this.configService.get<string>('refreshToken.expiresIn')});
 
-      return plainToInstance(AuthResponseDto, { success: true, accessToken, refreshToken, accountId: accountDetails.id });
+      return plainToInstance(AuthResponseDto, { success: true, accessToken, refreshToken, accountId: accountDetails.id, accountName: accountDetails.accountName, accountEmail: accountDetails.emailAddress });
     } catch (error) {
       this.logger.error('Login failed', {
         error: error.message,

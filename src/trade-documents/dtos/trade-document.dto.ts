@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Expose, Transform, Type } from 'class-transformer';
+import { Exclude, Expose, Transform, Type } from 'class-transformer';
 import {
   IsArray,
   IsDate,
@@ -367,7 +367,7 @@ export class OtherDocumentDetailsDto {
   @IsDate()
   @IsOptional()
   @Type(() => Date)
-  expiryDate: string;
+  expiryDate?: string;
 
   @ApiProperty({ description: 'Document Description' })
   @Expose()
@@ -447,11 +447,242 @@ export class IssueDetailsDto {
   @Expose()
   wrappedContent?: string;
 }
+
+// Create a class for document content transformation
+export class DocumentContent {
+  @Expose()
+  @IsOptional()
+  @Type(() => InvoiceDetailsDto)
+  invoice?: InvoiceDetailsDto;
+
+  @Expose()
+  @IsOptional()
+  @Type(() => BillOfExchangeDetailsDto)
+  billOfExchange?: BillOfExchangeDetailsDto;
+
+  @Expose()
+  @IsOptional()
+  @Type(() => PromissoryNoteDetailsDto)
+  promissoryNote?: PromissoryNoteDetailsDto;
+
+  @Expose()
+  @IsOptional()
+  @Type(() => OtherDocumentDetailsDto)
+  other?: OtherDocumentDetailsDto;
+}
+
+// *****************************************************************************
+// Content DTOs
+// *****************************************************************************
+export class InvoiceContentDto {
+  @ApiProperty({ description: 'Invoice Number' })
+  @Expose()
+  @IsString()
+  @IsNotEmpty()
+  invoiceNumber: string;
+
+  @ApiProperty({ description: 'Invoice Date' })
+  @Expose()
+  @IsString()
+  @IsNotEmpty()
+  invoiceDate: string;
+
+  @ApiProperty({ description: 'Due Date' })
+  @Expose()
+  @IsString()
+  @IsNotEmpty()
+  dueDate: string;
+
+  @ApiProperty({ description: 'Terms' })
+  @Expose()
+  @IsString()
+  @IsOptional()
+  terms?: string;
+
+  @ApiProperty({ description: 'Currency Code' })
+  @Expose()
+  @IsString()
+  @IsNotEmpty()
+  currencyCode: string;
+
+  @ApiProperty({ description: 'Bill From Details' })
+  @Expose()
+  @IsNotEmpty()
+  @Type(() => InvoicePartyDetailsDto)
+  billFrom: InvoicePartyDetailsDto;
+
+  @ApiProperty({ description: 'Bill To Details' })
+  @Expose()
+  @IsNotEmpty()
+  @Type(() => InvoicePartyDetailsDto)
+  billTo: InvoicePartyDetailsDto;
+
+  @ApiProperty({ description: 'Billable Items' })
+  @Expose()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => BillableItemDto)
+  billableItems: BillableItemDto[];
+
+  @ApiProperty({ description: 'Sub Total' })
+  @Expose()
+  @IsNumber()
+  subTotal: number;
+
+  @ApiProperty({ description: 'Tax Amount' })
+  @Expose()
+  @IsNumber()
+  tax: number;
+
+  @ApiProperty({ description: 'Total Amount' })
+  @Expose()
+  @IsNumber()
+  total: number;
+}
+
+export class BillOfExchangeContentDto {
+  @ApiProperty({ description: 'Bill of Exchange Reference' })
+  @Expose()
+  @IsString()
+  @IsNotEmpty()
+  boeReference: string;
+
+  @ApiProperty({ description: 'Amount in Numbers' })
+  @Expose()
+  @IsNumber()
+  @IsNotEmpty()
+  amountInNumbers: number;
+
+  @ApiProperty({ description: 'Currency' })
+  @Expose()
+  @IsString()
+  @IsNotEmpty()
+  currency: string;
+
+  @ApiProperty({ description: 'Bill of Lading Date' })
+  @Expose()
+  @IsString()
+  @IsNotEmpty()
+  billOfLadingDate: string;
+
+  @ApiProperty({ description: 'Place of Issue' })
+  @Expose()
+  @IsString()
+  @IsNotEmpty()
+  placeOfIssue: string;
+
+  @ApiProperty({ description: 'Date of Issue' })
+  @Expose()
+  @IsString()
+  @IsNotEmpty()
+  dateOfIssue: string;
+
+  @ApiProperty({ description: 'At Details' })
+  @Expose()
+  @IsString()
+  @IsNotEmpty()
+  atDetails: string;
+
+  @ApiProperty({ description: 'Pay To The Order' })
+  @Expose()
+  @IsString()
+  @IsNotEmpty()
+  payToTheOrder: string;
+
+  @ApiProperty({ description: 'Amount in Words' })
+  @Expose()
+  @IsString()
+  @IsNotEmpty()
+  amountInWords: string;
+
+  @ApiProperty({ description: 'Drawn Under' })
+  @Expose()
+  @IsString()
+  @IsNotEmpty()
+  drawnUnder: string;
+
+  @ApiProperty({ description: 'Dated' })
+  @Expose()
+  @IsString()
+  @IsNotEmpty()
+  dated: string;
+
+  @ApiProperty({ description: 'Issued By' })
+  @Expose()
+  @IsString()
+  @IsNotEmpty()
+  issuedBy: string;
+
+  @ApiProperty({ description: 'Drawee Details' })
+  @Expose()
+  @IsNotEmpty()
+  @Type(() => BillOfExchangePartyDetailsDto)
+  drawee: BillOfExchangePartyDetailsDto;
+
+  @ApiProperty({ description: 'Drawer Details' })
+  @Expose()
+  @IsNotEmpty()
+  @Type(() => BillOfExchangePartyDetailsDto)
+  drawer: BillOfExchangePartyDetailsDto;
+
+  @ApiProperty({ description: 'Terms and Conditions' })
+  @Expose()
+  @IsString()
+  @IsNotEmpty()
+  termsAndConditions: string;
+}
+
+export class PromissoryNoteContentDto {
+  @ApiProperty({ description: 'Lender Details' })
+  @Expose()
+  @IsNotEmpty()
+  @Type(() => PromissoryNotePartyDetailsDto)
+  lender: PromissoryNotePartyDetailsDto;
+
+  @ApiProperty({ description: 'Borrower Details' })
+  @Expose()
+  @IsNotEmpty()
+  @Type(() => PromissoryNotePartyDetailsDto)
+  borrower: PromissoryNotePartyDetailsDto;
+
+  @ApiProperty({ description: 'Loan Details' })
+  @Expose()
+  @IsNotEmpty()
+  @Type(() => PromissoryNoteLoanDetailsDto)
+  loanDetails: PromissoryNoteLoanDetailsDto;
+}
+
+export class OtherDocumentContentDto {
+  @ApiProperty({ description: 'Document Title' })
+  @Expose()
+  @IsString()
+  @IsNotEmpty()
+  title: string;
+
+  @ApiProperty({ description: 'Issue Date' })
+  @Expose()
+  @IsString()
+  @IsOptional()
+  issueDate?: string;
+
+  @ApiProperty({ description: 'Expiry Date' })
+  @Expose()
+  @IsString()
+  @IsOptional()
+  expiryDate?: string;
+
+  @ApiProperty({ description: 'Description' })
+  @Expose()
+  @IsString()
+  @IsNotEmpty()
+  description: string;
+}
+
 export class TradeDocumentDto {
-  @ApiProperty({ description: 'Internal Document Id' })
+  @ApiProperty({ description: 'Document Id' })
   @IsString()
   @Transform(({ value }) => value.toString(), { toPlainOnly: true })
-  @Expose({ name: '_id' })
+  @Expose()
   id: string;
 
   @ApiProperty({ description: 'Date the document was created' })
@@ -475,8 +706,9 @@ export class TradeDocumentDto {
   documentReference: string;
 
   @ApiProperty({ description: 'Trade Document Type' })
-  @Expose()
   @IsEnum(TradeDocumentType)
+  @IsNotEmpty()
+  @Expose()
   documentType: TradeDocumentType;
 
   @ApiProperty({ description: 'Current Document Status' })
@@ -484,29 +716,27 @@ export class TradeDocumentDto {
   @IsString()
   status: string;
 
-  @ApiProperty({ description: 'Invoice Document Contents' })
+  @ApiProperty({ description: 'Document Content based on document type' })
   @Expose()
   @IsOptional()
-  @Type(() => InvoiceDetailsDto)
-  invoiceContent?: InvoiceDetailsDto;
+  @Transform(({ obj }) => {
+    if (!obj) return undefined;
+    const contentField = obj.documentType?.toLowerCase() === 'invoice' ? 'invoiceContent' :
+                        obj.documentType?.toLowerCase() === 'bill of exchange' ? 'billOfExchangeContent' :
+                        obj.documentType?.toLowerCase() === 'promissory note' ? 'promissoryNoteContent' :
+                        'otherDocumentContent';
+    return obj[contentField];
+  }, { toPlainOnly: true })
+  documentContent?: InvoiceContentDto | BillOfExchangeContentDto | PromissoryNoteContentDto | OtherDocumentContentDto;
 
-  @ApiProperty({ description: 'Bill of Exchange Document Contents' })
-  @Expose()
-  @IsOptional()
-  @Type(() => BillOfExchangeDetailsDto)
-  billOfExchangeContent?: BillOfExchangeDetailsDto;
-
-  @ApiProperty({ description: 'Promissory Note Document Contents' })
-  @Expose()
-  @IsOptional()
-  @Type(() => PromissoryNoteDetailsDto)
-  promissoryNoteContent?: PromissoryNoteDetailsDto;
-
-  @ApiProperty({ description: 'Other Trade Document Contents' })
-  @Expose()
-  @IsOptional()
-  @Type(() => OtherDocumentDetailsDto)
-  otherDocumentContent?: OtherDocumentDetailsDto;
+  @Exclude()
+  invoiceContent?: InvoiceContent
+  @Exclude()
+  billOfExchangeContent?: BillOfExchangeContent;
+  @Exclude()
+  promissoryNoteContent?: PromissoryNoteContent
+  @Exclude()
+  otherDocumentContent?: OtherDocumentContent
 
   @ApiProperty({ description: 'Trade Document Claimants' })
   @Expose()
@@ -533,16 +763,19 @@ export class TradeDocumentDto {
   @ApiProperty({ description: 'Original Trade Document File Details' })
   @Expose()
   @IsOptional()
+  @Type(() => TradeDocumentFileDTO)
   originalFile?: TradeDocumentFileDTO;
 
   @ApiProperty({ description: 'Issued Trade Document File Details' })
   @Expose()
   @IsOptional()
+  @Type(() => TradeDocumentFileDTO)
   issuedFile?: TradeDocumentFileDTO;
 
   @ApiProperty({ description: 'Trade Trust File Details' })
   @Expose()
   @IsOptional()
+  @Type(() => TradeDocumentFileDTO)
   tradeTrustFile?: TradeDocumentFileDTO;
 }
 
@@ -584,25 +817,19 @@ export class UpsertTradeDocumentDto {
   @IsOptional()
   documentType?: TradeDocumentType;
 
-  @ApiProperty({ description: 'Invoice Document Contents' })
+  @ApiProperty({ description: 'Document Content based on document type' })
   @Expose()
   @IsOptional()
-  invoiceContent?: InvoiceContent;
+  documentContent?: DocumentContent;
 
-  @ApiProperty({ description: 'Bill of Exchange Document Contents' })
-  @Expose()
-  @IsOptional()
+  @Exclude()
+  invoiceContent?: InvoiceContent
+  @Exclude()
   billOfExchangeContent?: BillOfExchangeContent;
-
-  @ApiProperty({ description: 'Promissory Note Document Contents' })
-  @Expose()
-  @IsOptional()
-  promissoryNoteContent?: PromissoryNoteContent;
-
-  @ApiProperty({ description: 'Other Trade Document Contents' })
-  @Expose()
-  @IsOptional()
-  otherDocumentContent?: OtherDocumentContent;
+  @Exclude()
+  promissoryNoteContent?: PromissoryNoteContent
+  @Exclude()
+  otherDocumentContent?: OtherDocumentContent
 
   @ApiProperty({ description: 'Trade Document Claimants' })
   @Expose()

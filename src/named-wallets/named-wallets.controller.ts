@@ -19,7 +19,6 @@ import {
   UpdateNamedWalletDto,
 } from './dtos/named-wallets.dto';
 import mongoose from 'mongoose';
-import { AccountsService } from '../accounts/accounts.service';
 import { GeneralResponseDto } from '../common/common-dto';
 import { SearchQueryDto } from '../trade-documents/dtos/search-trade-documents.dto';
 import { NamedWalletsSearchResultsDto } from './dtos/named-wallets-search-results.dto';

@@ -19,6 +19,14 @@ export class AccountDetailsDto {
   @ApiProperty({ description: 'Wallet Address for Account' })
   @Expose()
   walletAddress: string;
+
+  @ApiProperty({description: 'Account Created On'})
+  @Expose()
+  createdAt: Date;
+
+  @ApiProperty({description: 'Account Last Updated On'})
+  @Expose()
+  updatedAt: Date;
 }
 
 export class AccountCreationDto {

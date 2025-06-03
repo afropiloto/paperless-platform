@@ -1,7 +1,3 @@
-import { Prop, Schema } from '@nestjs/mongoose';
-import { IsEnum, IsString } from 'class-validator';
-import { ApiProperty } from '@nestjs/swagger';
-import { Expose, Type } from 'class-transformer';
 import { TradeDocumentFileStatus } from '../trade-documents/trade-document-file.types';
 
 export enum TradeDocumentStatus {
@@ -14,7 +10,8 @@ export enum TradeDocumentType {
   INVOICE = 'invoice',
   BILL_OF_EXCHANGE = 'bill of exchange',
   PROMISSORY_NOTE = 'promissory note',
-  OTHER = 'other'
+  OTHER = 'other trade document',
+  UNKNOWN = 'unknown'
 }
 
 export enum LoanPeriodUnit {

@@ -17,7 +17,10 @@ export class LocalFileStorageService implements FileStorageService {
   constructor(private readonly configService: ConfigService) {
     this.uploadDir = this.configService.get<string>('LOCAL_FILE_STORAGE_PATH') ||
       path.join(__dirname, '../../../storage/uploads');
-    this.ensureUploadDirExists();
+    this.ensureUploadDirExists()
+      .then(()=>{
+        this.logger.debug({message: "Upload folder exists"})
+      });
   }
 
   private async ensureUploadDirExists() {

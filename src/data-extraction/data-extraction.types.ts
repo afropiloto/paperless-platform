@@ -1,9 +1,5 @@
-import {
-  BillOfExchangeContent,
-  InvoiceContent,
-  OtherDocumentContent,
-  PromissoryNoteContent,
-} from '../types/trade-documents.types';
+
+import { DocumentContent } from '../trade-documents/dtos/trade-document.dto';
 
 
 export interface DataExtractionJob {
@@ -22,10 +18,5 @@ export interface DataExtractionResponse {
   success: boolean;
   message?: string;
   requestId?: string;
-  data?: {
-    invoiceContent?: InvoiceContent;
-    billOfExchangeContent?: BillOfExchangeContent;
-    promissoryNoteContent?: PromissoryNoteContent;
-    otherDocumentContent?: OtherDocumentContent;
-  }
+  documentContent?: DocumentContent
 }
