@@ -1,5 +1,12 @@
 import { TradeDocumentFileStatus } from '../trade-documents/trade-document-file.types';
 
+export interface FileData {
+  buffer?: Buffer;
+  originalname?: string;
+  mimetype?: string;
+  size?: number;
+}
+
 export enum TradeDocumentStatus {
   IN_PROGRESS="In Progress",
   READY_TO_ISSUE="Ready to Issue",
@@ -121,8 +128,6 @@ export interface InvoiceContent  {
 // *****************************************************************************
 export interface OtherDocumentContent {
   title: string;
-  issueDate: string;
-  expiryDate: string;
   description: string;
 }
 

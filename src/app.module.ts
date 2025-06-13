@@ -11,7 +11,6 @@ import { BullModule } from '@nestjs/bullmq';
 import { DataExtractionModule } from './data-extraction/data-extraction.module';
 import { VerifyTradeDocumentModule } from './verify-trade-document/verify-trade-document.module';
 import { IssueTradeDocumentModule } from './issue-trade-document/issue-trade-document.module';
-import { LookupModule } from './lookup/lookup.module';
 import { TradeTrustModule } from './trade-trust/trade-trust.module';
 import { AuditModule } from './audit/audit.module';
 import { AnalyticsModule } from './analytics/analytics.module';
@@ -20,6 +19,9 @@ import { RegistrationModule } from './registration/registration.module';
 import { VirusScanModule } from './virus-scan/virus-scan.module';
 import { AuthModule } from './auth/auth.module';
 import { SiweModule } from './siwe/siwe.module';
+import { TradeFinanceModule } from './trade-finance/tradeFinanceModule';
+import { AppController } from './app.controller';
+import { DealDeskModule } from './deal-desk/deal-desk.module';
 
 @Module({
   imports: [
@@ -56,7 +58,6 @@ import { SiweModule } from './siwe/siwe.module';
     DataExtractionModule,
     VerifyTradeDocumentModule,
     IssueTradeDocumentModule,
-    LookupModule,
     TradeTrustModule,
     AuditModule,
     AnalyticsModule,
@@ -65,8 +66,10 @@ import { SiweModule } from './siwe/siwe.module';
     VirusScanModule,
     AuthModule,
     SiweModule,
+    TradeFinanceModule,
+    DealDeskModule,
   ],
-  controllers: [],
+  controllers: [AppController],
   providers: [],
 })
 export class AppModule {}

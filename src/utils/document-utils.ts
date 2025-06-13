@@ -1,9 +1,24 @@
 import * as crypto from 'crypto';
-import * as pdfParse from 'pdf-parse';
+//import * as pdfParse from 'pdf-parse';
+import pdfParse from 'pdf-parse';
+import { FileData } from '../types/trade-documents.types';
 
 export function isValidDataUrl(dataUrl: string): boolean {
   const dataUrlPattern = /^data:([a-zA-Z]+\/[a-zA-Z0-9+.-]+)?(;[a-zA-Z-]+=[a-zA-Z0-9-]+)*(;base64)?,([a-zA-Z0-9!$&',()*+;=\-._~:@/?%\s]*?)$/;
   return dataUrlPattern.test(dataUrl);
+}
+
+export function jsonToFileData(data: string | object, fileName: string): FileData {
+  // If data is already a string, parse it to ensure it's valid JSON
+  // If it's an object, stringify it
+  const jsonString = typeof data === 'string' ? JSON.stringify(JSON.parse(data)) : JSON.stringify(data);
+  const buffer: Buffer = Buffer.from(jsonString, 'utf-8');
+  return {
+    buffer: buffer,
+    originalname: fileName,
+    mimetype: 'application/json',
+    size: buffer.length
+  } as FileData
 }
 
 export function fileToDataUrl(file: Express.Multer.File): string {

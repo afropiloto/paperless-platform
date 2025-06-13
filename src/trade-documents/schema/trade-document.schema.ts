@@ -24,7 +24,7 @@ export class TradeDocumentClaimantDetails {
 @Schema({_id: false, timestamps: false})
 export class TradeDocumentClaimants {
   @Prop({required: true, type: TradeDocumentClaimantDetails})
-  holder?: TradeDocumentClaimantDetails;
+  owner?: TradeDocumentClaimantDetails;
   @Prop({required: true, type: TradeDocumentClaimantDetails})
   beneficiary?: TradeDocumentClaimantDetails;
 }
@@ -103,7 +103,10 @@ export class TradeDocument {
   tradeTrustFile: TradeDocumentFile;
 
   @Prop({ type: Object, required: false })
-  documentContent: object;
+  documentContent: any;
+
+  @Prop({type: String, required: false})
+  dealId: string;
 
   @Prop({type: IssueDetails, required: false})
   issueDetails?: IssueDetails
@@ -112,7 +115,7 @@ export class TradeDocument {
   claimants?: TradeDocumentClaimants;
 
   @Prop({required: false})
-  verifiableDataUrlHash: string;
+  verifiableDocumentHash: string;
 
   @Prop({required: false})
   documentTrackingId: string;

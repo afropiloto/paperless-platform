@@ -32,7 +32,7 @@ export class SearchQueryDto {
   @Type(() => Number)
   @Min(1, { message: 'Page size limit must be greater than 0' })
   @Max(100, { message: 'Page limit size cannot be greater than 100' })
-  limit: number = 5;
+  limit: number;
 
   @ApiProperty({description: "Field to order by"})
   @ApiPropertyOptional({default: "updatedAt"})

@@ -14,7 +14,7 @@ import { FileStorageModule } from '../file-storage/file-storage.module';
     MongooseModule.forFeature([{ name: TradeDocument.name, schema: TradeDocumentSchema }]),
     BullModule.registerQueue({name: DATA_EXTRACTION_QUEUE_NAME}),
     AccountsModule,
-    FileStorageModule
+    FileStorageModule,
   ],
   controllers: [TradeDocumentsController],
   providers: [TradeDocumentsService, TradeDocumentsRepository],

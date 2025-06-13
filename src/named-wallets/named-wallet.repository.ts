@@ -12,18 +12,24 @@ import { NamedWalletsSearchResultsDto } from './dtos/named-wallets-search-result
 export class NamedWalletsRepository {
   private readonly logger = new Logger(NamedWalletsRepository.name);
 
+
   constructor(@InjectModel(NamedWallet.name) private namedWalletModel: Model<NamedWallet>) {}
 
 
   async getAccountWallets(accountId: string, searchParams: SearchQueryDto) {
+    this.logger.debug({searchParams, accountId});
     const dataFacet = []
     if (searchParams.orderBy !== undefined && searchParams.orderBy.length > 0) {
       dataFacet.push({
         $sort: {[searchParams.orderBy]: searchParams.orderDirection === 'desc' ? -1 : 1}
       })
     }
-    dataFacet.push({$skip: (searchParams.page - 1) * searchParams.limit})
-    dataFacet.push({$limit: searchParams.limit})
+    dataFacet.push({$skip: (searchParams.page - 1) * (searchParams.limit ? searchParams.limit : 1)});
+
+    if (searchParams?.limit) {
+      dataFacet.push({$limit: searchParams.limit})
+    }
+
     const searchableFields = ["walletAddress", "walletName", "emailAddress"]
 
     const aggregationPipeline: PipelineStage[] = [];
@@ -53,9 +59,9 @@ export class NamedWalletsRepository {
           },
           {
             $addFields: {
-              page: searchParams.page,
+              page: searchParams?.page ? searchParams.page : 1,
               totalPages: {$ceil: {$divide: ["$totalDocuments", searchParams.limit]}},
-              limit: searchParams.limit,
+              limit: searchParams?.limit ? searchParams?.limit: 0,
             }
           }
         ],

@@ -81,7 +81,7 @@ export class VerifyTradeDocumentService {
       } as TradeDocumentVerificationResultsDto;
     }
     // Compare hashes
-    if (fileDocumentHash !== verificationDetails.verifiableDataUrlHash) {
+    if (fileDocumentHash !== verificationDetails.verifiableDocumentHash) {
       this.logger.debug({ message: "document hashes don't match" });
       return {
         validationSuccess: false,

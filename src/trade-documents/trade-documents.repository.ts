@@ -1,16 +1,13 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { TradeDocument } from './schema/trade-document.schema';
-import { FlattenMaps, isValidObjectId, Model, PipelineStage } from 'mongoose';
+import { isValidObjectId, Model, PipelineStage } from 'mongoose';
 import {
   IssueDetailsDto,
   TradeDocumentDto,
   UpsertTradeDocumentDto,
 } from './dtos/trade-document.dto';
 import {
-  BillOfExchangeContent,
-  InvoiceContent, OtherDocumentContent,
-  PromissoryNoteContent,
   TradeDocumentStatus,
 } from '../types/trade-documents.types';
 import { getUnsets } from './utils/trade-document.utils';
@@ -18,8 +15,7 @@ import { plainToInstance } from 'class-transformer';
 import { SearchQueryDto } from './dtos/search-trade-documents.dto';
 import { TradeDocumentFileVariant } from './trade-document-file.types';
 import { TradeDocumentFileDTO } from './dtos/trade-document-file.dto';
-import { TradeDocumentType } from '../types/trade-documents.types';
-
+import { TradeDocumentProtectedAttributesUpdateDto } from './dtos/trade-document-protected-attributes-update.dto';
 
 @Injectable()
 export class TradeDocumentsRepository {
@@ -35,12 +31,12 @@ export class TradeDocumentsRepository {
     createTradeDocumentDto: UpsertTradeDocumentDto,
     initialStatus: TradeDocumentStatus,
   ) {
-    const response = this.tradeDocumentModel.create({
+    const response = await this.tradeDocumentModel.create({
       accountId,
       status: initialStatus,
       ...createTradeDocumentDto,
     });
-    return plainToInstance(TradeDocumentDto, response);
+    return plainToInstance(TradeDocumentDto, {id: response._id, ...response.toObject()});
   }
 
   async updateTradeDocumentById(
@@ -50,7 +46,6 @@ export class TradeDocumentsRepository {
   ) {
     const filter = { accountId: accountId, _id: documentId };
     const unsets = getUnsets(tradeDocument.documentType);
-    this.logger.debug({filter, unsets, tradeDocument})
     const updatedDocument = await this.tradeDocumentModel.findOneAndUpdate(
       filter,
       {
@@ -62,7 +57,7 @@ export class TradeDocumentsRepository {
     if (!updatedDocument) {
       throw new Error('Failed to update Trade Document');
     }
-    return plainToInstance(TradeDocumentDto, updatedDocument);
+    return plainToInstance(TradeDocumentDto, {id: updatedDocument._id, ...updatedDocument.toObject()});
   }
 
   async updateTradeDocumentStatus(
@@ -70,14 +65,14 @@ export class TradeDocumentsRepository {
     documentId: string,
     newStatus: TradeDocumentStatus,
   ) {
-    const updatedDocument = await this.tradeDocumentModel.updateOne(
+    const updatedDocument = await this.tradeDocumentModel.findOneAndUpdate(
       { _id: documentId, accountId },
       {
         $set: { status: newStatus },
       },
-      { returnDocument: 'after' },
+      { new: true },
     );
-    return plainToInstance(TradeDocumentDto, updatedDocument);
+    return plainToInstance(TradeDocumentDto, {id: updatedDocument._id, ...updatedDocument.toObject()});
   }
 
   async updateTradeDocumentFileById(
@@ -87,34 +82,31 @@ export class TradeDocumentsRepository {
     tradeDocumentFile: TradeDocumentFileDTO,
   ) {
     const variantField = this.getFileVariantField(fileVariant);
-    const updatedDocument = this.tradeDocumentModel.updateOne(
+    const updatedDocument = await this.tradeDocumentModel.findByIdAndUpdate(
       { _id: documentId, accountId },
       {
         $set: { [variantField]: tradeDocumentFile },
       },
-      { returnDocument: 'after' },
+      {new:true}
     );
-    return plainToInstance(TradeDocumentDto, updatedDocument);
+    return plainToInstance(TradeDocumentDto, {id: updatedDocument._id, ...updatedDocument.toObject()});
   }
 
   private getSelections(includes: string[] = [], excludes: string[] = []) {
     return `${includes.length > 0 ? includes.join(' ') : ''} ${excludes.length > 0 ? '-' + excludes.join(' -') : ''}`;
   }
+
+
   async getDocumentById(
     accountId: string,
     documentId: string,
-    includes: string[] = [],
-    excludes: string[] = [],
-  ): Promise<any> {
+    includes: string[] = []
+  ): Promise<TradeDocumentDto> {
     if (!isValidObjectId(documentId) || !isValidObjectId(accountId)) {
       throw new BadRequestException('Invalid document identifier');
     }
 
-    // If includes is empty, we want all fields except those in excludes
-    // If includes has values, we want those fields plus the content fields
-    const contentFields = ['invoiceContent', 'billOfExchangeContent', 'promissoryNoteContent', 'otherDocumentContent'];
-    const allIncludes = includes.length > 0 ? [...new Set([...includes, ...contentFields])] : [];
-    const selections = this.getSelections(allIncludes, excludes);
+    const selections = this.getSelections(includes, []);
 
     const document = await this.tradeDocumentModel
       .findOne({
@@ -122,51 +114,14 @@ export class TradeDocumentsRepository {
         _id: documentId,
       })
       .select(selections)
-      .lean()
-      .exec();
-    this.logger.debug({ document });
-    
+
     if (!document) {
       return null;
     }
 
-    // Return raw document with _id mapped to id
-    return {
-      id: document._id,
-      ...document,
-    };
+    return plainToInstance(TradeDocumentDto, {id: document.id, ...document.toObject()});
   }
 
-  private getContentFieldForType(documentType: string): string {
-    switch (documentType?.toLowerCase()) {
-      case TradeDocumentType.INVOICE.toLowerCase():
-        return 'invoiceContent';
-      case TradeDocumentType.BILL_OF_EXCHANGE.toLowerCase():
-        return 'billOfExchangeContent';
-      case TradeDocumentType.PROMISSORY_NOTE.toLowerCase():
-        return 'promissoryNoteContent';
-      case TradeDocumentType.OTHER.toLowerCase():
-        return 'otherDocumentContent';
-      default:
-        return 'otherDocumentContent';
-    }
-  }
-
-  extractDocumentContent(
-    documentType: string,
-    document: TradeDocument) {
-    switch (documentType.toLowerCase()) {
-      case 'invoice':
-        return document.invoiceContent as InvoiceContent;
-      case "bill of exchange":
-        return document.billOfExchangeContent as BillOfExchangeContent;
-      case "promissory note":
-        return document.promissoryNoteContent as PromissoryNoteContent;
-      case "other":
-        return document.otherDocumentContent as OtherDocumentContent;
-    }
-    return {};
-  }
 
   async getDocumentsByType(
     accountId: string,
@@ -198,7 +153,7 @@ export class TradeDocumentsRepository {
   }
 
   private getFileVariantField(fileVariant: TradeDocumentFileVariant) {
-    switch (fileVariant) {
+    switch (fileVariant.toUpperCase()) {
       case TradeDocumentFileVariant.ISSUED:
         return 'issuedFile';
       case TradeDocumentFileVariant.ORIGINAL:
@@ -216,7 +171,6 @@ export class TradeDocumentsRepository {
     fileVariant: TradeDocumentFileVariant,
   ): Promise<TradeDocumentFileDTO> {
     const variantField = this.getFileVariantField(fileVariant);
-
     if (!isValidObjectId(documentId) || !isValidObjectId(accountId)) {
       throw new BadRequestException('Invalid document file request');
     }
@@ -246,9 +200,7 @@ export class TradeDocumentsRepository {
         documentTrackingId: trackingId,
       })
       .select(selections)
-      .lean()
-      .exec();
-    return plainToInstance(TradeDocumentDto, document);
+    return plainToInstance(TradeDocumentDto, {id: document._id, ...document.toObject()});
   }
 
   async getDocumentFileDetailsByTrackingId(
@@ -276,14 +228,15 @@ export class TradeDocumentsRepository {
     documentId: string,
     issueDetails: IssueDetailsDto,
   ) {
-    const updatedDocument = this.tradeDocumentModel.updateOne(
+    issueDetails.dateIssued = new Date();
+    const updatedDocument = await this.tradeDocumentModel.findOneAndUpdate(
       { _id: documentId, accountId },
       {
         $set: { issueDetails },
       },
-      { returnDocument: 'after' },
+      { new: true },
     );
-    return plainToInstance(TradeDocumentDto, updatedDocument);
+    return plainToInstance(TradeDocumentDto, {id: updatedDocument._id, ...updatedDocument.toObject()});
   }
 
   async retrieveTradeDocumentsByAccountId(
@@ -398,5 +351,14 @@ export class TradeDocumentsRepository {
         accountId,
       })) !== null
     );
+  }
+
+  async updateProtectedTradeDocumentAttributesById(accountId: string, documentId: string, updates: TradeDocumentProtectedAttributesUpdateDto) {
+    if (!isValidObjectId(accountId) || !isValidObjectId(documentId)) {
+      throw new BadRequestException('Invalid trade document identifier');
+    }
+    const updatedDocument =  await this.tradeDocumentModel.findOneAndUpdate({ accountId, _id: documentId }, updates, { new: true })
+    return plainToInstance(TradeDocumentDto, {id: updatedDocument._id, ...updatedDocument.toObject()});
+
   }
 }

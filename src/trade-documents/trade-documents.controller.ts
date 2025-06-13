@@ -4,10 +4,8 @@ import {
   Controller,
   Delete,
   Get,
-  HttpException,
   HttpStatus,
   Logger,
-  NotFoundException,
   Param,
   ParseFilePipeBuilder,
   Patch,
@@ -24,20 +22,20 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { TradeDocumentsService } from './trade-documents.service';
-import mongoose from 'mongoose';
 import {
   CreateTradeDocumentFromFileDto,
   TradeDocumentDto,
   UpsertTradeDocumentDto,
   UpsertTradeDocumentFileDto,
 } from './dtos/trade-document.dto';
-import { TradeDocumentStatus, TradeDocumentType } from '../types/trade-documents.types';
+import { TradeDocumentType } from '../types/trade-documents.types';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { GeneralResponseDto } from '../common/common-dto';
 import { TRADE_DOCUMENT_SUMMARY_INCLUDE_FIELDS } from './trade-document.constants';
 import { SearchQueryDto } from './dtos/search-trade-documents.dto';
 import { TradeDocumentFileVariant } from './trade-document-file.types';
 import {Response} from 'express';
+import { plainToInstance } from 'class-transformer';
 
 @ApiTags('Trade Documents')
 @Controller('trade-documents')
@@ -297,14 +295,15 @@ export class TradeDocumentsController {
   async deleteTradeDocumentById(
     @Param('accountId') accountId: string,
     @Param('documentId') documentId: string,
-  ) {
+  ): Promise<GeneralResponseDto> {
 
     // Proceed to delete document
     await this.tradeDocumentsService.deleteDocumentById(accountId, documentId);
-    return {
-      success: true,
-      message: 'Successfully deleted document',
-    };
+
+   return plainToInstance(GeneralResponseDto, {
+    success: true,
+    message: 'Successfully deleted document',
+   })
   }
 
   @Patch(':accountId/:documentId')

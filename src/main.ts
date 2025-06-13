@@ -5,9 +5,15 @@ import { ClassSerializerInterceptor, ValidationPipe } from '@nestjs/common';
 import { MongoExceptionFilter } from './filters/mongooseException.filter';
 import * as bodyParser from 'body-parser';
 import { LoggingInterceptor } from './interceptors/request-logger.interceptor';
+import { join } from 'path';
+import * as express from 'express';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  
+  // Add static file serving for .well-known directory
+  app.use('/.well-known', express.static(join(__dirname, '..', 'public')));
+  
   app.enableCors();
   app.use(bodyParser.json({ limit: '10mb' }));
   app.use(bodyParser.urlencoded({ limit: '10mb', extended: true }));

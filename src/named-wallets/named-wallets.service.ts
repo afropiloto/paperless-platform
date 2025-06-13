@@ -16,7 +16,6 @@ export class NamedWalletsService {
 
   async getWalletsForAccountId(accountId: string, searchParams: SearchQueryDto): Promise<NamedWalletsSearchResultsDto> {
     const results = await this.namedWalletRepository.getAccountWallets(accountId, searchParams);
-    this.logger.debug({results})
 
     return results ? plainToInstance(NamedWalletsSearchResultsDto, results) : undefined;
   }

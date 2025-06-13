@@ -193,12 +193,6 @@ export class OtherDocumentContent {
   @Prop({ required: true })
   title: string;
 
-  @Prop({ required: false })
-  issueDate: string;
-
-  @Prop({ required: false })
-  expiryDate: string;
-
   @Prop({ required: true })
   description: string;
 }

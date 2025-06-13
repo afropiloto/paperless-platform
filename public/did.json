@@ -1,0 +1,27 @@
+{
+  "id": "did:web:ai.paiperless.com",
+  "verificationMethod": [
+    {
+      "type": "Bls12381G2Key2020",
+      "id": "did:web:ai.paiperless.com#keys-1",
+      "controller": "did:web:ai.paiperless.com",
+      "publicKeyBase58": "qy88UVY5p3nuwYMJGEffhovQKPQfgz7cPGriCL8Em7KL67SZvRPV8s4uWtD745SJFB4EPTdvYneymS3eU9ec9RPD73kUgwD4tnTjFhbK4R11DJmJMrNeMCYiGfqMGcLcM1w"
+    }
+  ],
+  "@context": [
+    "https://www.w3.org/ns/did/v1",
+    "https://w3id.org/security/suites/bls12381-2020/v1"
+  ],
+  "authentication": [
+    "did:web:ai.paiperless.com#keys-1"
+  ],
+  "assertionMethod": [
+    "did:web:ai.paiperless.com#keys-1"
+  ],
+  "capabilityInvocation": [
+    "did:web:ai.paiperless.com#keys-1"
+  ],
+  "capabilityDelegation": [
+    "did:web:ai.paiperless.com#keys-1"
+  ]
+}

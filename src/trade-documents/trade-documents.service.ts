@@ -1,9 +1,10 @@
 import { BadRequestException, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import {
-  CreateTradeDocumentFromFileDto, DocumentContent, TradeDocumentDto,
+  CreateTradeDocumentFromFileDto, IssueDetailsDto,
   UpsertTradeDocumentDto,
 } from './dtos/trade-document.dto';
 import {
+  FileData,
   TradeDocumentStatus,
   TradeDocumentType,
 } from '../types/trade-documents.types';
@@ -31,7 +32,9 @@ import {
 import { FileStorageService } from '../file-storage/file-storage.interface';
 import { FILE_STORAGE_SERVICE } from '../file-storage/file-storage.constants';
 import { TradeDocumentFileDTO } from './dtos/trade-document-file.dto';
-import mongoose from 'mongoose';
+import { TradeDocumentProtectedAttributesUpdateDto } from './dtos/trade-document-protected-attributes-update.dto';
+
+
 
 @Injectable()
 export class TradeDocumentsService {
@@ -68,15 +71,9 @@ export class TradeDocumentsService {
       throw new NotFoundException('Account not found');
     }
 
-    // Transform the document content based on type
-    const transformedDocument: UpsertTradeDocumentDto = {
-      ...tradeDocument,
-      ...this.transformDocumentContent(tradeDocument.documentType, tradeDocument.documentContent),
-    };
-
     const newDocument = await this.tradeDocumentsRepo.createTradeDocument(
       accountId,
-      transformedDocument,
+      tradeDocument,
       TradeDocumentStatus.IN_PROGRESS,
     );
 
@@ -87,43 +84,24 @@ export class TradeDocumentsService {
     });
 
     // Transform the response back to use documentContent
-    return this.transformResponseToDocumentContent(newDocument);
+    return newDocument;
   }
 
   async getDocumentById(
     accountId: string,
     documentId: string,
-    includes: string[] = [],
-    excludes: string[] = [],
+    includes: string[] = []
   ) {
     const document = await this.tradeDocumentsRepo.getDocumentById(
       accountId,
       documentId,
-      includes,
-      excludes,
+      includes
     );
     if (!document) {
       throw new NotFoundException('Trade Document not found for this account');
     }
-    this.logger.debug({ document });
-    
-    // Transform the document content based on type
-    const contentField = this.getContentFieldForType(document.documentType);
-    const transformedDocument = {
-      ...document,
-      documentContent: document[contentField],
-      // Remove the individual content fields
-      invoiceContent: undefined,
-      billOfExchangeContent: undefined,
-      promissoryNoteContent: undefined,
-      otherDocumentContent: undefined,
-    };
-    
-    // Single transformation to TradeDocumentDto
-    return plainToInstance(TradeDocumentDto, transformedDocument, {
-      excludeExtraneousValues: true,
-      enableImplicitConversion: true
-    });
+
+    return document;
   }
 
   async getDocumentsByType(accountId: string, documentType: DocumentType) {
@@ -142,14 +120,15 @@ export class TradeDocumentsService {
   async deleteDocumentById(accountId: string, documentId: string) {
     const document = await this.getDocumentById(
       accountId,
-      documentId, [], ['wrappedContent', 'tradeDocumentFile', 'merkleRoot']
+      documentId, ['status']
     );
+
     if (!document) {
-      return { success: true } as GeneralResponseDto
+      throw new NotFoundException("The document could not be found.")
     }
     // Check if the document is in a deletable state
     if (!this.documentIsDeletable(document.status)) {
-      this.logger.debug({
+      this.logger.error({
         message: 'Document not deletable',
         accountId,
         documentId,
@@ -176,7 +155,7 @@ export class TradeDocumentsService {
   ) {
     const document = await this.getDocumentById(
       accountId,
-      documentId, [], ['wrappedContent', 'tradeDocumentFile', 'merkleRoot']
+      documentId, ['status'],
     );
     if (!document) {
       throw new NotFoundException('The document not found for account');
@@ -185,15 +164,11 @@ export class TradeDocumentsService {
     if (!this.documentIsUpdatable(document.status)) {
       throw new BadRequestException('The document could not be updated');
     }
-    // Transform the document content based on type
-    const transformedDocument = {
-      ...tradeDocument,
-      ...this.transformDocumentContent(tradeDocument.documentType, tradeDocument.documentContent),
-    };
+
     const updatedDocument = await this.tradeDocumentsRepo.updateTradeDocumentById(
       accountId,
       documentId,
-      transformedDocument,
+      tradeDocument,
     );
 
     if (!updatedDocument) {
@@ -206,7 +181,7 @@ export class TradeDocumentsService {
       documentId,
     });
 
-    return this.transformResponseToDocumentContent(updatedDocument);
+    return updatedDocument;
   }
 
   private async submitForDataExtraction(
@@ -253,7 +228,8 @@ export class TradeDocumentsService {
   async updateTradeDocumentFileById(
     accountId: string,
     tradeDocumentId: string,
-    file: Express.Multer.File,
+    file: Express.Multer.File | FileData,
+    fileVariant: TradeDocumentFileVariant = TradeDocumentFileVariant.ORIGINAL
   ) {
     const tradeDocumentExists =
       await this.tradeDocumentsRepo.tradeDocumentExists(
@@ -263,28 +239,32 @@ export class TradeDocumentsService {
     if (!tradeDocumentExists) {
       throw new NotFoundException('Trade document does not exist');
     }
+
+    // Handle both Multer file and FileData object
+    const fileBuffer = file.buffer;
+    const fileName = file.originalname;
+    const mimeType = file.mimetype;
+    const fileSize = file.size;
     
     const { storedFileName, storedFilePath } =
       await this.fileStorageService.uploadFile(
-        file.buffer,
-        file.originalname,
-        file.mimetype,
+        fileBuffer,
+        fileName,
+        mimeType,
       );
 
     // Store File details
     const tradeDocumentFileDetails: TradeDocumentFileDTO = {
       storedFileName: storedFileName,
       storedFilePath: storedFilePath,
-      mimeType: file.mimetype,
-      originalFileName: file.originalname,
-      size: file.size,
+      mimeType: mimeType,
+      originalFileName: fileName,
+      size: fileSize,
       status: TradeDocumentFileStatus.AWAITING_VIRUS_SCAN,
     };
 
-    const currentFileDetails = await this.tradeDocumentsRepo.getDocumentFileById(accountId, tradeDocumentId, TradeDocumentFileVariant.ORIGINAL);
+    const currentFileDetails = await this.tradeDocumentsRepo.getDocumentFileById(accountId, tradeDocumentId, fileVariant);
     if (currentFileDetails && currentFileDetails.storedFileName) {
-      // ToDo: If a Trade Document File already exists then delete the file. Record Audit Trail
-      this.logger.debug({message: "File deletion required", currentFileDetails});
       this.fileStorageService.deleteFile(currentFileDetails.storedFileName)
         .then(()=> {
           this.auditService.log({
@@ -298,8 +278,7 @@ export class TradeDocumentsService {
     }
 
     // Store file details
-    const tradeDocument = await this.tradeDocumentsRepo.updateTradeDocumentFileById(accountId, tradeDocumentId, TradeDocumentFileVariant.ORIGINAL, tradeDocumentFileDetails)
-
+    const tradeDocument = await this.tradeDocumentsRepo.updateTradeDocumentFileById(accountId, tradeDocumentId, fileVariant, tradeDocumentFileDetails)
     // Check if Data Extract is required or not
     const performDataExtraction = this.canPerformDataExtraction(
       tradeDocument.documentType,
@@ -332,8 +311,10 @@ export class TradeDocumentsService {
       eventType: AuditEventType.DOCUMENT_FILE_UPDATED,
       accountId,
       documentId: tradeDocumentId,
-      details: {originalFileName: file.originalname, fileType: file.mimetype, fileSize: file.size},
+      details: {originalFileName: fileName, fileType: mimeType, fileSize: fileSize},
     });
+
+    return tradeDocument;
   }
 
   async updateTradeDocumentStatus(
@@ -402,18 +383,19 @@ export class TradeDocumentsService {
     );
 
     // Add the file to the trade document
-    await this.updateTradeDocumentFileById(accountId, newDocument.id, file);
+    const updatedDocument = await this.updateTradeDocumentFileById(accountId, newDocument.id, file, TradeDocumentFileVariant.ORIGINAL);
 
     await this.auditService.log({
       eventType: AuditEventType.DOCUMENT_CREATED,
       accountId,
-      documentId: newDocument.id,
+      documentId: updatedDocument.id,
     });
-    return this.getDocumentById(accountId, newDocument.id);
+    return updatedDocument;
   }
 
   async getTradeDocumentFileStream(accountId: string, documentId: string, fileVariant: TradeDocumentFileVariant) {
     const fileDetails = await this.getDocumentFileDetailsById(accountId, documentId, fileVariant);
+
     if (!fileDetails || !fileDetails.storedFileName) {
       throw new NotFoundException("Trade Document File Not Found");
     }
@@ -425,49 +407,6 @@ export class TradeDocumentsService {
       }
     };
   }
-
-  // Helper methods to transform between the two formats
-  private transformDocumentContent(
-    documentType: TradeDocumentType,
-    documentContent?: DocumentContent,
-  ) {
-    if (!documentContent) return {};
-
-    const contentField = this.getContentFieldForType(documentType);
-    return {
-      [contentField]: documentContent,
-    };
-  }
-
-  private transformResponseToDocumentContent(document: TradeDocumentDto): TradeDocumentDto {
-    const contentField = this.getContentFieldForType(document.documentType);
-    return {
-      ...document,
-      documentContent: contentField ? document[contentField] : undefined,
-      // Remove the individual content fields
-      invoiceContent: undefined,
-      billOfExchangeContent: undefined,
-      promissoryNoteContent: undefined,
-      otherDocumentContent: undefined,
-    } as TradeDocumentDto;
-  }
-
-
-  private getContentFieldForType(documentType: TradeDocumentType): string {
-    switch (documentType.toLowerCase()) {
-      case TradeDocumentType.INVOICE.toLowerCase():
-        return 'invoiceContent';
-      case TradeDocumentType.BILL_OF_EXCHANGE.toLowerCase():
-        return 'billOfExchangeContent';
-      case TradeDocumentType.PROMISSORY_NOTE.toLowerCase():
-        return 'promissoryNoteContent';
-      case TradeDocumentType.OTHER.toLowerCase():
-        return 'otherDocumentContent';
-      default:
-        return 'otherDocumentContent';
-    }
-  }
-
 
   private documentIsDeletable(status: string) {
     switch (status.toLowerCase()) {
@@ -489,5 +428,18 @@ export class TradeDocumentsService {
       default:
         return false;
     }
+  }
+
+  async getTradeDocumentFile(accountId: string, documentId: string, variant: TradeDocumentFileVariant) {
+    return this.tradeDocumentsRepo.getDocumentFileById(accountId, documentId, variant);
+  }
+
+  async updateTradeDocumentIssueDetails(accountId: string, documentId: string, issueDetails: IssueDetailsDto) {
+    return this.tradeDocumentsRepo.updateTradeDocumentIssueDetailsById(accountId, documentId, issueDetails);
+  }
+
+  async updateProtectedAttributes(accountId: string, documentId: string, updates: TradeDocumentProtectedAttributesUpdateDto) {
+    return this.tradeDocumentsRepo.updateProtectedTradeDocumentAttributesById(accountId, documentId, updates)
+
   }
 }

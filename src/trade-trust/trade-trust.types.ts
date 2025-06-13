@@ -1,4 +1,4 @@
-export interface TradeTrustIssueJob {
+export interface TradeDocumentIssueJob {
   accountId: string;
   documentId: string;
   documentType: string;
@@ -13,7 +13,7 @@ export enum TradeTrustDocumentClass {
 
 export interface WrappedDocumentDetails {
   merkleRoot: string,
-  wrappedContent: string
+  wrappedContent: string,
 }
 
 export interface TradeTrustFileDetails {

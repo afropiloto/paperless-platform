@@ -4,53 +4,73 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
-import { GeneralResponseDto } from '../common/common-dto';
-import { InjectQueue } from '@nestjs/bullmq';
-import {
-  TRADE_TRUST_PREPARE_ISSUE_EVENT,
-  TRADE_TRUST_QUEUE_NAME,
-} from '../constants/app.constants';
-import { Queue } from 'bullmq';
+import { InjectFlowProducer } from '@nestjs/bullmq';
+import { FlowProducer } from 'bullmq';
 import {
   TradeDocumentStatus,
   TradeDocumentType,
 } from '../types/trade-documents.types';
-import {
-  TradeTrustDocumentClass,
-  TradeTrustIssueJob,
-} from '../trade-trust/trade-trust.types';
+import { TradeTrustDocumentClass } from '../trade-trust/trade-trust.types';
 import { AuditService } from '../audit/audit.service';
 import { TradeDocumentsService } from '../trade-documents/trade-documents.service';
-import { AuditEventType } from '../audit/audit-event-type.enum';
-import { CreateAuditEventDto } from '../audit/dtos/create-audit-event.dto';
-import { TradeDocumentDto } from '../trade-documents/dtos/trade-document.dto';
+import {
+  BillOfExchangeContentDto,
+  InvoiceContentDto,
+  OtherDocumentContentDto,
+  PromissoryNoteContentDto,
+  TradeDocumentDto,
+} from '../trade-documents/dtos/trade-document.dto';
 import { getTradeTrustDocumentClass } from '../trade-trust/trade-trust-utils';
 import { isAddress } from 'ethers-v6';
 import {
   BillOfExchangeContent,
-  InvoiceContent, OtherDocumentContent,
+  InvoiceContent,
+  OtherDocumentContent,
   PromissoryNoteContent,
 } from '../trade-documents/schema/document-content.schema';
+
+import { GeneralResponseDto } from '../common/common-dto';
+import { plainToInstance } from 'class-transformer';
+import {
+  FINALISE_ISSUE_QUEUE,
+  ISSUED_FILE_QUEUE,
+  MINT_DOCUMENT_QUEUE,
+  TRADE_DOCUMENT_QUEUE,
+  TT_FILE_QUEUE,
+} from '../constants/app.constants';
+import { generateTrackingId } from '../utils/issued-pdf/document-tracking';
+import { IssueJobData } from './issue-trade-document.types';
+
+export interface IssueTradeDocumentDetails {
+  accountId: string;
+  documentId: string;
+}
 
 @Injectable()
 export class IssueTradeDocumentService {
   private readonly logger = new Logger(IssueTradeDocumentService.name);
+
   constructor(
-    @InjectQueue(TRADE_TRUST_QUEUE_NAME)
-    private readonly tradeTrustQueue: Queue,
     private readonly auditService: AuditService,
     private readonly tradeDocumentsService: TradeDocumentsService,
+    @InjectFlowProducer('issue-trade-document')
+    private readonly flowProducer: FlowProducer,
   ) {}
 
-  private isReadyToIssue(tradeDocument: TradeDocumentDto): {readyToIssue: boolean, message?: string} {
+  private isReadyToIssue(tradeDocument: TradeDocumentDto): {
+    readyToIssue: boolean;
+    message?: string;
+  } {
     // Document must be In Progress
     if (
       !tradeDocument.status ||
       tradeDocument.status.toLowerCase() !==
         TradeDocumentStatus.IN_PROGRESS.toLowerCase()
     ) {
-
-      return {readyToIssue: false, message: 'Trade Document status is must be In Progress'};
+      return {
+        readyToIssue: false,
+        message: 'Trade Document status is must be In Progress',
+      };
     }
 
     // Document must have a document reference
@@ -58,32 +78,75 @@ export class IssueTradeDocumentService {
       !tradeDocument.documentReference ||
       tradeDocument.documentReference.trim().length === 0
     ) {
-      return {readyToIssue: false, message: 'Trade Document must have a documentReference set'};
+      return {
+        readyToIssue: false,
+        message: 'Trade Document must have a documentReference set',
+      };
     }
 
     // Document must have valid content for the documentType
     if (!tradeDocument.documentType) {
-      return {readyToIssue: false, message: 'Trade Document must have a documentType set'};
+      return {
+        readyToIssue: false,
+        message: 'Trade Document must have a documentType set',
+      };
     }
+    this.logger.debug({
+      tradeDocument,
+      isInvoiceContent: tradeDocument.documentContent instanceof InvoiceContent,
+      isBOEContent:
+        tradeDocument.documentContent instanceof BillOfExchangeContent,
+      isPromNoteContent:
+        tradeDocument.documentContent instanceof PromissoryNoteContent,
+      isOtherContent:
+        tradeDocument.documentContent instanceof OtherDocumentContent,
+    });
     switch (tradeDocument.documentType.toLowerCase()) {
       case TradeDocumentType.INVOICE.toLowerCase():
-        if (!tradeDocument.documentContent || !(tradeDocument.documentContent instanceof InvoiceContent)) {
-          return {readyToIssue: false, message: 'Invoice Trade Documents must have valid Invoice content'};
+        if (
+          !tradeDocument.documentContent ||
+          !(tradeDocument.documentContent instanceof InvoiceContentDto)
+        ) {
+          return {
+            readyToIssue: false,
+            message: 'Invoice Trade Documents must have valid Invoice content',
+          };
         }
         break;
       case TradeDocumentType.PROMISSORY_NOTE.toLowerCase():
-        if (!tradeDocument.documentContent || !(tradeDocument.documentContent instanceof PromissoryNoteContent)) {
-          return {readyToIssue: false, message: 'Promissory Note Trade Documents must have valid Promissory Note content'};
+        if (
+          !tradeDocument.documentContent ||
+          !(tradeDocument.documentContent instanceof PromissoryNoteContentDto)
+        ) {
+          return {
+            readyToIssue: false,
+            message:
+              'Promissory Note Trade Documents must have valid Promissory Note content',
+          };
         }
         break;
       case TradeDocumentType.BILL_OF_EXCHANGE.toLowerCase():
-        if (!tradeDocument.documentContent || !(tradeDocument.documentContent instanceof BillOfExchangeContent)) {
-          return {readyToIssue: false, message: 'Invoice Trade Documents must have valid Bill Of Exchange content'};
+        if (
+          !tradeDocument.documentContent ||
+          !(tradeDocument.documentContent instanceof BillOfExchangeContentDto)
+        ) {
+          return {
+            readyToIssue: false,
+            message:
+              'Bill of Exchange Trade Documents must have valid Bill Of Exchange content',
+          };
         }
         break;
       case TradeDocumentType.OTHER.toLowerCase():
-        if (!tradeDocument.documentContent || !(tradeDocument.documentContent instanceof OtherDocumentContent)) {
-          return {readyToIssue: false, message: 'Invoice Trade Documents must have valid Other Document content'};
+        if (
+          !tradeDocument.documentContent ||
+          !(tradeDocument.documentContent instanceof OtherDocumentContentDto)
+        ) {
+          return {
+            readyToIssue: false,
+            message:
+              'Other Trade Documents must have valid Other Document content',
+          };
         }
         break;
     }
@@ -93,81 +156,115 @@ export class IssueTradeDocumentService {
       getTradeTrustDocumentClass(tradeDocument.documentType) ===
       TradeTrustDocumentClass.TRANSFERABLE
     ) {
-      if (!tradeDocument.claimants.beneficiary.walletAddress && isAddress(tradeDocument.claimants.beneficiary.walletAddress)) {
-        return {readyToIssue: false, message: 'Transferable Trade Documents must have a valid wallet address for the beneficiary'};
+      if (
+        !tradeDocument.claimants.beneficiary.walletAddress &&
+        isAddress(tradeDocument.claimants.beneficiary.walletAddress)
+      ) {
+        return {
+          readyToIssue: false,
+          message:
+            'Transferable Trade Documents must have a valid wallet address for the beneficiary',
+        };
       }
-      if (!tradeDocument.claimants.holder.walletAddress && isAddress(tradeDocument.claimants.holder.walletAddress)) {
-        return {readyToIssue: false, message: 'Transferable Trade Documents must have a valid wallet address for the holder'};
+      if (
+        !tradeDocument.claimants.owner.walletAddress &&
+        isAddress(tradeDocument.claimants.owner.walletAddress)
+      ) {
+        return {
+          readyToIssue: false,
+          message:
+            'Transferable Trade Documents must have a valid wallet address for the holder',
+        };
       }
     }
 
-    return {readyToIssue: true};
+    return { readyToIssue: true };
   }
 
-  async issueTradeDocument(
-    accountId: string,
-    documentId: string,
-  ): Promise<GeneralResponseDto> {
-    const tradeDocument = await this.tradeDocumentsService.getDocumentById(
+  async issueTradeDocument(data: IssueTradeDocumentDetails) {
+    const { accountId, documentId } = data;
+
+    const document = await this.tradeDocumentsService.getDocumentById(
       accountId,
       documentId,
-      [
-        'documentReference',
-        'status',
-        'documentType',
-        'invoiceContent',
-        'billOfExchangeContent',
-        'PromissoryNoteContent',
-        'otherDocumentContent',
-        'claimants',
-      ],
-      ['wrappedContent', 'tradeDocumentFile', 'merkleRoot'],
     );
-    if (!tradeDocument) {
-      throw new NotFoundException(`Trade document does not exist`);
+    if (!document) {
+      throw new NotFoundException('The trade document could not be found');
     }
-
-    const currentState = this.isReadyToIssue(tradeDocument);
-    if (!currentState.readyToIssue) {
-      throw new BadRequestException(`Trade Document is not ready to be issued. ${currentState.message}`);
-    }
-
-    // Document ready to be issued so add to Trade Trust Queue to begin issue process
-    const jobDetails: TradeTrustIssueJob = {
-      accountId: accountId,
-      documentId: documentId,
-      documentType: tradeDocument.documentType,
-    };
-    try {
-      const job = await this.tradeTrustQueue.add(
-        TRADE_TRUST_PREPARE_ISSUE_EVENT,
-        jobDetails,
+    const documentStatus = this.isReadyToIssue(document);
+    if (!documentStatus.readyToIssue) {
+      throw new BadRequestException(
+        `The trade document could not be ready to issue: ${documentStatus.message}`,
       );
-      this.logger.debug({
-        message: 'Trade Document scheduled for issue',
-        jobId: job.id,
-        accountId,
-        documentId,
-      });
-
-      await this.auditService.log({
-        eventType: AuditEventType.DOCUMENT_SCHEDULED_FOR_ISSUE,
-        accountId,
-        documentId,
-      } as CreateAuditEventDto);
-
-      return { success: true, message: 'Document scheduled to be issued' };
-    } catch (error) {
-      this.logger.error({
-        message: 'Failed to schedule Trade Document to be issued',
-        error: error.message,
-        accountId,
-        documentId,
-      });
-      return {
-        success: false,
-        message: 'Failed to schedule Trade Document to be issued',
-      };
     }
+
+    const isTransferrable =
+      getTradeTrustDocumentClass(document.documentType) ===
+      TradeTrustDocumentClass.TRANSFERABLE;
+
+    const issueDate = new Date();
+    const documentTrackingId = generateTrackingId();
+    const documentReference = document.documentReference;
+
+    // Set the document status to Processing to prevent further actions until complete
+    await this.tradeDocumentsService.updateTradeDocumentStatus(
+      accountId,
+      documentId,
+      TradeDocumentStatus.PROCESSING,
+    );
+
+    // The flow we are looking for here a strict sequence of steps where each step finishes before the next one
+    //  1. produce-issued-file
+    //  2. produce-tt-file
+    //  3. mint-document (this only occurs if the trade document is transferrable)
+    //  4. finalise-issue
+    //  Because we want a strict order of steps, we express this in reverse order and make steps the child of the previous step
+    const jobData: IssueJobData = { accountId, documentId, isTransferrable, issueDate, documentTrackingId, documentReference }
+    await this.flowProducer.add({
+      name: 'issue-trade-document',
+      queueName: TRADE_DOCUMENT_QUEUE,
+      data: jobData,
+      children: [
+        {
+          name: 'finalise-issue',
+          queueName: FINALISE_ISSUE_QUEUE,
+          data: jobData,
+          opts: {
+            attempts: 3,
+            backoff: { type: 'exponential', delay: 1000 },
+          }, children: [
+            {
+              name: 'mint-document',
+              queueName: MINT_DOCUMENT_QUEUE,
+              data: jobData,
+              opts: {
+                attempts: 3,
+                backoff: { type: 'exponential', delay: 1000 },
+              },
+              children: [
+                {
+                  name: 'produce-tt-file',
+                  queueName: TT_FILE_QUEUE,
+                  data: jobData,
+                  children: [
+                    {
+                      name: 'produce-issued-file',
+                      queueName: ISSUED_FILE_QUEUE,
+                      data: jobData
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }]
+    })
+
+
+
+    return plainToInstance(GeneralResponseDto, {
+      success: true,
+      message: 'Trade Document scheduled for Issuing',
+    });
   }
 }
