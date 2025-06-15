@@ -22,6 +22,7 @@ import { SiweModule } from './siwe/siwe.module';
 import { TradeFinanceModule } from './trade-finance/tradeFinanceModule';
 import { AppController } from './app.controller';
 import { DealDeskModule } from './deal-desk/deal-desk.module';
+import { TypeOrmModule } from '@nestjs/typeorm';
 
 @Module({
   imports: [
@@ -30,9 +31,21 @@ import { DealDeskModule } from './deal-desk/deal-desk.module';
       cache: true,
       load: [appConfig],
     }),
+
     MongooseModule.forRoot(
       process.env.MONGODB_URI || 'mongodb://localhost/tradedocs',
     ),
+    TypeOrmModule.forRoot({
+      type: 'postgres',
+      host: process.env.DB_HOST || 'localhost',
+      port: parseInt(process.env.DB_PORT, 10) || 5432,
+      username: process.env.DB_USERNAME || 'postgres',
+      password: process.env.DB_PASSWORD || 'password',
+      database: process.env.DB_NAME || 'checklist_db',
+      entities: [__dirname + '/**/*.entity{.ts,.js}'], // Automatically load entities
+      synchronize: true, // Auto-create tables (disable in production)
+
+    }),
     BullModule.forRoot({
       connection: {
         host:  process.env.REDIS_HOST || 'localhost',

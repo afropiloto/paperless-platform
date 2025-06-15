@@ -1,8 +1,5 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
-import { DealDeskController } from './deal-desk.controller';
-import { DealDeskService } from './deal-desk.service';
-import { DealDeskRepository } from './deal-desk.repository';
 import { DueDiligenceChecklist, DueDiligenceChecklistSchema } from './schemas/due-diligence-checklist.schema';
 import { DueDiligenceChecklistRepository } from './repositories/due-diligence-checklist.repository';
 import { DueDiligenceChecklistService } from './services/due-diligence-checklist.service';
@@ -11,22 +8,27 @@ import { DealProcessing, DealProcessingSchema } from './schemas/deal-processing.
 import { DealProcessingRepository } from './repositories/deal-processing.repository';
 import { DealProcessingService } from './services/deal-processing.service';
 import { DealProcessingController } from './controllers/deal-processing.controller';
+import { Account, AccountSchema } from '../accounts/schemas/account.schema';
+import { TradeFinance, TradeFinanceSchema } from '../trade-finance/schemas/trade-finance.schema';
+import { ChecklistTemplateModule } from './checklist-template/checklist-template.module';
+import { ChecklistTemplateController } from './checklist-template/checklist-template.controller';
 
 @Module({
   imports: [
     MongooseModule.forFeature([
+      { name: DealProcessing.name, schema: DealProcessingSchema },
       { name: DueDiligenceChecklist.name, schema: DueDiligenceChecklistSchema },
-      { name: DealProcessing.name, schema: DealProcessingSchema }
-    ])
+      { name: Account.name, schema: AccountSchema },
+      { name: TradeFinance.name, schema: TradeFinanceSchema },
+    ]),
+    ChecklistTemplateModule
   ],
   controllers: [
-    DealDeskController,
     DueDiligenceChecklistController,
-    DealProcessingController
+    DealProcessingController,
+    ChecklistTemplateController
   ],
   providers: [
-    DealDeskService,
-    DealDeskRepository,
     DueDiligenceChecklistRepository,
     DueDiligenceChecklistService,
     DealProcessingRepository,

@@ -4,7 +4,7 @@ import {
   Post,
   Body,
   Param,
-  HttpStatus,
+  HttpStatus, Logger,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -19,13 +19,14 @@ import {
   DealProcessingResponseDto,
   DealProcessingSummaryResponseDto,
 } from '../dto/deal-processing-response.dto';
-import { FundingDecisionType } from '../schemas/deal-processing.schema';
 import { plainToInstance } from 'class-transformer';
 import { CreateDealProcessingDto } from '../dto/create-deal-processing.dto';
+import { FundingDecisionType } from '../types/deal-desk.types';
 
 @ApiTags('Deal Processing')
 @Controller('deal-processing')
 export class DealProcessingController {
+  private readonly logger = new Logger(DealProcessingController.name)
   constructor(
     private readonly dealProcessingService: DealProcessingService,
   ) {}
@@ -75,6 +76,7 @@ export class DealProcessingController {
     @Param('id') id: string,
   ): Promise<DealProcessingResponseDto> {
     const dealProcessing = await this.dealProcessingService.getDealProcessing(id);
+    this.logger.debug({dealProcessing})
     return plainToInstance(DealProcessingResponseDto, dealProcessing, {
       excludeExtraneousValues: true,
     });
@@ -88,8 +90,9 @@ export class DealProcessingController {
     type: [DealProcessingSummaryResponseDto],
   })
   async getDealProcessingList(): Promise<DealProcessingSummaryResponseDto[]> {
-    const dealProcessings = await this.dealProcessingService.getDealProcessingList();
-    return plainToInstance(DealProcessingSummaryResponseDto, dealProcessings, {
+    const dealProcessingList = await this.dealProcessingService.getDealProcessingList();
+
+    return plainToInstance(DealProcessingSummaryResponseDto, dealProcessingList, {
       excludeExtraneousValues: true,
     });
   }

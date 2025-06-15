@@ -8,7 +8,8 @@ import { CreateTradeFinanceDealDto } from './dtos/create-trade-finance-deal.dto'
 import { TradeFinanceDealDto } from './dtos/trade-finance-deal.dto';
 import { TradeFinanceSearchResultsDto } from './dtos/trade-finance-search-results.dto';
 import { plainToInstance } from 'class-transformer';
-import { SubmitTradeDetailFundingDto, TradeDetailFundingAction } from './dtos/submit-trade-detail-funding.dto';
+import { SubmitTradeDetailFundingDto } from './dtos/submit-trade-detail-funding.dto';
+import { TradeDetailFundingAction } from './types/trade-finance.types';
 
 @ApiTags('Trade Finance')
 @Controller('trade-finance')

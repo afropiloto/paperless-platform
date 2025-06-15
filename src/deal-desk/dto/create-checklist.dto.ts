@@ -1,4 +1,4 @@
-import { IsArray, IsNotEmpty, IsNumber, IsString, ValidateNested } from 'class-validator';
+import { IsArray, IsInt, IsNotEmpty, IsNumber, IsPositive, IsString, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 
@@ -28,6 +28,12 @@ export class SectionDto {
   @IsString()
   @IsNotEmpty()
   title: string;
+
+  @ApiProperty({description: 'The position of the section in the template', example: 1})
+  @IsNumber()
+  @IsPositive()
+  @IsInt()
+  position: number;
 
   @ApiProperty({
     description: 'Guidance text for the section',

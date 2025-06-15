@@ -1,30 +1,8 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Schema as MongooseSchema, Types } from 'mongoose';
+import { Document, Types } from 'mongoose';
+import { ChecklistItemStatus, DealProcessingStatus, FundingDecisionType } from '../types/deal-desk.types';
 
-export enum DealProcessingStatus {
-  NEW = 'NEW',
-  IN_PROGRESS = 'IN_PROGRESS',
-  COMPLETED = 'COMPLETED',
-  REJECTED = 'REJECTED',
-  AWAITING_AGREEMENT = 'AWAITING_AGREEMENT',
-  FUNDING_REQUESTED = 'FUNDING_REQUESTED',
-  FUNDS_RELEASED = 'FUNDS_RELEASED',
-  LOAN_REPAID = 'LOAN_REPAID',
-  WITHDRAWN = 'WITHDRAWN',
-}
 
-export enum ChecklistItemStatus {
-  NOT_STARTED = 'NOT_STARTED',
-  IN_PROGRESS = 'IN_PROGRESS',
-  COMPLETED = 'COMPLETED',
-  REJECTED = 'REJECTED',
-}
-
-export enum FundingDecisionType {
-  APPROVED = 'APPROVED',
-  REJECTED = 'REJECTED',
-  PENDING = 'PENDING',
-}
 
 @Schema()
 export class NoteEntry {
@@ -40,19 +18,10 @@ export class NoteEntry {
 
 export const NoteEntrySchema = SchemaFactory.createForClass(NoteEntry);
 
-@Schema({ timestamps: true })
+@Schema({ timestamps: false, _id: false })
 export class ChecklistItem {
-  @Prop({ required: true })
-  id: string;
-
-  @Prop({ required: true })
+   @Prop({ required: true })
   title: string;
-
-  @Prop({ required: true })
-  description: string;
-
-  @Prop({ required: true })
-  order: number;
 
   @Prop({
     type: String,
@@ -65,16 +34,11 @@ export class ChecklistItem {
   notes: string[];
 }
 
-@Schema({ timestamps: true })
+@Schema({ timestamps: false, _id: false })
 export class Section {
-  @Prop({ required: true })
-  id: string;
-
   @Prop({ required: true })
   title: string;
 
-  @Prop({ required: true })
-  order: number;
 
   @Prop({ type: [ChecklistItem], default: [] })
   items: ChecklistItem[];
@@ -96,7 +60,7 @@ export class DealProcessing extends Document {
   status: DealProcessingStatus;
 
   @Prop({ type: [Section], default: [] })
-  sections: Section[];
+  dueDiligenceChecks: Section[];
 
   @Prop({
     type: String,

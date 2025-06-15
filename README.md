@@ -10,6 +10,8 @@
    * Need to add auth-guard to ensure requests have a valid session token and API key
    * Need to add an API key so that we know which application is making the request
 3. Deal Desk Module
+   * When a deal is sent for funding request then create a new deal using the deal-desk module
+   * When a submitted deal is withdrawn, then update the deal using the deal-desk to be withdrawn
    * List Customers
    * Get Deals for customers (ignore In Progress)
    * Get All Deals (ignore In Progress)
@@ -17,36 +19,36 @@
    * Update Deal Decision information
    * Make Funding Decision
 4. Check Verify issued document works as expected
-4. Registration Module
+5. Registration Module
     - Need to integrate virus scan to file uploads. Possibly use a 2 stage scan (shallow -> deep) and provide a status on the document to indicate if it viewable yet.
     - Need to Add SIWE and check signature before creating new Registration and store the Wallet Address
-5. Add Onboarding Module
+6. Add Onboarding Module
    - Initialise onboarding
    - Update Onboarding task state
    - Log Decision
    - Get Registrations by status
-6. Look at how we are handling dates to make sure we are doing this properly within DTOs and schemas
-7. Trade Documents
+7. Look at how we are handling dates to make sure we are doing this properly within DTOs and schemas
+8. Trade Documents
    * Integrate Virus scanning
    * Consider add Simple document classifier to determine the likely document type if not provided. 
      * This would be used when the File changes and we don't have a file type specified.
-8. Add Data Extraction on initial file upload
+9. Add Data Extraction on initial file upload
     * Test data extraction and failure modes
-9. Account Analytics
-    * Controller
-    * Service
-    * Repository
-10. Authentication Module
+10. Account Analytics
+     * Controller
+     * Service
+     * Repository
+11. Authentication Module
     * Auth guard on routes (JWT or API Key?)
     * What about an API Keys for applications rather than JWT tokens?
     * Need middleware to decode the JWT and pull out the accountId for downstream use
     * Add AuthGuard to protected routes
     * Add Audit events for login
-11. Update ReadMe with set up & deployment information
-12. Consider adding a Notifications feature that we can use to notify accounts of problems with documents or general issues
-13. Write Service and Controller Tests
+12. Update ReadMe with set up & deployment information
+13. Consider adding a Notifications feature that we can use to notify accounts of problems with documents or general issues
+14. Write Service and Controller Tests
     * Can we get Cursor to create the tests?
-14. Consider adding a method to share issued documents with 3rd parties - this needs an email service
+15. Consider adding a method to share issued documents with 3rd parties - this needs an email service
 
 
 # Platform Deployment

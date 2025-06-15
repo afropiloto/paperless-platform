@@ -1,0 +1,16 @@
+services:
+  postgres:
+    image: postgres:latest
+    container_name: postgres-container
+    environment:
+      POSTGRES_USER: tradedocs
+      POSTGRES_PASSWORD: X7347sSIkPK9
+      POSTGRES_DB: tradedocs
+    ports:
+      - "5432:5432"
+    volumes:
+      - ${POSTGRESQL_DB_PATH}:/var/lib/postgresql/data
+
+volumes:
+  pgdata:
+    driver: local

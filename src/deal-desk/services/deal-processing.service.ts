@@ -1,12 +1,12 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { DealProcessingRepository } from '../repositories/deal-processing.repository';
-import { DealProcessing, DealProcessingStatus, CheckListItemStatus } from '../schemas/deal-processing.schema';
-import { FundingDecisionType } from '../schemas/deal-processing.schema';
+import { DealProcessing, Section } from '../schemas/deal-processing.schema';
 import { ChecklistItemUpdateDto } from '../dto/update-checklist.dto';
-import { DueDiligenceChecklistService } from './due-diligence-checklist.service';
 import { CreateDealProcessingDto } from '../dto/create-deal-processing.dto';
 import { Types } from 'mongoose';
 import { DueDiligenceChecklistRepository } from '../repositories/due-diligence-checklist.repository';
+import { ChecklistItemStatus, DealProcessingStatus, FundingDecisionType } from '../types/deal-desk.types';
+
 
 @Injectable()
 export class DealProcessingService {
@@ -27,31 +27,33 @@ export class DealProcessingService {
     }
 
     // Create a new deal processing record with the checklist details
-    const dealProcessing = new DealProcessing();
-    dealProcessing.dealId = new Types.ObjectId(createDto.dealId);
-    dealProcessing.accountId = new Types.ObjectId(createDto.accountId);
-    dealProcessing.status = DealProcessingStatus.NEW;
-    dealProcessing.sections = latestChecklist.sections.map((section) => ({
-      id: section.id,
-      title: section.title,
-      order: section.order,
-      items: section.items.map((item) => ({
-        id: item.id,
-        title: item.title,
-        description: item.description,
-        order: item.order,
-        status: ChecklistItemStatus.NOT_STARTED,
-        notes: [],
+    
+    const dealProcessingData = {
+      dealId: new Types.ObjectId(createDto.dealId),
+      accountId: new Types.ObjectId(createDto.accountId),
+      status: DealProcessingStatus.NEW,
+      dueDiligenceChecks: latestChecklist.sections.map((section) => ({
+        title: section.title,
+        items: section.items.map((item) => ({
+          title: item.title,
+          status: ChecklistItemStatus.NOT_STARTED,
+          notes: [],
+        })),
       })),
-    }));
-    dealProcessing.fundingDecision = FundingDecisionType.PENDING;
+      fundingDecision: FundingDecisionType.PENDING,
+      fundingDecisionNotes: '',
+      fundingDecisionDate: null,
+    };
+    
 
-    return await this.dealProcessingRepository.create(dealProcessing);
+    return await this.dealProcessingRepository.create(dealProcessingData as DealProcessing);
   }
 
   async getDealProcessing(id: string): Promise<DealProcessing> {
     try {
-      return await this.dealProcessingRepository.findById(id);
+      const results =  await this.dealProcessingRepository.findById(id);
+      this.logger.debug({results})
+      return results
     } catch (error) {
       this.logger.error(`Failed to get deal processing ${id}: ${error.message}`);
       throw error;

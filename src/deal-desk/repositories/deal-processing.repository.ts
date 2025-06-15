@@ -1,9 +1,12 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, PipelineStage, Types } from 'mongoose';
 import { DealProcessing } from '../schemas/deal-processing.schema';
-import { CheckListItemStatus } from '../schemas/deal-processing.schema';
-import { FundingDecisionType } from '../schemas/deal-processing.schema';
+import { FundingDecisionType } from '../types/deal-desk.types';
+import { Account } from '../../accounts/schemas/account.schema';
+import { TradeFinance } from '../../trade-finance/schemas/trade-finance.schema';
+
+class CheckListItemStatus {}
 
 @Injectable()
 export class DealProcessingRepository {
@@ -12,9 +15,14 @@ export class DealProcessingRepository {
   constructor(
     @InjectModel(DealProcessing.name)
     private readonly dealProcessingModel: Model<DealProcessing>,
+    @InjectModel(Account.name)
+    private readonly accountModel: Model<Account>,
+    @InjectModel(TradeFinance.name)
+    private readonly tradeFinanceModel: Model<TradeFinance>,
   ) {}
 
   async create(dealProcessing: DealProcessing): Promise<DealProcessing> {
+   this.logger.debug({dealProcessing})
     try {
       const createdDealProcessing = new this.dealProcessingModel(dealProcessing);
       return await createdDealProcessing.save();
@@ -26,11 +34,94 @@ export class DealProcessingRepository {
 
   async findById(id: string): Promise<DealProcessing> {
     try {
-      const dealProcessing = await this.dealProcessingModel.findById(id).exec();
-      if (!dealProcessing) {
+      const aggregationPipeline: PipelineStage[] = [
+        {
+          $match: {
+            _id: new Types.ObjectId(id)
+          }
+        },
+        {
+          $lookup: {
+            from: 'accounts',
+            localField: 'accountId',
+            foreignField: '_id',
+            as: 'account'
+          }
+        },
+        {
+          $lookup: {
+            from: 'tradefinances',
+            localField: 'dealId',
+            foreignField: '_id',
+            as: 'tradeFinance'
+          }
+        },
+        {
+          $lookup: {
+            from: 'tradedocuments',
+            let: { documentIds: { $arrayElemAt: ['$tradeFinance.documentIds', 0] } },
+            pipeline: [
+              {
+                $match: {
+                  $expr: {
+                    $and: [
+                      { $isArray: '$$documentIds' },
+                      { $in: ['$_id', '$$documentIds'] }
+                    ]
+                  }
+                }
+              },
+              {
+                $project: {
+                  _id: { $toString: '$_id' },
+                  documentReference: 1,
+                  documentType: 1,
+                  status: 1
+                }
+              }
+            ],
+            as: 'invoices'
+          }
+        },
+        {
+          $addFields: {
+            accountName: { $arrayElemAt: ['$account.accountName', 0] },
+            invoiceTotal: { $arrayElemAt: ['$tradeFinance.totalValue', 0] },
+            loanAmount: { $arrayElemAt: ['$tradeFinance.loanDetails.loanAmount', 0] },
+            collateralAmount: { $arrayElemAt: ['$tradeFinance.loanDetails.loanCollateralAmount', 0] },
+            loanTerm: { $arrayElemAt: ['$tradeFinance.loanDetails.loanDurationDays', 0] }
+          }
+        },
+        {
+          $project: {
+            _id: { $toString: '$_id' },
+            dealId: { $toString: '$dealId' },
+            accountId: { $toString: '$accountId' },
+            accountName: 1,
+            invoiceTotal: 1,
+            loanAmount: 1,
+            collateralAmount: 1,
+            loanTerm: 1,
+            status: 1,
+            sections: 1,
+            fundingDecision: 1,
+            fundingDecisionNotes: 1,
+            fundingDecisionDate: 1,
+            createdAt: 1,
+            updatedAt: 1,
+            invoices: 1
+          }
+        }
+      ];
+
+      const result = await this.dealProcessingModel.aggregate(aggregationPipeline).exec();
+      this.logger.debug({result})
+      
+      if (!result || result.length === 0) {
         throw new NotFoundException(`Deal processing with id ${id} not found`);
       }
-      return dealProcessing;
+
+      return result[0];
     } catch (error) {
       this.logger.error(`Failed to find deal processing by id ${id}: ${error.message}`);
       throw error;
@@ -39,11 +130,57 @@ export class DealProcessingRepository {
 
   async findAll(): Promise<DealProcessing[]> {
     try {
-      return await this.dealProcessingModel
-        .find()
-        .select('_id dealId status createdAt updatedAt')
-        .sort({ updatedAt: -1 })
-        .exec();
+      const aggregationPipeline: PipelineStage[] = [
+        {
+          $lookup: {
+            from: 'accounts',
+            localField: 'accountId',
+            foreignField: '_id',
+            as: 'account'
+          }
+        },
+        {
+          $lookup: {
+            from: 'tradefinances',
+            localField: 'dealId',
+            foreignField: '_id',
+            as: 'tradeFinance'
+          }
+        },
+        {
+          $addFields: {
+            accountName: { $arrayElemAt: ['$account.accountName', 0] },
+            invoiceTotal: { $arrayElemAt: ['$tradeFinance.totalValue', 0] },
+            loanAmount: { $arrayElemAt: ['$tradeFinance.loanDetails.loanAmount', 0] },
+            collateralAmount: { $arrayElemAt: ['$tradeFinance.loanDetails.loanCollateralAmount', 0] },
+            loanTerm: { $arrayElemAt: ['$tradeFinance.loanDetails.loanDurationDays', 0] }
+          }
+        },
+        {
+          $project: {
+            _id: { $toString: '$_id' },
+            dealId: { $toString: '$dealId' },
+            accountId: { $toString: '$accountId' },
+            accountName: 1,
+            invoiceTotal: 1,
+            loanAmount: 1,
+            collateralAmount: 1,
+            loanTerm: 1,
+            status: 1,
+            sections: 1,
+            fundingDecision: 1,
+            fundingDecisionNotes: 1,
+            fundingDecisionDate: 1,
+            createdAt: 1,
+            updatedAt: 1
+          }
+        },
+        {
+          $sort: { updatedAt: -1 }
+        }
+      ];
+
+      return await this.dealProcessingModel.aggregate(aggregationPipeline).exec();
     } catch (error) {
       this.logger.error(`Failed to find all deal processing records: ${error.message}`);
       throw error;
@@ -131,8 +268,6 @@ export class DealProcessingRepository {
     user: string,
   ): Promise<DealProcessing> {
     try {
-      const dealProcessing = await this.findById(id);
-
       const fundingDecision = {
         decision,
         decisionNotes: {

@@ -1,6 +1,6 @@
-import { Exclude, Expose, Type } from 'class-transformer';
+import { Exclude, Expose, Transform, Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
-import { DealProcessingStatus, FundingDecisionType } from '../schemas/deal-processing.schema';
+import { DealProcessingStatus, FundingDecisionType } from '../types/deal-desk.types';
 
 @Exclude()
 export class NoteResponseDto {
@@ -96,6 +96,7 @@ export class DealProcessingResponseDto {
     example: '507f1f77bcf86cd799439011'
   })
   @Expose()
+  @Transform(({ value }) => value?.toString(), { toPlainOnly: true })
   _id: string;
 
   @ApiProperty({
@@ -103,7 +104,16 @@ export class DealProcessingResponseDto {
     example: '507f1f77bcf86cd799439012'
   })
   @Expose()
+  @Transform(({ value }) => value?.toString(), { toPlainOnly: true })
   dealId: string;
+
+  @ApiProperty({
+    description: 'Account ID associated with the deal processing',
+    example: 'account123'
+  })
+  @Expose()
+  @Transform(({ value }) => value?.toString(), { toPlainOnly: true })
+  accountId: string;
 
   @ApiProperty({
     description: 'Current status of the deal processing',
@@ -143,12 +153,42 @@ export class DealProcessingResponseDto {
   @Expose()
   updatedAt: Date;
 
+
+
   @ApiProperty({
-    description: 'Account ID associated with the deal processing',
-    example: 'account123'
+    description: 'Name of the account associated with the deal',
+    example: 'Account Name'
   })
   @Expose()
-  accountId: string;
+  accountName: string;
+
+  @ApiProperty({
+    description: 'Total invoice amount for the deal',
+    example: 100000
+  })
+  @Expose()
+  invoiceTotal: number;
+
+  @ApiProperty({
+    description: 'Requested loan amount for the deal',
+    example: 50000
+  })
+  @Expose()
+  loanAmount: number;
+
+  @ApiProperty({
+    description: 'Collateral amount for the deal',
+    example: 20000
+  })
+  @Expose()
+  collateralAmount: number;
+
+  @ApiProperty({
+    description: 'Term of the loan in days',
+    example: 180
+  })
+  @Expose()
+  loanTerm: number;
 }
 
 @Exclude()
@@ -158,6 +198,7 @@ export class DealProcessingSummaryResponseDto {
     example: '507f1f77bcf86cd799439011'
   })
   @Expose()
+  @Transform(({ value }) => value?.toString(), { toPlainOnly: true })
   _id: string;
 
   @ApiProperty({
@@ -165,6 +206,7 @@ export class DealProcessingSummaryResponseDto {
     example: '507f1f77bcf86cd799439012'
   })
   @Expose()
+  @Transform(({ value }) => value?.toString(), { toPlainOnly: true })
   dealId: string;
 
   @ApiProperty({
@@ -194,5 +236,49 @@ export class DealProcessingSummaryResponseDto {
     example: 'account123'
   })
   @Expose()
+  @Transform(({ value }) => value?.toString(), { toPlainOnly: true })
   accountId: string;
+
+  @ApiProperty({
+    description: 'Name of the account associated with the deal',
+    example: 'Account Name'
+  })
+  @Expose()
+  accountName: string;
+
+  @ApiProperty({
+    description: 'Total invoice amount for the deal',
+    example: 100000
+  })
+  @Expose()
+  invoiceTotal: number;
+
+  @ApiProperty({
+    description: 'Requested loan amount for the deal',
+    example: 50000
+  })
+  @Expose()
+  loanAmount: number;
+
+  @ApiProperty({
+    description: 'Collateral amount for the deal',
+    example: 20000
+  })
+  @Expose()
+  collateralAmount: number;
+
+  @ApiProperty({
+    description: 'Term of the loan in days',
+    example: 180
+  })
+  @Expose()
+  loanTerm: number;
+
+  @ApiProperty({
+    description: 'Funding decision',
+    enum: ['Awaiting Decision', 'Approved', 'Rejected'],
+    example: 'Approved'
+  })
+  @Expose()
+  fundingDecision: FundingDecisionType;
 } 

@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEnum } from 'class-validator';
+import { TradeDetailFundingAction } from '../types/trade-finance.types';
 
 
 export class SubmitTradeDetailFundingDto {

@@ -1,7 +1,8 @@
 import { IsString, IsOptional, IsEnum, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
-import { CheckListItemStatus } from '../schemas/deal-processing.schema';
+import { ChecklistItemStatus } from '../types/deal-desk.types';
+
 
 export class NoteUpdateDto {
   @ApiProperty({
@@ -36,13 +37,13 @@ export class ChecklistItemUpdateDto {
 
   @ApiProperty({
     description: 'New status for the checklist item',
-    enum: CheckListItemStatus,
+    enum: ChecklistItemStatus,
     required: false,
-    example: CheckListItemStatus.SATISFACTORY
+    example: ChecklistItemStatus.SATISFACTORY
   })
   @IsOptional()
-  @IsEnum(CheckListItemStatus)
-  status?: CheckListItemStatus;
+  @IsEnum(ChecklistItemStatus)
+  status?: ChecklistItemStatus;
 
   @ApiProperty({
     description: 'New note to add to the checklist item',

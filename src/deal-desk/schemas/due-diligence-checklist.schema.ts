@@ -1,7 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
 
-@Schema()
+@Schema({_id: false, timestamps: false})
 export class ChecklistItem {
   @Prop({ required: true })
   title: string;
@@ -12,7 +12,7 @@ export class ChecklistItem {
 
 export const ChecklistItemSchema = SchemaFactory.createForClass(ChecklistItem);
 
-@Schema()
+@Schema({_id: false, timestamps: false})
 export class Section {
   @Prop({ required: true })
   title: string;
@@ -26,7 +26,7 @@ export class Section {
 
 export const SectionSchema = SchemaFactory.createForClass(Section);
 
-@Schema()
+@Schema({timestamps: true})
 export class DueDiligenceChecklist extends Document {
   @Prop({ required: true, unique: true, index: true })
   version: number;
