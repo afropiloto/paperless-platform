@@ -19,6 +19,7 @@ export enum ChecklistItemStatus {
 
 export enum FundingDecisionType {
   APPROVED = 'APPROVED',
-  REJECTED = 'REJECTED',
+  DECLINED = 'DECLINED',
   PENDING = 'PENDING',
 }
+

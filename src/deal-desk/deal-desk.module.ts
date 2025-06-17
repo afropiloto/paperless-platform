@@ -10,8 +10,9 @@ import { DealProcessingService } from './services/deal-processing.service';
 import { DealProcessingController } from './controllers/deal-processing.controller';
 import { Account, AccountSchema } from '../accounts/schemas/account.schema';
 import { TradeFinance, TradeFinanceSchema } from '../trade-finance/schemas/trade-finance.schema';
-import { ChecklistTemplateModule } from './checklist-template/checklist-template.module';
-import { ChecklistTemplateController } from './checklist-template/checklist-template.controller';
+import { PromissoryNotePdfService } from './services/promissory-note-pdf.service';
+import { CommonModule } from '../common/common.module';
+import { FileStorageModule } from '../file-storage/file-storage.module';
 
 @Module({
   imports: [
@@ -21,18 +22,19 @@ import { ChecklistTemplateController } from './checklist-template/checklist-temp
       { name: Account.name, schema: AccountSchema },
       { name: TradeFinance.name, schema: TradeFinanceSchema },
     ]),
-    ChecklistTemplateModule
+    CommonModule,
+    FileStorageModule
   ],
   controllers: [
     DueDiligenceChecklistController,
     DealProcessingController,
-    ChecklistTemplateController
   ],
   providers: [
     DueDiligenceChecklistRepository,
     DueDiligenceChecklistService,
     DealProcessingRepository,
-    DealProcessingService
+    DealProcessingService,
+    PromissoryNotePdfService
   ]
 })
 export class DealDeskModule {}

@@ -1,11 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
-import {
-  BillOfExchangeContent,
-  InvoiceContent,
-  OtherDocumentContent,
-  PromissoryNoteContent,
-} from './document-content.schema';
 import { TradeDocumentType } from '../../types/trade-documents.types';
 import { TradeTrustDocumentClass } from '../../trade-trust/trade-trust.types';
 import { TradeDocumentFileStatus } from '../trade-document-file.types';

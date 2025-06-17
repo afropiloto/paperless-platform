@@ -1,8 +1,11 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
 import { ChecklistItemStatus, DealProcessingStatus, FundingDecisionType } from '../types/deal-desk.types';
-
-
+import { Expose, Type } from 'class-transformer';
+import { ApiProperty } from '@nestjs/swagger';
+import { IsDate, IsEnum } from 'class-validator';
+import { PromissoryNoteState } from '../dto/deal-processing-response.dto';
+import { TradeDocumentFile } from '../../common/schemas/trade-document-file.schema';
 
 @Schema()
 export class NoteEntry {
@@ -30,8 +33,9 @@ export class ChecklistItem {
   })
   status: ChecklistItemStatus;
 
-  @Prop({ type: [String], default: [] })
-  notes: string[];
+  @Prop({ type: [NoteEntry], default: [] })
+  @Type(() => NoteEntry)
+  notes: NoteEntry[];
 }
 
 @Schema({ timestamps: false, _id: false })
@@ -42,6 +46,35 @@ export class Section {
 
   @Prop({ type: [ChecklistItem], default: [] })
   items: ChecklistItem[];
+}
+
+@Schema({timestamps: true})
+export class FundingDecisionDetails extends Document {
+  @Prop({
+    type: String,
+    enum: FundingDecisionType,
+    default: FundingDecisionType.PENDING,
+  })
+  decision: FundingDecisionType;
+
+  @Prop({type: NoteEntry})
+  decisionNotes?: NoteEntry
+}
+
+@Schema({ timestamps: true })
+export class PromissoryNoteDetails extends Document {
+  @Prop({ type: Object, default: {} })
+  content: any;
+
+  @Prop(
+    {type: String,
+      enum: PromissoryNoteState,
+      default: PromissoryNoteState.IN_PROGRESS
+    })
+  status: PromissoryNoteState;
+
+  @Prop({ type: TradeDocumentFile })
+  issuedFile?: TradeDocumentFile;
 }
 
 @Schema({ timestamps: true })
@@ -59,21 +92,25 @@ export class DealProcessing extends Document {
   })
   status: DealProcessingStatus;
 
+  @Prop()
+  dueDiligenceChecklistVersion: number;
+
   @Prop({ type: [Section], default: [] })
   dueDiligenceChecks: Section[];
 
   @Prop({
-    type: String,
-    enum: FundingDecisionType,
-    default: FundingDecisionType.PENDING,
+    type: FundingDecisionDetails
   })
-  fundingDecision: FundingDecisionType;
+  fundingDecision: FundingDecisionDetails;
 
   @Prop({ type: String })
   fundingDecisionNotes: string;
 
   @Prop({ type: Date })
   fundingDecisionDate: Date;
+
+  @Prop({ type: PromissoryNoteDetails, required: false })
+  promissoryNote: PromissoryNoteDetails;
 }
 
 export const DealProcessingSchema = SchemaFactory.createForClass(DealProcessing); 

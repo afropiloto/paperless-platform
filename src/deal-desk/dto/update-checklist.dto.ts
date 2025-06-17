@@ -53,5 +53,5 @@ export class ChecklistItemUpdateDto {
   @IsOptional()
   @ValidateNested()
   @Type(() => NoteUpdateDto)
-  note?: NoteUpdateDto;
+  notes?: NoteUpdateDto[];
 } 
