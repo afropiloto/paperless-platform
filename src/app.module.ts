@@ -24,6 +24,7 @@ import { AppController } from './app.controller';
 import { DealDeskModule } from './deal-desk/deal-desk.module';
 import { DueDiligenceChecklistsModule } from './due-diligence-checklists/due-diligence-checklists.module';
 import { OnboardingModule } from './onboarding/onboarding.module';
+import { AccountUsersModule } from './account-users/account-users.module';
 
 @Module({
   imports: [
@@ -73,6 +74,7 @@ import { OnboardingModule } from './onboarding/onboarding.module';
     DealDeskModule,
     DueDiligenceChecklistsModule,
     OnboardingModule,
+    AccountUsersModule,
   ],
   controllers: [AppController],
   providers: [],
