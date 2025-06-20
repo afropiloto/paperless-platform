@@ -9,46 +9,52 @@
 2. Security
    * Need to add auth-guard to ensure requests have a valid session token and API key
    * Need to add an API key so that we know which application is making the request
-3. Deal Desk Module
-   * When a deal is sent for funding request then create a new deal using the deal-desk module
+3. Authentication Module
+    * Need to extend Authentication Module to include a lookup between wallet address, application and application roles.
+    * For example a wallet might be allowed to access Onboarding with the Agent role and Deal Desk with the Agent and Supervisor role.
+    * There is an issue with using Web3 login in that an account is linked to a single wallet address. 
+    * We could extend this by having the company account record linked to multiple wallets with different roles. 
+    * We use these wallets for authentication and SIWE but use the company wallet address for tasks such as assigning ownership or making payments.
+    * This would require 3 things:
+      * For internal users we would need a Voy  Operations Account
+      * We would need a UI to manage Voy Operations Accounts
+      * We would need a customer facing page on Paiperless for a company admin to manage their accounts
+4. Deal Desk Module
    * When a submitted deal is withdrawn, then update the deal using the deal-desk to be withdrawn
-   * List Customers
-   * Get Deals for customers (ignore In Progress)
-   * Get All Deals (ignore In Progress)
-   * Get Deal Decision information
-   * Update Deal Decision information
-   * Make Funding Decision
-4. Check Verify issued document works as expected
-5. Registration Module
+   * List Customers (wait for Onboarding to be complete)
+   * Handle Promissory Note Signed event
+5. Check Verify issued document works as expected
+6. Registration Module
     - Need to integrate virus scan to file uploads. Possibly use a 2 stage scan (shallow -> deep) and provide a status on the document to indicate if it viewable yet.
     - Need to Add SIWE and check signature before creating new Registration and store the Wallet Address
-6. Add Onboarding Module
-   - Initialise onboarding
-   - Update Onboarding task state
+7. Add Onboarding Module
+   - Initialise onboarding record
+   - Handle updates to DD checklist
    - Log Decision
    - Get Registrations by status
-7. Look at how we are handling dates to make sure we are doing this properly within DTOs and schemas
-8. Trade Documents
+   - Get Registration by Id
+8. Look at how we are handling dates to make sure we are doing this properly within DTOs and schemas
+9. Trade Documents
    * Integrate Virus scanning
    * Consider add Simple document classifier to determine the likely document type if not provided. 
      * This would be used when the File changes and we don't have a file type specified.
-9. Add Data Extraction on initial file upload
-    * Test data extraction and failure modes
-10. Account Analytics
+10. Add Data Extraction on initial file upload
+     * Test data extraction and failure modes
+11. Account Analytics
      * Controller
      * Service
      * Repository
-11. Authentication Module
+12. Authentication Module
     * Auth guard on routes (JWT or API Key?)
     * What about an API Keys for applications rather than JWT tokens?
     * Need middleware to decode the JWT and pull out the accountId for downstream use
     * Add AuthGuard to protected routes
     * Add Audit events for login
-12. Update ReadMe with set up & deployment information
-13. Consider adding a Notifications feature that we can use to notify accounts of problems with documents or general issues
-14. Write Service and Controller Tests
+13. Update ReadMe with set up & deployment information
+14. Consider adding a Notifications feature that we can use to notify accounts of problems with documents or general issues
+15. Write Service and Controller Tests
     * Can we get Cursor to create the tests?
-15. Consider adding a method to share issued documents with 3rd parties - this needs an email service
+16. Consider adding a method to share issued documents with 3rd parties - this needs an email service
 
 
 # Platform Deployment

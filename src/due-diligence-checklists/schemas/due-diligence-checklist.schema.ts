@@ -1,5 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
+import { DueDiligenceChecklistType } from '../types/due-diligence-checklists.types';
 
 @Schema({_id: false, timestamps: false})
 export class ChecklistItem {
@@ -28,11 +29,13 @@ export const SectionSchema = SchemaFactory.createForClass(Section);
 
 @Schema({timestamps: true})
 export class DueDiligenceChecklist extends Document {
-  @Prop({ required: true, unique: true, index: true })
+  @Prop({required: true, enum: DueDiligenceChecklistType, type: String })
+  checklistType: DueDiligenceChecklistType;
+
+  @Prop({ required: true})
   version: number;
 
-  @Prop({ type: [SectionSchema], required: true })
+  @Prop({ type: [SectionSchema], required: true, default: []})
   sections: Section[];
 }
-
 export const DueDiligenceChecklistSchema = SchemaFactory.createForClass(DueDiligenceChecklist); 

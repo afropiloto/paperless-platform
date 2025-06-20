@@ -14,6 +14,7 @@ import { AccountsModule } from '../accounts/accounts.module';
     AccountsModule,
   ],
   providers: [RegistrationService, RegistrationRepository],
-  controllers: [RegistrationController]
+  controllers: [RegistrationController],
+  exports: [RegistrationService],
 })
 export class RegistrationModule {}

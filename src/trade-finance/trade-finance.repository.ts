@@ -5,8 +5,8 @@ import { TradeDocument } from '../trade-documents/schema/trade-document.schema';
 import { TradeFinance } from './schemas/trade-finance.schema';
 import { plainToInstance } from 'class-transformer';
 import { TradeDocumentStatus, TradeDocumentType } from '../types/trade-documents.types';
-import { SearchQueryDto } from '../trade-documents/dtos/search-trade-documents.dto';
 import { TradeFinanceDealDto } from './dtos/trade-finance-deal.dto';
+import { SearchQueryDto } from '../common/dtos/search.dto';
 
 const financeableTradeDocumentsStates = [TradeDocumentStatus.ISSUED]
 

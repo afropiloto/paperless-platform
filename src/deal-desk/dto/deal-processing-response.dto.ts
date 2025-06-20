@@ -1,13 +1,20 @@
 import { Exclude, Expose, Transform, Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
-import { DealProcessingStatus, FundingDecisionType } from '../types/deal-desk.types';
-import { IsDate, IsEnum } from 'class-validator';
+import {
+  DealProcessingStatus,
+  FundingDecisionType,
+} from '../types/deal-desk.types';
+import { IsDate, IsEnum, IsString } from 'class-validator';
 import { Logger } from '@nestjs/common';
+import { ChecklistInstanceDto } from '../../due-diligence-checklists/dtos/checklist-instance.dto';
+import { TradeDocumentFileDTO } from '../../trade-documents/dtos/trade-document-file.dto';
+import { SearchResultsMetadata } from '../../common/dtos/search.dto';
+import { NoteResponseDto } from '../../common/dto/note-response.dto';
 
 export enum PromissoryNoteState {
-  IN_PROGRESS="IN_PROGRESS",
-  ISSUED="ISSUED",
-  SIGNED="SIGNED"
+  IN_PROGRESS = 'IN_PROGRESS',
+  ISSUED = 'ISSUED',
+  SIGNED = 'SIGNED',
 }
 
 @Exclude()
@@ -115,101 +122,34 @@ export class DealPromissoryNoteDto {
 
 @Exclude()
 export class DealPromissoryNoteDetailsDto {
-  private static readonly logger = new Logger(DealPromissoryNoteDetailsDto.name);
+  private static readonly logger = new Logger(
+    DealPromissoryNoteDetailsDto.name,
+  );
 
-  @ApiProperty({description: "Content for the promissory note"})
+  @ApiProperty({ description: 'Content for the promissory note' })
   @Expose()
   @Type(() => DealPromissoryNoteDto)
   content: DealPromissoryNoteDto;
 
-  @ApiProperty({description: "Status of the promissory note"})
+  @ApiProperty({ description: 'Status of the promissory note' })
   @Expose()
   @IsEnum(PromissoryNoteState)
-  status: PromissoryNoteState
+  status: PromissoryNoteState;
 
-  @ApiProperty({description: "Date the Promissory note was created"})
+  @ApiProperty({ description: 'Issued Promissory Note file details' })
+  @Expose()
+  @Type(() => TradeDocumentFileDTO)
+  issuedFile?: TradeDocumentFileDTO;
+
+  @ApiProperty({ description: 'Date the Promissory note was created' })
   @Expose()
   @IsDate()
   createdAt: Date;
 
-  @ApiProperty({description: "Date the Promissory note was last updated"})
+  @ApiProperty({ description: 'Date the Promissory note was last updated' })
   @Expose()
   @IsDate()
   updatedAt: Date;
-}
-
-
-@Exclude()
-export class NoteResponseDto {
-  @ApiProperty({
-    description: 'The note text',
-    example: 'Documentation verified and approved'
-  })
-  @Expose()
-  note: string;
-
-  @ApiProperty({
-    description: 'ID of the user who added the note',
-    example: 'user123'
-  })
-  @Expose()
-  user: string;
-
-  @ApiProperty({description: "Promissory Note Details for an approved deal"})
-  @Expose()
-  @Type(() => DealPromissoryNoteDetailsDto)
-  promissoryNote?: DealPromissoryNoteDetailsDto;
-
-  @ApiProperty({
-    description: 'When the note was created',
-    example: '2024-03-20T10:00:00Z'
-  })
-  @Expose()
-  createdAt: Date;
-}
-
-@Exclude()
-export class CheckListItemResponseDto {
-  @ApiProperty({
-    description: 'Title of the checklist item',
-    example: 'Verify company registration'
-  })
-  @Expose()
-  title: string;
-
-  @ApiProperty({
-    description: 'Current status of the checklist item',
-    enum: ['Not Started', 'In Progress', 'Adverse', 'Satisfactory'],
-    example: 'Satisfactory'
-  })
-  @Expose()
-  status: string;
-
-  @ApiProperty({
-    description: 'Notes added to this checklist item',
-    type: [NoteResponseDto]
-  })
-  @Expose()
-  @Type(() => NoteResponseDto)
-  notes: NoteResponseDto[];
-}
-
-@Exclude()
-export class SectionResponseDto {
-  @ApiProperty({
-    description: 'Title of the section',
-    example: 'Company Verification'
-  })
-  @Expose()
-  title: string;
-
-  @ApiProperty({
-    description: 'Checklist items in this section',
-    type: [CheckListItemResponseDto]
-  })
-  @Expose()
-  @Type(() => CheckListItemResponseDto)
-  items: CheckListItemResponseDto[];
 }
 
 @Exclude()
@@ -217,14 +157,14 @@ export class FundingDecisionResponseDto {
   @ApiProperty({
     description: 'The funding decision',
     enum: ['Awaiting Decision', 'Approved', 'Rejected'],
-    example: 'Approved'
+    example: 'Approved',
   })
   @Expose()
   decision: FundingDecisionType;
 
   @ApiProperty({
     description: 'Notes about the funding decision',
-    type: NoteResponseDto
+    type: NoteResponseDto,
   })
   @Expose()
   @Type(() => NoteResponseDto)
@@ -232,19 +172,18 @@ export class FundingDecisionResponseDto {
 
   @ApiProperty({
     description: 'Decision Date',
-    type: Date
+    type: Date,
   })
   @Expose()
   @Type(() => Date)
   createdAt: Date;
 }
 
-
 @Exclude()
 export class DealProcessingResponseDto {
   @ApiProperty({
     description: 'Unique identifier of the deal processing record',
-    example: '507f1f77bcf86cd799439011'
+    example: '507f1f77bcf86cd799439011',
   })
   @Expose()
   @Transform(({ value }) => value?.toString(), { toPlainOnly: true })
@@ -252,7 +191,7 @@ export class DealProcessingResponseDto {
 
   @ApiProperty({
     description: 'Reference to the trade finance deal',
-    example: '507f1f77bcf86cd799439012'
+    example: '507f1f77bcf86cd799439012',
   })
   @Expose()
   @Transform(({ value }) => value?.toString(), { toPlainOnly: true })
@@ -260,36 +199,56 @@ export class DealProcessingResponseDto {
 
   @ApiProperty({
     description: 'Account ID associated with the deal processing',
-    example: 'account123'
+    example: 'account123',
   })
   @Expose()
   @Transform(({ value }) => value?.toString(), { toPlainOnly: true })
   accountId: string;
 
   @ApiProperty({
+    description: 'Account ID associated with the deal processing',
+    example: 'account123',
+  })
+  @ApiProperty({
     description: 'Current status of the deal processing',
     enum: ['New', 'In Progress', 'Awaiting Decision', 'Approved', 'Rejected'],
-    example: 'In Progress'
+    example: 'In Progress',
   })
   @Expose()
   status: DealProcessingStatus;
 
   @ApiProperty({
-    description: 'Due diligence checklist sections',
-    type: [SectionResponseDto]
+    description: 'Due diligence checklist',
+    type: [ChecklistInstanceDto],
   })
+  @ApiProperty({
+    description:
+      'Due Diligence Checklist ID associated with the deal processing',
+    example: '507f1f77bcf86cd799439012',
+  })
+  @Expose()
+  @IsString()
+  dueDiligenceChecklistId: string;
 
-  @ApiProperty({description: "The version of the Due Diligence Checklist used for this deal", example:1})
+  @ApiProperty({
+    description: 'Due Diligence Checklist associated with the deal processing',
+    example: '507f1f77bcf86cd799439012',
+  })
+  @Expose()
+  @Type(() => ChecklistInstanceDto)
+  dueDiligenceChecks?: ChecklistInstanceDto;
+
+  @ApiProperty({
+    description:
+      'The version of the Due Diligence Checklist used for this deal',
+    example: 1,
+  })
   @Expose()
   dueDiligenceChecklistVersion: number;
 
-  @Expose()
-  @Type(() => SectionResponseDto)
-  dueDiligenceChecks: SectionResponseDto[];
-
   @ApiProperty({
     description: 'Funding decision information',
-    type: FundingDecisionResponseDto
+    type: FundingDecisionResponseDto,
   })
   @Expose()
   @Type(() => FundingDecisionResponseDto)
@@ -297,60 +256,59 @@ export class DealProcessingResponseDto {
 
   @ApiProperty({
     description: 'Deal Promissory Note',
-    type: DealPromissoryNoteDetailsDto
+    type: DealPromissoryNoteDetailsDto,
   })
   @Expose()
   @Type(() => DealPromissoryNoteDetailsDto)
   promissoryNote?: DealPromissoryNoteDetailsDto;
 
-
+  @Expose()
+  @Type(() => TradeDocumentFileDTO)
   @ApiProperty({
     description: 'When the record was created',
-    example: '2024-03-20T10:00:00Z'
+    example: '2024-03-20T10:00:00Z',
   })
   @Expose()
   createdAt: Date;
 
   @ApiProperty({
     description: 'When the record was last updated',
-    example: '2024-03-20T10:00:00Z'
+    example: '2024-03-20T10:00:00Z',
   })
   @Expose()
   updatedAt: Date;
 
-
-
   @ApiProperty({
     description: 'Name of the account associated with the deal',
-    example: 'Account Name'
+    example: 'Account Name',
   })
   @Expose()
   accountName: string;
 
   @ApiProperty({
     description: 'Total invoice amount for the deal',
-    example: 100000
+    example: 100000,
   })
   @Expose()
   invoiceTotal: number;
 
   @ApiProperty({
     description: 'Requested loan amount for the deal',
-    example: 50000
+    example: 50000,
   })
   @Expose()
   loanAmount: number;
 
   @ApiProperty({
     description: 'Collateral amount for the deal',
-    example: 20000
+    example: 20000,
   })
   @Expose()
   collateralAmount: number;
 
   @ApiProperty({
     description: 'Term of the loan in days',
-    example: 180
+    example: 180,
   })
   @Expose()
   loanTerm: number;
@@ -360,7 +318,7 @@ export class DealProcessingResponseDto {
 export class DealProcessingSummaryResponseDto {
   @ApiProperty({
     description: 'Unique identifier of the deal processing record',
-    example: '507f1f77bcf86cd799439011'
+    example: '507f1f77bcf86cd799439011',
   })
   @Expose()
   @Transform(({ value }) => value?.toString(), { toPlainOnly: true })
@@ -368,7 +326,7 @@ export class DealProcessingSummaryResponseDto {
 
   @ApiProperty({
     description: 'Reference to the trade finance deal',
-    example: '507f1f77bcf86cd799439012'
+    example: '507f1f77bcf86cd799439012',
   })
   @Expose()
   @Transform(({ value }) => value?.toString(), { toPlainOnly: true })
@@ -377,28 +335,28 @@ export class DealProcessingSummaryResponseDto {
   @ApiProperty({
     description: 'Current status of the deal processing',
     enum: ['New', 'In Progress', 'Awaiting Decision', 'Approved', 'Rejected'],
-    example: 'In Progress'
+    example: 'In Progress',
   })
   @Expose()
   status: DealProcessingStatus;
 
   @ApiProperty({
     description: 'When the record was created',
-    example: '2024-03-20T10:00:00Z'
+    example: '2024-03-20T10:00:00Z',
   })
   @Expose()
   createdAt: Date;
 
   @ApiProperty({
     description: 'When the record was last updated',
-    example: '2024-03-20T10:00:00Z'
+    example: '2024-03-20T10:00:00Z',
   })
   @Expose()
   updatedAt: Date;
 
   @ApiProperty({
     description: 'Account ID associated with the deal processing',
-    example: 'account123'
+    example: 'account123',
   })
   @Expose()
   @Transform(({ value }) => value?.toString(), { toPlainOnly: true })
@@ -406,35 +364,35 @@ export class DealProcessingSummaryResponseDto {
 
   @ApiProperty({
     description: 'Name of the account associated with the deal',
-    example: 'Account Name'
+    example: 'Account Name',
   })
   @Expose()
   accountName: string;
 
   @ApiProperty({
     description: 'Total invoice amount for the deal',
-    example: 100000
+    example: 100000,
   })
   @Expose()
   invoiceTotal: number;
 
   @ApiProperty({
     description: 'Requested loan amount for the deal',
-    example: 50000
+    example: 50000,
   })
   @Expose()
   loanAmount: number;
 
   @ApiProperty({
     description: 'Collateral amount for the deal',
-    example: 20000
+    example: 20000,
   })
   @Expose()
   collateralAmount: number;
 
   @ApiProperty({
     description: 'Term of the loan in days',
-    example: 180
+    example: 180,
   })
   @Expose()
   loanTerm: number;
@@ -442,8 +400,28 @@ export class DealProcessingSummaryResponseDto {
   @ApiProperty({
     description: 'Funding decision',
     enum: ['Awaiting Decision', 'Approved', 'Rejected'],
-    example: 'Approved'
+    example: 'Approved',
   })
   @Expose()
   fundingDecision: FundingDecisionType;
-} 
+
+  @ApiProperty({
+    description: 'Deal reference from trade finance',
+    example: 'DEAL-2024-001',
+  })
+  @Expose()
+  dealReference: string;
+}
+
+@Exclude()
+export class DealProcessingSearchResultsDto {
+  @ApiProperty({ description: 'List of matching deal processing records' })
+  @Expose()
+  @Type(() => DealProcessingSummaryResponseDto)
+  data?: DealProcessingSummaryResponseDto[];
+
+  @ApiProperty({ description: 'Search Results Metadata' })
+  @Expose()
+  @Type(() => SearchResultsMetadata)
+  metadata?: SearchResultsMetadata;
+}

@@ -4,8 +4,8 @@ import { Model, PipelineStage } from 'mongoose';
 import { NamedWallet } from './schemas/named-wallet.schema';
 import { CreateNamedWalletDto, NamedWalletDto, UpdateNamedWalletDto } from './dtos/named-wallets.dto';
 import { plainToInstance } from 'class-transformer';
-import { SearchQueryDto } from '../trade-documents/dtos/search-trade-documents.dto';
 import { NamedWalletsSearchResultsDto } from './dtos/named-wallets-search-results.dto';
+import { SearchQueryDto } from '../common/dtos/search.dto';
 
 
 @Injectable()

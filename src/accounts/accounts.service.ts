@@ -1,7 +1,8 @@
 import { BadRequestException, HttpException, HttpStatus, Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { AccountCreationDto, AccountUpdateDto } from './dtos/accounts.dto';
+import { AccountCreationDto, AccountStatusUpdateDto, AccountUpdateDto } from './dtos/accounts.dto';
 import { AccountsRepository } from './accounts.repository';
 import { isValidObjectId } from 'mongoose';
+import { SearchQueryDto } from '../common/dtos/search.dto';
 
 @Injectable()
 export class AccountsService {
@@ -29,7 +30,7 @@ export class AccountsService {
     return this.accountsRepository.accountExists(accountId);
   }
 
-  async updateAccount(accountId: string, updates: AccountUpdateDto) {
+  async updateAccount(accountId: string, updates: AccountUpdateDto | AccountStatusUpdateDto) {
     this.logger.debug({accountId, updates});
 
     const exists = await this.accountExists(accountId);
@@ -46,5 +47,9 @@ export class AccountsService {
 
   async findByWalletAddress(walletAddress: string) {
     return this.accountsRepository.findByWalletAddress(walletAddress);
+  }
+
+  searchAccounts(searchParams: SearchQueryDto, includes: string[]) {
+   return this.accountsRepository.findAccounts(searchParams, includes);
   }
 }

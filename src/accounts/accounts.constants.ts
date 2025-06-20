@@ -1,0 +1,1 @@
+export const ACCOUNT_SUMMARY_INCLUDE_FIELDS = ['accountId', 'accountName', 'status']

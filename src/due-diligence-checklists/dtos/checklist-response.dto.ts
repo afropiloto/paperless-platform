@@ -46,7 +46,19 @@ export class SectionResponseDto {
 @Exclude()
 export class ChecklistResponseDto {
   @ApiProperty({
-    description: 'Version number of the checklist',
+    description: "Unique id for checklist"
+  })
+  @Expose()
+  _id: string;
+
+  @ApiProperty({
+    description: "The Checklist Type"
+  })
+  @Expose()
+  checklistType: string;
+
+  @ApiProperty({
+    description: 'Version number of the checklist template',
     example: 1
   })
   @Expose()

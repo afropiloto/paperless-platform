@@ -1,11 +1,11 @@
 import { HttpException, HttpStatus, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { CreateNamedWalletDto, NamedWalletDto, UpdateNamedWalletDto } from './dtos/named-wallets.dto';
 import { NamedWalletsRepository } from './named-wallet.repository';
-import { SearchQueryDto } from '../trade-documents/dtos/search-trade-documents.dto';
 import { plainToInstance } from 'class-transformer';
 import { NamedWalletsSearchResultsDto } from './dtos/named-wallets-search-results.dto';
 import mongoose from 'mongoose';
 import { AccountsService } from '../accounts/accounts.service';
+import { SearchQueryDto } from '../common/dtos/search.dto';
 
 @Injectable()
 export class NamedWalletsService {

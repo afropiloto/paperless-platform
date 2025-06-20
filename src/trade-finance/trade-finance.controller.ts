@@ -1,15 +1,13 @@
 import { Body, Controller, Delete, Get, Logger, Param, Post, Put, Query } from '@nestjs/common';
 import { TradeFinanceService } from './trade-finance.service';
 import { ApiBody, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
-import {
-  SearchQueryDto,
-} from '../trade-documents/dtos/search-trade-documents.dto';
 import { CreateTradeFinanceDealDto } from './dtos/create-trade-finance-deal.dto';
 import { TradeFinanceDealDto } from './dtos/trade-finance-deal.dto';
 import { TradeFinanceSearchResultsDto } from './dtos/trade-finance-search-results.dto';
 import { plainToInstance } from 'class-transformer';
 import { SubmitTradeDetailFundingDto } from './dtos/submit-trade-detail-funding.dto';
 import { TradeDetailFundingAction } from './types/trade-finance.types';
+import { SearchQueryDto } from '../common/dtos/search.dto';
 
 @ApiTags('Trade Finance')
 @Controller('trade-finance')

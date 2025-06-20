@@ -21,7 +21,6 @@ import { AuditService } from '../audit/audit.service';
 import { AuditEventType } from '../audit/audit-event-type.enum';
 import { plainToInstance } from 'class-transformer';
 import {
-  SearchQueryDto,
   TradeDocumentsSearchResultsDto,
 } from './dtos/search-trade-documents.dto';
 import { AccountsService } from '../accounts/accounts.service';
@@ -33,6 +32,7 @@ import { FileStorageService } from '../file-storage/file-storage.interface';
 import { FILE_STORAGE_SERVICE } from '../file-storage/file-storage.constants';
 import { TradeDocumentFileDTO } from './dtos/trade-document-file.dto';
 import { TradeDocumentProtectedAttributesUpdateDto } from './dtos/trade-document-protected-attributes-update.dto';
+import { SearchQueryDto } from '../common/dtos/search.dto';
 
 
 

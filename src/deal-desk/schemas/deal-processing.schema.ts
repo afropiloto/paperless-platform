@@ -1,54 +1,15 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
-import { ChecklistItemStatus, DealProcessingStatus, FundingDecisionType } from '../types/deal-desk.types';
-import { Expose, Type } from 'class-transformer';
-import { ApiProperty } from '@nestjs/swagger';
-import { IsDate, IsEnum } from 'class-validator';
+import {
+  DealProcessingStatus,
+  FundingDecisionType,
+} from '../types/deal-desk.types';
 import { PromissoryNoteState } from '../dto/deal-processing-response.dto';
 import { TradeDocumentFile } from '../../common/schemas/trade-document-file.schema';
-
-@Schema()
-export class NoteEntry {
-  @Prop({ required: true })
-  note: string;
-
-  @Prop({ required: true })
-  user: string;
-
-  @Prop({ required: true, default: Date.now })
-  createdAt: Date;
-}
-
-export const NoteEntrySchema = SchemaFactory.createForClass(NoteEntry);
-
-@Schema({ timestamps: false, _id: false })
-export class ChecklistItem {
-   @Prop({ required: true })
-  title: string;
-
-  @Prop({
-    type: String,
-    enum: ChecklistItemStatus,
-    default: ChecklistItemStatus.NOT_STARTED,
-  })
-  status: ChecklistItemStatus;
-
-  @Prop({ type: [NoteEntry], default: [] })
-  @Type(() => NoteEntry)
-  notes: NoteEntry[];
-}
-
-@Schema({ timestamps: false, _id: false })
-export class Section {
-  @Prop({ required: true })
-  title: string;
+import { NoteEntry } from '../../common/schemas/note-entry.schema';
 
 
-  @Prop({ type: [ChecklistItem], default: [] })
-  items: ChecklistItem[];
-}
-
-@Schema({timestamps: true})
+@Schema({ timestamps: true })
 export class FundingDecisionDetails extends Document {
   @Prop({
     type: String,
@@ -57,8 +18,8 @@ export class FundingDecisionDetails extends Document {
   })
   decision: FundingDecisionType;
 
-  @Prop({type: NoteEntry})
-  decisionNotes?: NoteEntry
+  @Prop({ type: NoteEntry })
+  decisionNotes?: NoteEntry;
 }
 
 @Schema({ timestamps: true })
@@ -66,11 +27,11 @@ export class PromissoryNoteDetails extends Document {
   @Prop({ type: Object, default: {} })
   content: any;
 
-  @Prop(
-    {type: String,
-      enum: PromissoryNoteState,
-      default: PromissoryNoteState.IN_PROGRESS
-    })
+  @Prop({
+    type: String,
+    enum: PromissoryNoteState,
+    default: PromissoryNoteState.IN_PROGRESS,
+  })
   status: PromissoryNoteState;
 
   @Prop({ type: TradeDocumentFile })
@@ -93,13 +54,10 @@ export class DealProcessing extends Document {
   status: DealProcessingStatus;
 
   @Prop()
-  dueDiligenceChecklistVersion: number;
-
-  @Prop({ type: [Section], default: [] })
-  dueDiligenceChecks: Section[];
+  dueDiligenceChecklistId: string;
 
   @Prop({
-    type: FundingDecisionDetails
+    type: FundingDecisionDetails,
   })
   fundingDecision: FundingDecisionDetails;
 
@@ -113,4 +71,5 @@ export class DealProcessing extends Document {
   promissoryNote: PromissoryNoteDetails;
 }
 
-export const DealProcessingSchema = SchemaFactory.createForClass(DealProcessing); 
+export const DealProcessingSchema =
+  SchemaFactory.createForClass(DealProcessing);

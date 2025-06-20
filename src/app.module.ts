@@ -22,7 +22,8 @@ import { SiweModule } from './siwe/siwe.module';
 import { TradeFinanceModule } from './trade-finance/tradeFinanceModule';
 import { AppController } from './app.controller';
 import { DealDeskModule } from './deal-desk/deal-desk.module';
-import { TypeOrmModule } from '@nestjs/typeorm';
+import { DueDiligenceChecklistsModule } from './due-diligence-checklists/due-diligence-checklists.module';
+import { OnboardingModule } from './onboarding/onboarding.module';
 
 @Module({
   imports: [
@@ -70,6 +71,8 @@ import { TypeOrmModule } from '@nestjs/typeorm';
     SiweModule,
     TradeFinanceModule,
     DealDeskModule,
+    DueDiligenceChecklistsModule,
+    OnboardingModule,
   ],
   controllers: [AppController],
   providers: [],

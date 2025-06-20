@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import PDFDocument from 'pdfkit';
-import { PromissoryNote } from '../types/promissory-note.interface';
+import { PromissoryNote } from './types/promissory-note.interface';
 
 @Injectable()
 export class PromissoryNotePdfService {

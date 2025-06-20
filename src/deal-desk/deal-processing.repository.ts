@@ -1,13 +1,14 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, PipelineStage, Types } from 'mongoose';
-import { DealProcessing } from '../schemas/deal-processing.schema';
-import { DealProcessingStatus, FundingDecisionType } from '../types/deal-desk.types';
-import { Account } from '../../accounts/schemas/account.schema';
-import { TradeFinance } from '../../trade-finance/schemas/trade-finance.schema';
-import { PromissoryNoteState } from '../dto/deal-processing-response.dto';
-
-class CheckListItemStatus {}
+import { DealProcessing } from './schemas/deal-processing.schema';
+import { DealProcessingStatus, FundingDecisionType } from './types/deal-desk.types';
+import { Account } from '../accounts/schemas/account.schema';
+import { TradeFinance } from '../trade-finance/schemas/trade-finance.schema';
+import { DealProcessingResponseDto, PromissoryNoteState, DealProcessingSearchResultsDto, DealProcessingSummaryResponseDto } from './dto/deal-processing-response.dto';
+import { plainToInstance } from 'class-transformer';
+import { NewDealProcessing } from './dto/create-deal-processing.dto';
+import { SearchQueryDto, SortDirection } from '../common/dtos/search.dto';
 
 @Injectable()
 export class DealProcessingRepository {
@@ -22,13 +23,14 @@ export class DealProcessingRepository {
     private readonly tradeFinanceModel: Model<TradeFinance>,
   ) {}
 
-  async create(dealProcessing: DealProcessing): Promise<DealProcessing> {
+  async create(dealProcessing: NewDealProcessing): Promise<DealProcessingResponseDto> {
     this.logger.debug({ dealProcessing });
     try {
       const createdDealProcessing = new this.dealProcessingModel(
-        dealProcessing,
+        {...dealProcessing},
       );
-      return await createdDealProcessing.save();
+      const newDeal =  await createdDealProcessing.save();
+      return plainToInstance(DealProcessingResponseDto, newDeal);
     } catch (error) {
       this.logger.error(`Failed to create deal processing: ${error.message}`);
       throw error;
@@ -37,7 +39,7 @@ export class DealProcessingRepository {
 
   
 
-  async findById(id: string): Promise<DealProcessing> {
+  async findById(id: string): Promise<DealProcessingResponseDto> {
     try {
       const aggregationPipeline: PipelineStage[] = [
         {
@@ -46,9 +48,15 @@ export class DealProcessingRepository {
           },
         },
         {
+          $addFields: {
+            accountIdObjectId: { $toObjectId: '$accountId' },
+            dealIdObjectId: { $toObjectId: '$dealId' }
+          }
+        },
+        {
           $lookup: {
             from: 'accounts',
-            localField: 'accountId',
+            localField: 'accountIdObjectId',
             foreignField: '_id',
             as: 'account',
           },
@@ -56,7 +64,7 @@ export class DealProcessingRepository {
         {
           $lookup: {
             from: 'tradefinances',
-            localField: 'dealId',
+            localField: 'dealIdObjectId',
             foreignField: '_id',
             as: 'tradeFinance',
           },
@@ -92,8 +100,7 @@ export class DealProcessingRepository {
             status: 1,
             sections: 1,
             fundingDecision: 1,
-            dueDiligenceChecks: 1,
-            dueDiligenceChecklistVersion: 1,
+            dueDiligenceChecklistId: 1,
             promissoryNote: 1,
             createdAt: 1,
             updatedAt: 1,
@@ -110,7 +117,8 @@ export class DealProcessingRepository {
         throw new NotFoundException(`Deal processing with id ${id} not found`);
       }
 
-      return result[0];
+
+      return plainToInstance(DealProcessingResponseDto, result[0]);
     } catch (error) {
       this.logger.error(
         `Failed to find deal processing by id ${id}: ${error.message}`,
@@ -119,13 +127,41 @@ export class DealProcessingRepository {
     }
   }
 
-  async findAll(): Promise<DealProcessing[]> {
+  async findAll(searchParams?: SearchQueryDto): Promise<DealProcessingSearchResultsDto> {
     try {
-      const aggregationPipeline: PipelineStage[] = [
+      const {
+        queryTerm,
+        page = 1,
+        limit = 10,
+        orderBy = 'updatedAt',
+        orderDirection = SortDirection.DESC
+      } = searchParams || {};
+
+      const skip = (page - 1) * limit;
+      const sortDirection = orderDirection === SortDirection.ASC ? 1 : -1;
+
+      // Build match stage for search
+      const matchStage: any = {};
+      if (queryTerm) {
+        matchStage.$or = [
+          { accountName: { $regex: queryTerm, $options: 'i' } },
+          { dealReference: { $regex: queryTerm, $options: 'i' } },
+          { status: { $regex: queryTerm, $options: 'i' } }
+        ];
+      }
+
+      // Base pipeline with lookups and field additions
+      const basePipeline: PipelineStage[] = [
+        {
+          $addFields: {
+            accountIdObjectId: { $toObjectId: '$accountId' },
+            dealIdObjectId: { $toObjectId: '$dealId' }
+          }
+        },
         {
           $lookup: {
             from: 'accounts',
-            localField: 'accountId',
+            localField: 'accountIdObjectId',
             foreignField: '_id',
             as: 'account',
           },
@@ -133,7 +169,7 @@ export class DealProcessingRepository {
         {
           $lookup: {
             from: 'tradefinances',
-            localField: 'dealId',
+            localField: 'dealIdObjectId',
             foreignField: '_id',
             as: 'tradeFinance',
           },
@@ -142,6 +178,7 @@ export class DealProcessingRepository {
           $addFields: {
             accountName: { $arrayElemAt: ['$account.accountName', 0] },
             invoiceTotal: { $arrayElemAt: ['$tradeFinance.totalValue', 0] },
+            dealReference: { $arrayElemAt: ['$tradeFinance.dealReference', 0] },
             loanAmount: {
               $arrayElemAt: ['$tradeFinance.loanDetails.loanAmount', 0],
             },
@@ -163,122 +200,64 @@ export class DealProcessingRepository {
             accountId: { $toString: '$accountId' },
             accountName: 1,
             invoiceTotal: 1,
+            dealReference: 1,
             loanAmount: 1,
             collateralAmount: 1,
             loanTerm: 1,
             status: 1,
             sections: 1,
             fundingDecision: 1,
-            dueDiligenceChecks: 1,
-            dueDiligenceChecklistVersion: 1,
+            dueDiligenceChecklistId: 1,
             promissoryNote: 1,
             createdAt: 1,
             updatedAt: 1,
           },
         },
-        {
-          $sort: { updatedAt: -1 },
-        },
       ];
 
-      return await this.dealProcessingModel
-        .aggregate(aggregationPipeline)
+      // Add search filter if query term exists
+      if (Object.keys(matchStage).length > 0) {
+        basePipeline.push({ $match: matchStage });
+      }
+
+      // Get total count for pagination
+      const countPipeline = [...basePipeline, { $count: 'total' }];
+      const totalRecords = await this.dealProcessingModel
+        .aggregate(countPipeline)
         .exec();
+      
+      const total = totalRecords[0]?.total || 0;
+      const totalPages = Math.ceil(total / limit);
+
+      // Build data pipeline with sorting and pagination
+      const dataPipeline: PipelineStage[] = [
+        ...basePipeline,
+        { $sort: { [orderBy]: sortDirection as 1 | -1 } },
+        { $skip: skip },
+        { $limit: limit }
+      ];
+
+      const results = await this.dealProcessingModel
+        .aggregate(dataPipeline)
+        .exec();
+
+      const data = results.map(result => 
+        plainToInstance(DealProcessingSummaryResponseDto, result, {
+          excludeExtraneousValues: true,
+        })
+      );
+
+      return {
+        data,
+        metadata: {
+          page,
+          totalPages,
+          limit
+        }
+      };
     } catch (error) {
       this.logger.error(
         `Failed to find all deal processing records: ${error.message}`,
-      );
-      throw error;
-    }
-  }
-
-  async addNote(
-    id: string,
-    sectionIndex: number,
-    itemIndex: number,
-    note: string,
-    user: string,
-  ): Promise<DealProcessing> {
-    try {
-      const dealProcessing = await this.findById(id);
-
-      // Validate section and item indices
-      if (!dealProcessing.dueDiligenceChecks[sectionIndex]) {
-        throw new NotFoundException(
-          `Section at index ${sectionIndex} not found`,
-        );
-      }
-      if (!dealProcessing.dueDiligenceChecks[sectionIndex].items[itemIndex]) {
-        throw new NotFoundException(
-          `Item at index ${itemIndex} not found in section ${sectionIndex}`,
-        );
-      }
-      this.logger.debug({ sectionIndex, itemIndex, note, user });
-      // Add new note
-      const newNote = {
-        note,
-        user,
-        createdAt: new Date(),
-      };
-
-      // Use $push to add to the notes array
-      return await this.dealProcessingModel
-        .findByIdAndUpdate(
-          id,
-          {
-            $push: {
-              [`dueDiligenceChecks.${sectionIndex}.items.${itemIndex}.notes`]:
-                newNote,
-            },
-          },
-          { new: true },
-        )
-        .exec();
-    } catch (error) {
-      this.logger.error(
-        `Failed to add note to deal processing ${id}: ${error.message}`,
-      );
-      throw error;
-    }
-  }
-
-  async updateChecklistItemStatus(
-    id: string,
-    sectionIndex: number,
-    itemIndex: number,
-    status: CheckListItemStatus,
-  ): Promise<DealProcessing> {
-    try {
-      const dealProcessing = await this.findById(id);
-
-      // Validate section and item indices
-      if (!dealProcessing.dueDiligenceChecks[sectionIndex]) {
-        throw new NotFoundException(
-          `Section at index ${sectionIndex} not found`,
-        );
-      }
-      if (!dealProcessing.dueDiligenceChecks[sectionIndex].items[itemIndex]) {
-        throw new NotFoundException(
-          `Item at index ${itemIndex} not found in section ${sectionIndex}`,
-        );
-      }
-
-      // Update the status
-      return await this.dealProcessingModel
-        .findByIdAndUpdate(
-          id,
-          {
-            $set: {
-              [`dueDiligenceChecks.${sectionIndex}.items.${itemIndex}.status`]:
-                status,
-            },
-          },
-          { new: true },
-        )
-        .exec();
-    } catch (error) {
-      this.logger.error(
-        `Failed to update checklist item status for deal processing ${id}: ${error.message}`,
       );
       throw error;
     }

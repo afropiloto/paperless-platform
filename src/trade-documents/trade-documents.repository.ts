@@ -12,10 +12,10 @@ import {
 } from '../types/trade-documents.types';
 import { getUnsets } from './utils/trade-document.utils';
 import { plainToInstance } from 'class-transformer';
-import { SearchQueryDto } from './dtos/search-trade-documents.dto';
 import { TradeDocumentFileVariant } from './trade-document-file.types';
 import { TradeDocumentFileDTO } from './dtos/trade-document-file.dto';
 import { TradeDocumentProtectedAttributesUpdateDto } from './dtos/trade-document-protected-attributes-update.dto';
+import { SearchQueryDto } from '../common/dtos/search.dto';
 
 @Injectable()
 export class TradeDocumentsRepository {

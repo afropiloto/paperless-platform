@@ -1,13 +1,13 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Expose, Type } from 'class-transformer';
-import { TradeDocumentDto } from './trade-document.dto';
 import { SearchResultsMetadata } from '../../common/dtos/search.dto';
+import { AccountDetailsDto } from './accounts.dto';
 
-export class TradeDocumentsSearchResultsDto {
+export class AccountsSearchResultsDto {
   @ApiProperty({ description: 'List of matching trade documents' })
   @Expose()
-  @Type(() => TradeDocumentDto)
-  data?: TradeDocumentDto[];
+  @Type(() => AccountDetailsDto)
+  data?: AccountDetailsDto[];
 
   @ApiProperty({ description: 'Search Results Metadata' })
   @Expose()

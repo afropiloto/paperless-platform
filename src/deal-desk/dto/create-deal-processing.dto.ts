@@ -1,5 +1,7 @@
 import { IsMongoId, IsNotEmpty } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+import { Types } from 'mongoose';
+import { DealProcessingStatus, FundingDecisionType } from '../types/deal-desk.types';
 
 export class CreateDealProcessingDto {
   @ApiProperty({
@@ -17,4 +19,14 @@ export class CreateDealProcessingDto {
   @IsNotEmpty()
   @IsMongoId()
   accountId: string;
-} 
+}
+
+export interface NewDealProcessing {
+  dealId: string;
+  accountId: string;
+  status: DealProcessingStatus,
+  dueDiligenceChecklistId: string
+  fundingDecision: {
+    decision: FundingDecisionType,
+  },
+}

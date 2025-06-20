@@ -32,10 +32,10 @@ import { TradeDocumentType } from '../types/trade-documents.types';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { GeneralResponseDto } from '../common/common-dto';
 import { TRADE_DOCUMENT_SUMMARY_INCLUDE_FIELDS } from './trade-document.constants';
-import { SearchQueryDto } from './dtos/search-trade-documents.dto';
 import { TradeDocumentFileVariant } from './trade-document-file.types';
 import {Response} from 'express';
 import { plainToInstance } from 'class-transformer';
+import { SearchQueryDto } from '../common/dtos/search.dto';
 
 @ApiTags('Trade Documents')
 @Controller('trade-documents')

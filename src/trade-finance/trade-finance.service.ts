@@ -1,12 +1,13 @@
 import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { TradeFinanceRepository } from './trade-finance.repository';
 import { plainToInstance } from 'class-transformer';
-import { SearchQueryDto, TradeDocumentsSearchResultsDto } from '../trade-documents/dtos/search-trade-documents.dto';
+import { TradeDocumentsSearchResultsDto } from '../trade-documents/dtos/search-trade-documents.dto';
 import { TRADE_DOCUMENT_SUMMARY_INCLUDE_FIELDS } from '../trade-documents/trade-document.constants';
 import { CreateTradeFinanceDealDto } from './dtos/create-trade-finance-deal.dto';
 import { TradeFinanceDealDto } from './dtos/trade-finance-deal.dto';
 import { SubmitTradeDetailFundingDto } from './dtos/submit-trade-detail-funding.dto';
 import { TradeFinanceDealStatus } from './types/trade-finance.types';
+import { SearchQueryDto } from '../common/dtos/search.dto';
 
 @Injectable()
 export class TradeFinanceService {

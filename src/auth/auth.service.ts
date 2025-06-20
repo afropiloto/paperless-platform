@@ -33,13 +33,13 @@ export class AuthService {
         this.logger.warn('Login attempt for unauthorized account', { walletAddress });
         throw new UnauthorizedException("Account not authorized");
       }
-
+      this.logger.debug({accountDetails})
       // Generate JWT + Refresh Token
       const payload = { accountId: accountDetails.id };
       const accessToken = this.jwtService.sign(payload, { expiresIn: this.configService.get<string>('jwt.expiresIn') });
       const refreshToken = this.jwtService.sign(payload, { expiresIn: this.configService.get<string>('refreshToken.expiresIn')});
 
-      return plainToInstance(AuthResponseDto, { success: true, accessToken, refreshToken, accountId: accountDetails.id, accountName: accountDetails.accountName, accountEmail: accountDetails.emailAddress });
+      return plainToInstance(AuthResponseDto, { success: true, accessToken, refreshToken, accountId: accountDetails.id, accountName: accountDetails.accountName, accountEmail: accountDetails.contact.emailAddress });
     } catch (error) {
       this.logger.error('Login failed', {
         error: error.message,

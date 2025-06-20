@@ -9,6 +9,7 @@ import {
   Post,
   Res,
   NotFoundException,
+  Query,
 } from '@nestjs/common';
 import {
   ApiBody,
@@ -16,19 +17,23 @@ import {
   ApiParam,
   ApiResponse,
   ApiTags,
+  ApiQuery,
 } from '@nestjs/swagger';
-import { DealProcessingService } from '../services/deal-processing.service';
-import { ChecklistItemUpdateDto } from '../dto/update-checklist.dto';
+import { DealProcessingService } from './deal-processing.service';
+import { ChecklistItemUpdateDto } from '../due-diligence-checklists/dtos/update-checklist.dto';
 import {
   DealProcessingResponseDto,
-  DealProcessingSummaryResponseDto,
-} from '../dto/deal-processing-response.dto';
+  DealProcessingSearchResultsDto,
+} from './dto/deal-processing-response.dto';
 import { plainToInstance } from 'class-transformer';
-import { CreateDealProcessingDto } from '../dto/create-deal-processing.dto';
-import { FundingDecisionType } from '../types/deal-desk.types';
-import { UpdatePromissoryNoteDto } from '../dto/update-promissory-note.dto';
+import { CreateDealProcessingDto } from './dto/create-deal-processing.dto';
+import { FundingDecisionType } from './types/deal-desk.types';
+import { UpdatePromissoryNoteDto } from './dto/update-promissory-note.dto';
 import { Response } from 'express';
-import { DealAnalyticsDto } from '../dto/deal-analytics.dto';
+import { DealAnalyticsDto } from './dto/deal-analytics.dto';
+import { ChecklistInstanceDto } from '../due-diligence-checklists/dtos/checklist-instance.dto';
+
+import { SearchQueryDto } from '../common/dtos/search.dto';
 
 @ApiTags('Deal Processing')
 @Controller('deal-processing')
@@ -48,15 +53,25 @@ export class DealProcessingController {
   }
 
   @Get()
-  @ApiOperation({ summary: 'Get all deal processing records' })
+  @ApiOperation({ summary: 'Get all deal processing records with search, pagination and ordering' })
+  @ApiQuery({ name: 'queryTerm', required: false, description: 'Search term for Status, Account Name or Deal Reference' })
+  @ApiQuery({ name: 'page', required: false, description: 'Page number', type: Number })
+  @ApiQuery({ name: 'limit', required: false, description: 'Number of items per page', type: Number })
+  @ApiQuery({ name: 'orderBy', required: false, description: 'Field to order by' })
+  @ApiQuery({ name: 'orderDirection', required: false, description: 'Sort direction (asc or desc)' })
   @ApiResponse({
     status: 200,
-    description: 'Returns all deal processing records',
-    type: [DealProcessingResponseDto]
+    description: 'Returns paginated deal processing records with search results',
+    type: DealProcessingSearchResultsDto
   })
-  async getDealProcessingList(): Promise<DealProcessingResponseDto[]> {
-    const results = await this.dealProcessingService.getDealProcessingList();
-    return plainToInstance(DealProcessingResponseDto, results);
+  async getDealProcessingList(
+    @Query() searchParams: SearchQueryDto
+  ): Promise<DealProcessingSearchResultsDto> {
+    const results = await this.dealProcessingService.getDealProcessingList(searchParams);
+    this.logger.debug({results});
+    return plainToInstance(DealProcessingSearchResultsDto, results, {
+      excludeExtraneousValues: true,
+    });
   }
 
   @Get(':id')
@@ -69,8 +84,8 @@ export class DealProcessingController {
   async getDealProcessing(
     @Param('id') id: string,
   ): Promise<DealProcessingResponseDto> {
-    const result = await this.dealProcessingService.getDealProcessing(id);
-    return plainToInstance(DealProcessingResponseDto, result);
+    return await this.dealProcessingService.getDealProcessing(id);
+
   }
 
   @Post()
@@ -92,11 +107,8 @@ export class DealProcessingController {
   async createDealProcessing(
     @Body() createDto: CreateDealProcessingDto,
   ): Promise<DealProcessingResponseDto> {
-    const dealProcessing =
-      await this.dealProcessingService.createDealProcessing(createDto);
-    return plainToInstance(DealProcessingResponseDto, dealProcessing, {
-      excludeExtraneousValues: true,
-    });
+    return await this.dealProcessingService.createDealProcessing(createDto);
+
   }
 
   @Post(':id/funding-decision')
@@ -148,38 +160,6 @@ export class DealProcessingController {
         body.note,
         body.user ? body.user : 'unknown',
       );
-    return plainToInstance(DealProcessingResponseDto, dealProcessing, {
-      excludeExtraneousValues: true,
-    });
-  }
-
-  @Post(':id/checklist')
-  @ApiOperation({ summary: 'Update checklist items for a deal' })
-  @ApiParam({
-    name: 'id',
-    description: 'ID of the deal processing record',
-    type: 'string',
-  })
-  @ApiBody({
-    type: [ChecklistItemUpdateDto],
-  })
-  @ApiResponse({
-    status: HttpStatus.OK,
-    description: 'Checklist items updated successfully',
-    type: DealProcessingResponseDto,
-  })
-  @ApiResponse({
-    status: HttpStatus.NOT_FOUND,
-    description: 'Deal processing record or checklist item not found',
-  })
-  async updateChecklist(
-    @Param('id') id: string,
-    @Body() updates: ChecklistItemUpdateDto[],
-  ): Promise<DealProcessingResponseDto> {
-    const dealProcessing = await this.dealProcessingService.updateChecklist(
-      id,
-      updates,
-    );
     return plainToInstance(DealProcessingResponseDto, dealProcessing, {
       excludeExtraneousValues: true,
     });
@@ -291,5 +271,34 @@ export class DealProcessingController {
       }
       throw new NotFoundException('Failed to download promissory note');
     }
+  }
+
+  @Patch(':id/checklist')
+  @ApiOperation({ summary: 'Update a due diligence checklist for the deal' })
+  @ApiParam({
+    name: 'id',
+    description: 'ID of the checklist to update',
+    type: 'string',
+  })
+  @ApiBody({
+    type: [ChecklistItemUpdateDto],
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Checklist items updated successfully',
+    type: ChecklistInstanceDto,
+  })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'Deal processing record or checklist item not found',
+  })
+  async updateChecklist (
+    @Param('id') id: string,
+    @Body() updates: ChecklistItemUpdateDto[],
+  ): Promise<ChecklistInstanceDto> {
+    return await this.dealProcessingService.updateChecklist(
+      id,
+      updates,
+    );
   }
 }

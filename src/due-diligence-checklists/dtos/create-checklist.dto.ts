@@ -1,8 +1,9 @@
-import { IsArray, IsInt, IsNotEmpty, IsNumber, IsPositive, IsString, ValidateNested } from 'class-validator';
+import { IsArray, IsNotEmpty, IsString, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class ChecklistItemDto {
+
   @ApiProperty({
     description: 'Title of the checklist item',
     example: 'Verify company registration'
@@ -29,12 +30,6 @@ export class SectionDto {
   @IsNotEmpty()
   title: string;
 
-  @ApiProperty({description: 'The position of the section in the template', example: 1})
-  @IsNumber()
-  @IsPositive()
-  @IsInt()
-  position: number;
-
   @ApiProperty({
     description: 'Guidance text for the section',
     example: 'Complete all company verification checks before proceeding'
@@ -54,14 +49,6 @@ export class SectionDto {
 }
 
 export class CreateChecklistDto {
-  @ApiProperty({
-    description: 'Version number of the checklist',
-    example: 1
-  })
-  @IsNumber()
-  @IsNotEmpty()
-  version: number;
-
   @ApiProperty({
     description: 'List of sections in the checklist',
     type: [SectionDto]

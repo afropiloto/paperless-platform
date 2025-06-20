@@ -1,7 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { DueDiligenceChecklist } from '../schemas/due-diligence-checklist.schema';
+import { DueDiligenceChecklist } from './schemas/due-diligence-checklist.schema';
+import { DueDiligenceChecklistType } from './types/due-diligence-checklists.types';
+import { CreateChecklistDto } from './dtos/create-checklist.dto';
 
 @Injectable()
 export class DueDiligenceChecklistRepository {
@@ -12,9 +14,17 @@ export class DueDiligenceChecklistRepository {
     private readonly dueDiligenceChecklistModel: Model<DueDiligenceChecklist>,
   ) {}
 
-  async create(checklist: Partial<DueDiligenceChecklist>): Promise<DueDiligenceChecklist> {
+  async create(checklistType: DueDiligenceChecklistType, createDto: CreateChecklistDto): Promise<DueDiligenceChecklist> {
     try {
-      const createdChecklist = new this.dueDiligenceChecklistModel(checklist);
+      const latestOfType = await this.getLatest(checklistType);
+      let version: number;
+      if (!latestOfType) {
+        version = 1
+      } else {
+        version = latestOfType.version + 1
+      }
+      this.logger.debug({createDto, version, checklistType})
+      const createdChecklist = new this.dueDiligenceChecklistModel({version: version, checklistType: checklistType, ...createDto});
       return await createdChecklist.save();
     } catch (error) {
       this.logger.error(`Failed to create due diligence checklist: ${error.message}`);
@@ -22,10 +32,10 @@ export class DueDiligenceChecklistRepository {
     }
   }
 
-  async getLatest(): Promise<DueDiligenceChecklist> {
+  async getLatest(checklistType: DueDiligenceChecklistType): Promise<DueDiligenceChecklist> {
     try {
       return await this.dueDiligenceChecklistModel
-        .findOne()
+        .findOne({checklistType})
         .sort({ createdAt: -1 })
         .exec();
     } catch (error) {
@@ -34,10 +44,10 @@ export class DueDiligenceChecklistRepository {
     }
   }
 
-  async getByVersion(version: number): Promise<DueDiligenceChecklist> {
+  async getByVersion(checklistType: DueDiligenceChecklistType, version: number): Promise<DueDiligenceChecklist> {
     try {
       return await this.dueDiligenceChecklistModel
-        .findOne({ version })
+        .findOne({ checklistType, version })
         .exec();
     } catch (error) {
       this.logger.error(`Failed to get due diligence checklist by version ${version}: ${error.message}`);
@@ -45,10 +55,10 @@ export class DueDiligenceChecklistRepository {
     }
   }
 
-  async getAll(): Promise<DueDiligenceChecklist[]> {
+  async getAll(checklistType: DueDiligenceChecklistType): Promise<DueDiligenceChecklist[]> {
     try {
       return await this.dueDiligenceChecklistModel
-        .find()
+        .find({checklistType})
         .sort({ version: -1 })
         .exec();
     } catch (error) {
@@ -56,4 +66,4 @@ export class DueDiligenceChecklistRepository {
       throw error;
     }
   }
-} 
+}
