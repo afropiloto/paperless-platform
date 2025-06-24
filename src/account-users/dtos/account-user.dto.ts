@@ -1,22 +1,9 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Exclude, Expose, Type } from 'class-transformer';
-import { IsArray, IsEmail, IsEnum, IsMongoId, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { Exclude, Expose, Transform, Type } from 'class-transformer';
+import { IsArray, IsEmail, IsEnum, IsMongoId, IsOptional, IsString, ValidateNested, IsBoolean } from 'class-validator';
 import { AccountUserStatus } from '../schemas/account-user.schema';
-import { UserPermission } from '../types/application-permissions.types';
-
-// Legacy enums for backward compatibility
-export enum ApplicationModule {
-  DEAL_DESK = 'DealDesk',
-  PAIPERLESS = 'Paiperless',
-  ONBOARDING_DESK = 'OnboardingDesk',
-  PORTAL_ADMIN = 'PortalAdmin',
-}
-
-export enum ApplicationRole {
-  AGENT = 'Agent',
-  SUPERVISOR = 'Supervisor',
-  MANAGER = 'Manager',
-}
+import { ApplicationModule, ApplicationRole } from '../schemas/application-permissions.schema';
+import { SearchQueryDto } from '../../common/dtos/search.dto';
 
 // Legacy DTO for backward compatibility
 export class ApplicationPermissionsDto {
@@ -37,23 +24,41 @@ export class ApplicationPermissionsDto {
   role: ApplicationRole;
 }
 
-// New DTO for configurable permissions
+// DTO for configurable permissions (matches validation service)
 export class UserPermissionDto {
   @ApiProperty({ 
-    description: 'Application module ID (e.g., deal-desk, paiperless)',
-    example: 'deal-desk'
+    description: 'Application module (e.g., DealDesk, Paiperless)',
+    example: 'DealDesk'
   })
   @IsString()
   @Expose()
-  moduleId: string;
+  module: string;
 
   @ApiProperty({ 
-    description: 'User role ID (e.g., agent, supervisor, manager)',
-    example: 'supervisor'
+    description: 'User role (e.g., Agent, Supervisor, Manager)',
+    example: 'Supervisor'
   })
   @IsString()
   @Expose()
-  roleId: string;
+  role: string;
+}
+
+// Extended search DTO for account users endpoint
+export class AccountUsersSearchDto extends SearchQueryDto {
+  @ApiPropertyOptional({ 
+    description: 'Include deleted users in the results',
+    default: false,
+    example: false
+  })
+  @IsOptional()
+  @IsBoolean()
+  @Transform(({ value }) => {
+    if (value === 'true') return true;
+    if (value === 'false') return false;
+    return value; // Let validation handle invalid values
+  })
+  @Expose()
+  showDeleted?: boolean;
 }
 
 export class CreateAccountUserDto {
@@ -78,11 +83,11 @@ export class CreateAccountUserDto {
   walletAddress: string;
 
   @ApiProperty({ 
-    description: 'User permissions (new format)', 
+    description: 'User permissions', 
     type: [UserPermissionDto],
     example: [
-      { moduleId: 'deal-desk', roleId: 'supervisor' },
-      { moduleId: 'paiperless', roleId: 'agent' }
+      { module: 'DealDesk', role: 'Supervisor' },
+      { module: 'Paiperless', role: 'Agent' }
     ]
   })
   @IsArray()
@@ -122,11 +127,11 @@ export class UpdateAccountUserDto {
   walletAddress?: string;
 
   @ApiPropertyOptional({ 
-    description: 'User permissions (new format)', 
+    description: 'User permissions (partial update - only provided permissions will be updated)', 
     type: [UserPermissionDto],
     example: [
-      { moduleId: 'deal-desk', roleId: 'supervisor' },
-      { moduleId: 'paiperless', roleId: 'agent' }
+      { module: 'DealDesk', role: 'Supervisor' },
+      { module: 'Paiperless', role: 'Agent' }
     ]
   })
   @IsOptional()
@@ -176,7 +181,7 @@ export class AccountUserResponseDto {
   status: AccountUserStatus;
 
   @ApiProperty({ 
-    description: 'User permissions (new format)', 
+    description: 'User permissions (configurable format)', 
     type: [UserPermissionDto] 
   })
   @Expose()

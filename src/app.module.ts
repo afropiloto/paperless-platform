@@ -25,6 +25,8 @@ import { DealDeskModule } from './deal-desk/deal-desk.module';
 import { DueDiligenceChecklistsModule } from './due-diligence-checklists/due-diligence-checklists.module';
 import { OnboardingModule } from './onboarding/onboarding.module';
 import { AccountUsersModule } from './account-users/account-users.module';
+import { ApiKeyAuthModule } from './api-key-auth/api-key-auth.module';
+import { DocumentSigningModule } from './document-signing/document-signing.module';
 
 @Module({
   imports: [
@@ -75,6 +77,8 @@ import { AccountUsersModule } from './account-users/account-users.module';
     DueDiligenceChecklistsModule,
     OnboardingModule,
     AccountUsersModule,
+    ApiKeyAuthModule,
+    DocumentSigningModule,
   ],
   controllers: [AppController],
   providers: [],

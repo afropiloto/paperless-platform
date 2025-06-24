@@ -1,5 +1,5 @@
 import { Injectable, Logger, BadRequestException } from '@nestjs/common';
-import { APPLICATION_PERMISSIONS_CONFIG } from '../config/application-permissions.config';
+import { ApplicationModule, ApplicationRole } from '../schemas/application-permissions.schema';
 import { UserPermission } from '../types/application-permissions.types';
 
 @Injectable()
@@ -10,39 +10,28 @@ export class PermissionsValidationService {
    * Validates a single permission combination
    */
   validatePermission(permission: UserPermission): void {
-    const { moduleId, roleId } = permission;
+    const { module, role } = permission;
 
-    // Check if module exists and is active
-    const module = APPLICATION_PERMISSIONS_CONFIG.modules.find(m => m.id === moduleId);
-    if (!module) {
-      throw new BadRequestException(`Invalid module: ${moduleId}`);
-    }
-    if (!module.active) {
-      throw new BadRequestException(`Module ${module.name} is not active`);
+    // Check if module is valid
+    if (!Object.values(ApplicationModule).includes(module as ApplicationModule)) {
+      throw new BadRequestException(`Invalid module: ${module}`);
     }
 
-    // Check if role exists and is active
-    const role = APPLICATION_PERMISSIONS_CONFIG.roles.find(r => r.id === roleId);
-    if (!role) {
-      throw new BadRequestException(`Invalid role: ${roleId}`);
-    }
-    if (!role.active) {
-      throw new BadRequestException(`Role ${role.name} is not active`);
+    // Check if role is valid
+    if (!Object.values(ApplicationRole).includes(role as ApplicationRole)) {
+      throw new BadRequestException(`Invalid role: ${role}`);
     }
 
-    // Check if the combination is valid and active
-    const combination = APPLICATION_PERMISSIONS_CONFIG.validCombinations.find(
-      c => c.moduleId === moduleId && c.roleId === roleId
+    // Check if the combination is valid
+    const validCombinations = this.getValidCombinations();
+    const isValidCombination = validCombinations.some(
+      c => c.module === module && c.role === role
     );
-    if (!combination) {
+    
+    if (!isValidCombination) {
       throw new BadRequestException(
-        `Invalid permission combination: ${module.name} + ${role.name}. ` +
+        `Invalid permission combination: ${module} + ${role}. ` +
         `This combination is not allowed.`
-      );
-    }
-    if (!combination.active) {
-      throw new BadRequestException(
-        `Permission combination ${module.name} + ${role.name} is not active`
       );
     }
   }
@@ -56,7 +45,7 @@ export class PermissionsValidationService {
     }
 
     // Check for duplicate permissions
-    const permissionKeys = permissions.map(p => `${p.moduleId}:${p.roleId}`);
+    const permissionKeys = permissions.map(p => `${p.module}:${p.role}`);
     const uniqueKeys = new Set(permissionKeys);
     if (uniqueKeys.size !== permissions.length) {
       throw new BadRequestException('Duplicate permissions are not allowed');
@@ -72,81 +61,71 @@ export class PermissionsValidationService {
    * Gets all valid modules
    */
   getValidModules() {
-    return APPLICATION_PERMISSIONS_CONFIG.modules.filter(m => m.active);
+    return Object.values(ApplicationModule).map(module => ({
+      id: module,
+      name: module,
+      description: `${module} module`,
+      active: true
+    }));
   }
 
   /**
    * Gets all valid roles
    */
   getValidRoles() {
-    return APPLICATION_PERMISSIONS_CONFIG.roles.filter(r => r.active);
+    return Object.values(ApplicationRole).map(role => ({
+      id: role,
+      name: role,
+      description: `${role} role`,
+      active: true
+    }));
   }
 
   /**
    * Gets all valid permission combinations
    */
   getValidCombinations() {
-    return APPLICATION_PERMISSIONS_CONFIG.validCombinations.filter(c => c.active);
+    const combinations = [];
+    
+    // DealDesk combinations
+    combinations.push({ module: ApplicationModule.DEAL_DESK, role: ApplicationRole.AGENT });
+    combinations.push({ module: ApplicationModule.DEAL_DESK, role: ApplicationRole.SUPERVISOR });
+    combinations.push({ module: ApplicationModule.DEAL_DESK, role: ApplicationRole.MANAGER });
+    
+    // Paiperless combinations
+    combinations.push({ module: ApplicationModule.PAIPERLESS, role: ApplicationRole.AGENT });
+    combinations.push({ module: ApplicationModule.PAIPERLESS, role: ApplicationRole.SUPERVISOR });
+    combinations.push({ module: ApplicationModule.PAIPERLESS, role: ApplicationRole.MANAGER });
+    
+    // OnboardingDesk combinations
+    combinations.push({ module: ApplicationModule.ONBOARDING_DESK, role: ApplicationRole.AGENT });
+    combinations.push({ module: ApplicationModule.ONBOARDING_DESK, role: ApplicationRole.SUPERVISOR });
+    combinations.push({ module: ApplicationModule.ONBOARDING_DESK, role: ApplicationRole.MANAGER });
+    
+    // PortalAdmin combinations (more restricted)
+    combinations.push({ module: ApplicationModule.PORTAL_ADMIN, role: ApplicationRole.SUPERVISOR });
+    combinations.push({ module: ApplicationModule.PORTAL_ADMIN, role: ApplicationRole.MANAGER });
+    
+    return combinations;
   }
 
   /**
    * Gets valid roles for a specific module
    */
-  getValidRolesForModule(moduleId: string): string[] {
+  getValidRolesForModule(module: string): string[] {
     const validCombinations = this.getValidCombinations();
     return validCombinations
-      .filter(c => c.moduleId === moduleId)
-      .map(c => c.roleId);
+      .filter(c => c.module === module)
+      .map(c => c.role);
   }
 
   /**
    * Gets valid modules for a specific role
    */
-  getValidModulesForRole(roleId: string): string[] {
+  getValidModulesForRole(role: string): string[] {
     const validCombinations = this.getValidCombinations();
     return validCombinations
-      .filter(c => c.roleId === roleId)
-      .map(c => c.moduleId);
-  }
-
-  /**
-   * Converts legacy enum values to new format for backward compatibility
-   */
-  convertLegacyPermission(module: string, role: string): UserPermission {
-    const moduleMap: Record<string, string> = {
-      'DealDesk': 'deal-desk',
-      'Paiperless': 'paiperless',
-      'OnboardingDesk': 'onboarding-desk',
-      'PortalAdmin': 'portal-admin'
-    };
-
-    const roleMap: Record<string, string> = {
-      'Agent': 'agent',
-      'Supervisor': 'supervisor',
-      'Manager': 'manager'
-    };
-
-    const moduleId = moduleMap[module];
-    const roleId = roleMap[role];
-
-    if (!moduleId || !roleId) {
-      throw new BadRequestException(`Invalid legacy permission: ${module} + ${role}`);
-    }
-
-    return { moduleId, roleId };
-  }
-
-  /**
-   * Converts new format to legacy format for backward compatibility
-   */
-  convertToLegacyFormat(permission: UserPermission): { module: string; role: string } {
-    const module = APPLICATION_PERMISSIONS_CONFIG.modules.find(m => m.id === permission.moduleId);
-    const role = APPLICATION_PERMISSIONS_CONFIG.roles.find(r => r.id === permission.roleId);
-
-    if (!module || !role) {
-      throw new BadRequestException(`Invalid permission: ${permission.moduleId} + ${permission.roleId}`);
-    }
-
-    return { module: module.name, role: role.name };
+      .filter(c => c.role === role)
+      .map(c => c.module);
   }
 } 

@@ -13,9 +13,7 @@ import {
   IsString,
   ValidateNested,
 } from 'class-validator';
-import {
-  InvoicePartyDetails,
-} from '../schema/document-content.schema';
+
 import {
   TradeDocumentType,
 } from '../../types/trade-documents.types';

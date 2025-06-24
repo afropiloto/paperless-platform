@@ -1,11 +1,12 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { Registration } from './schemas/registration.schema';
+import { Registration, RegistrationDocumentDetails } from './schemas/registration.schema';
 import { plainToInstance } from 'class-transformer';
 import { RegistrationDetailsDto } from './dtos/registration-details.dto';
 import { CreateRegistrationDto } from './dtos/create-registration.dto';
 import { RegistrationDocumentFileDetails } from './models/registration-document-file-details';
+import { ObjectId } from 'mongodb';
 
 @Injectable()
 export class RegistrationRepository {
@@ -50,5 +51,15 @@ export class RegistrationRepository {
 
   async registrationForWalletAddressExists(accountWalletAddress: string) {
     return (await this.registrationModel.exists({ accountWalletAddress })) !== null;
+  }
+
+  async getFileDetailsById(registrationId: string, fileId: string) {
+    const registrationDetails =  await this.findByRegistrationId(registrationId);
+    this.logger.debug({registrationDetails})
+    const registrationFileDetails = registrationDetails.documents.filter((document) => document._id.toString() === fileId);
+    this.logger.debug({registrationFileDetails})
+
+    if (registrationFileDetails.length !== 1) {throw new NotFoundException('Registration File not found');}
+    return registrationFileDetails ? plainToInstance(RegistrationDocumentDetails, registrationFileDetails[0]) : null
   }
 }

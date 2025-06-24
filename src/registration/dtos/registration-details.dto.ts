@@ -2,7 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Expose, Transform, Type } from 'class-transformer';
 import { RegistrationDocumentType } from '../enums/document-type.enum';
 import { RegistrationDocumentStatus, RegistrationStatus } from '../enums/registration-status.enum';
-import { IS_ETHEREUM_ADDRESS, IsEmail, IsEthereumAddress, IsString, ValidateNested } from 'class-validator';
+import { IsEmail, IsEthereumAddress, IsString, ValidateNested } from 'class-validator';
 
 
 export class RegistrationAddressDto {
@@ -88,6 +88,11 @@ export class RegistrationCompanyDetailsDto {
 }
 
 export class RegistrationDocumentDto {
+  @ApiProperty({ description: 'Unique File Id' })
+  @Expose()
+  @Transform(({ value }) => value?.toString(), { toPlainOnly: true })
+  _id: string;
+
   @ApiProperty({ description: 'File name for  Registration Document' })
   @Expose()
   originalFilename: string;

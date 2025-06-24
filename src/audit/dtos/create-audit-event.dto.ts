@@ -16,6 +16,10 @@ export class CreateAuditEventDto {
   @IsOptional()
   originator?: string;
 
+  @IsString()
+  @IsOptional()
+  userId?: string;
+
   @IsOptional()
   @IsObject()
   details?: Record<string, any>;

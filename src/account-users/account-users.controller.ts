@@ -1,19 +1,20 @@
-import { 
-  Body, 
-  Controller, 
-  Get, 
-  HttpStatus, 
-  Logger, 
-  Param, 
-  Patch, 
-  Post, 
-  Query 
+import {
+  Body,
+  Controller,
+  Get,
+  HttpStatus,
+  Logger,
+  Param,
+  Patch,
+  Post,
+  Query,
+   UseGuards,
 } from '@nestjs/common';
 import { 
   ApiBody, 
   ApiOperation, 
   ApiParam, 
-  ApiQuery, 
+
   ApiResponse, 
   ApiTags 
 } from '@nestjs/swagger';
@@ -21,11 +22,13 @@ import { AccountUsersService } from './account-users.service';
 import { 
   CreateAccountUserDto, 
   UpdateAccountUserDto, 
-  AccountUserResponseDto 
-} from './dtos/account-user.dto';
-import { AccountUsersSearchResultsDto } from './dtos/account-users-search-results.dto';
-import { SearchQueryDto } from '../common/dtos/search.dto';
-import { plainToInstance } from 'class-transformer';
+  AccountUserResponseDto, 
+  AccountUsersSearchDto 
+} from './dtos';
+import { AccountUsersSearchResultsDto } from './dtos';
+import { ApiKeyProtectedSwagger } from '../utils/swagger.decorators';
+import { ApiKeyGuard } from '../api-key-auth/api-key.guard';
+import { ClientAccess } from '../api-key-auth/decorators/client-access.decorator';
 
 @ApiTags('Account Users')
 @Controller('account-users')
@@ -36,8 +39,8 @@ export class AccountUsersController {
 
   @Post()
   @ApiOperation({ 
-    summary: 'Create a new account user',
-    description: 'Creates a new user associated with an account with specified permissions and details'
+    summary: 'Create account user',
+    description: 'Creates a new account user with the specified permissions and details'
   })
   @ApiBody({ 
     type: CreateAccountUserDto,
@@ -63,10 +66,45 @@ export class AccountUsersController {
     return await this.accountUsersService.createAccountUser(createAccountUserDto);
   }
 
+  @ApiKeyProtectedSwagger()
+  @UseGuards(ApiKeyGuard)
+  @ClientAccess('paiperless-portal', 'internal-only')
+  @Get('account/:accountId')
+  @ApiOperation({ 
+    summary: 'Get account users by account ID',
+    description: 'Retrieves a paginated list of account users for a specific account with optional search and filtering'
+  })
+  @ApiParam({
+    name: 'accountId',
+    description: 'Account ID',
+    type: 'string',
+    example: '507f1f77bcf86cd799439011'
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Account users retrieved successfully',
+    type: AccountUsersSearchResultsDto
+  })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Invalid account ID format'
+  })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'Account not found'
+  })
+  async getAccountUsersByAccountId(
+    @Param('accountId') accountId: string,
+    @Query() searchParams: AccountUsersSearchDto,
+  ): Promise<AccountUsersSearchResultsDto> {
+    this.logger.debug("getAccountUsersByAccountId")
+    return await this.accountUsersService.getAccountUsersByAccountId(accountId, searchParams);
+  }
+
   @Get(':id')
   @ApiOperation({ 
     summary: 'Get account user by ID',
-    description: 'Retrieves a specific account user by their unique identifier'
+    description: 'Retrieves a specific account user by their unique ID'
   })
   @ApiParam({
     name: 'id',
@@ -76,7 +114,7 @@ export class AccountUsersController {
   })
   @ApiResponse({
     status: HttpStatus.OK,
-    description: 'Account user details retrieved successfully',
+    description: 'Account user retrieved successfully',
     type: AccountUserResponseDto
   })
   @ApiResponse({
@@ -87,17 +125,46 @@ export class AccountUsersController {
     status: HttpStatus.NOT_FOUND,
     description: 'Account user not found'
   })
-  async getAccountUserById(
-    @Param('id') id: string
-  ): Promise<AccountUserResponseDto> {
+  async getAccountUserById(@Param('id') id: string): Promise<AccountUserResponseDto> {
     this.logger.debug({ id });
     return await this.accountUsersService.getAccountUserById(id);
   }
 
+  @Get('wallet/:walletAddress')
+  @ApiOperation({ 
+    summary: 'Get account user by wallet address',
+    description: 'Retrieves an account user by their Ethereum wallet address'
+  })
+  @ApiParam({
+    name: 'walletAddress',
+    description: 'Ethereum wallet address',
+    type: 'string',
+    example: '0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6'
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Account user retrieved successfully',
+    type: AccountUserResponseDto
+  })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Invalid wallet address format'
+  })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'Account user not found'
+  })
+  async getAccountUserByWalletAddress(
+    @Param('walletAddress') walletAddress: string
+  ): Promise<AccountUserResponseDto> {
+    this.logger.debug({ walletAddress });
+    return await this.accountUsersService.findAccountUserByWalletAddress(walletAddress);
+  }
+
   @Patch(':id')
   @ApiOperation({ 
-    summary: 'Update account user',
-    description: 'Updates an existing account user with new information'
+    summary: 'Update account user (partial update)',
+    description: 'Updates specific fields of an existing account user. Only provided fields will be updated. Permissions can be partially updated by providing only the permissions you want to change.'
   })
   @ApiParam({
     name: 'id',
@@ -107,7 +174,7 @@ export class AccountUsersController {
   })
   @ApiBody({ 
     type: UpdateAccountUserDto,
-    description: 'Account user update data'
+    description: 'Partial account user update data - only include fields you want to update'
   })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -134,76 +201,11 @@ export class AccountUsersController {
     return await this.accountUsersService.updateAccountUser(id, updateAccountUserDto);
   }
 
-  @Get('account/:accountId')
-  @ApiOperation({ 
-    summary: 'Get account users by account ID',
-    description: 'Retrieves all users associated with a specific account with search, pagination, and ordering capabilities'
-  })
-  @ApiParam({
-    name: 'accountId',
-    description: 'Account ID',
-    type: 'string',
-    example: '507f1f77bcf86cd799439011'
-  })
-  @ApiQuery({ 
-    name: 'queryTerm', 
-    required: false, 
-    description: 'Search term for name, email address, wallet address, or status',
-    type: 'string'
-  })
-  @ApiQuery({ 
-    name: 'page', 
-    required: false, 
-    description: 'Page number', 
-    type: 'number',
-    example: 1
-  })
-  @ApiQuery({ 
-    name: 'limit', 
-    required: false, 
-    description: 'Number of items per page', 
-    type: 'number',
-    example: 10
-  })
-  @ApiQuery({ 
-    name: 'orderBy', 
-    required: false, 
-    description: 'Field to order by', 
-    type: 'string',
-    example: 'name'
-  })
-  @ApiQuery({ 
-    name: 'orderDirection', 
-    required: false, 
-    description: 'Sort direction (asc or desc)', 
-    type: 'string',
-    example: 'asc'
-  })
-  @ApiResponse({
-    status: HttpStatus.OK,
-    description: 'Account users retrieved successfully with pagination metadata',
-    type: AccountUsersSearchResultsDto
-  })
-  @ApiResponse({
-    status: HttpStatus.BAD_REQUEST,
-    description: 'Invalid account ID format'
-  })
-  async getAccountUsersByAccountId(
-    @Param('accountId') accountId: string,
-    @Query() searchParams: SearchQueryDto
-  ): Promise<AccountUsersSearchResultsDto> {
-    this.logger.debug({ accountId, searchParams });
-    const results = await this.accountUsersService.getAccountUsersByAccountId(accountId, searchParams);
-    return plainToInstance(AccountUsersSearchResultsDto, results, {
-      excludeExtraneousValues: true,
-    });
-  }
-
   // Permission configuration endpoints
   @Get('permissions/modules')
   @ApiOperation({ 
-    summary: 'Get all valid application modules',
-    description: 'Retrieves all active application modules that can be assigned to users'
+    summary: 'Get all valid modules',
+    description: 'Retrieves all valid application modules that can be assigned to users'
   })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -215,8 +217,8 @@ export class AccountUsersController {
 
   @Get('permissions/roles')
   @ApiOperation({ 
-    summary: 'Get all valid application roles',
-    description: 'Retrieves all active application roles that can be assigned to users'
+    summary: 'Get all valid roles',
+    description: 'Retrieves all valid application roles that can be assigned to users'
   })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -248,7 +250,7 @@ export class AccountUsersController {
     name: 'moduleId',
     description: 'Module ID',
     type: 'string',
-    example: 'deal-desk'
+    example: 'DealDesk'
   })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -271,7 +273,7 @@ export class AccountUsersController {
     name: 'roleId',
     description: 'Role ID',
     type: 'string',
-    example: 'supervisor'
+    example: 'Supervisor'
   })
   @ApiResponse({
     status: HttpStatus.OK,

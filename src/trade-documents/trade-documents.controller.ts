@@ -63,7 +63,7 @@ export class TradeDocumentsController {
     description: 'Trade Document details could not be found',
   })
   @ApiResponse({
-    status: 401,
+    status: 403,
     description: 'Not authorized to retrieve Trade Document details',
   })
   async getTradeDocumentFileById(
@@ -99,7 +99,7 @@ export class TradeDocumentsController {
     description: 'Trade Document details could not be found',
   })
   @ApiResponse({
-    status: 401,
+    status: 403,
     description: 'Not authorized to access Trade Document',
   })
   async uploadTradeDocumentFile(
@@ -174,7 +174,7 @@ export class TradeDocumentsController {
     description: 'Account not found'
   })
   @ApiResponse({
-    status: 401,
+    status: 403,
     description: 'Not authorized to access Trade Document'
   })
   async createTradeDocumentFromFile(
@@ -233,7 +233,7 @@ export class TradeDocumentsController {
     description: 'Trade Document details could not be found',
   })
   @ApiResponse({
-    status: 401,
+    status: 403,
     description: 'Not authorized to retrieve Trade Document details',
   })
   async getTradeDocumentById(
@@ -263,7 +263,7 @@ export class TradeDocumentsController {
     description: 'Account not found',
   })
   @ApiResponse({
-    status: 401,
+    status: 403,
     description: 'Not authorized to retrieve Trade Document details',
   })
   @ApiQuery({type: SearchQueryDto})
@@ -289,7 +289,7 @@ export class TradeDocumentsController {
     description: 'Trade Document or account not found',
   })
   @ApiResponse({
-    status: 401,
+    status: 403,
     description: 'Not authorized to retrieve Trade Document details',
   })
   async deleteTradeDocumentById(
@@ -320,7 +320,7 @@ export class TradeDocumentsController {
     description: 'Trade Document details could not be found',
   })
   @ApiResponse({
-    status: 401,
+    status: 403,
     description: 'Not authorized to retrieve Trade Document details',
   })
   async updateTradeDocumentById(
@@ -351,7 +351,7 @@ export class TradeDocumentsController {
     description: 'Trade Document details could not be found',
   })
   @ApiResponse({
-    status: 401,
+    status: 403,
     description: 'Not authorized to retrieve Trade Document details',
   })
   async createTradeDocument(

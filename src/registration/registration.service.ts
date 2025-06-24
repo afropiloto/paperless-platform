@@ -60,4 +60,19 @@ export class RegistrationService {
   async getRegistrationDetails(registrationId: string): Promise<RegistrationDetailsDto> {
     return this.registrationRepository.findByRegistrationId(registrationId);
   }
+
+  async getDocumentFileStream(registrationId: string, fileId: string) {
+    const fileDetails = await this.registrationRepository.getFileDetailsById(registrationId, fileId)
+
+    if (!fileDetails || !fileDetails.storedFileName) {
+      throw new NotFoundException("Registration Document File Not Found");
+    }
+    return {
+      stream: this.fileStorageService.streamFile(fileDetails.storedFileName),
+      headers: {
+        'Content-Disposition': `attachment; filename="${fileDetails.originalFilename || 'download'}"`,
+        'Content-Type': fileDetails.mimeType || 'application/octet-stream',
+      }
+    };
+  }
 }

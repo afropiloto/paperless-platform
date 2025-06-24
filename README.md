@@ -6,33 +6,34 @@
 
 # Todo:
 1. Setup ai.paiperless.com with dns-txt record for identify verification
-2. Security
-   * Need to add auth-guard to ensure requests have a valid session token and API key
-   * Add API Keys for applications
-   * Also should check the JWT token to ensure the user has access to the endpoint action?
-   * Need middleware to decode the JWT and pull out the accountId for downstream use
-   * Add Audit events for login
-3. Authentication Module
-    * Need to update the Authentication module to use the Account-Users service to verify the account.
-    * The JWT token should include their permissions from the Account-User service so that client applications know what they have access to
-    * We need a Paiperless Account with users creating
-4. Deal Desk Module
+2. Document signing
+  * Add service to interact with the Document Signing service to read data.
+  * Update retrieval methods to get current data from chain. Do this for In Progress items only but where an updated status is returned, update the status in the database.
+3.  Audit - ensure we are auditing the right things - including login
+4. Email Module - add EmailerService that integrates with an email provider to send emails.
+5. Security
+   * Need to add setup API Key guards on endpoints
+   * Need to add JWT guard to controllers
+   * Need to add UserPermissionGuards to controller methods
+   * We need a Paiperless Account with users creating
+6. Deal Desk Module
    * When a submitted deal is withdrawn, then update the deal using the deal-desk to be withdrawn
-   * Potentially look at issuing the Prom Note as a Trade Document linked to the Paiperless Account
+   * Create and Issue the Prom Note as a Trade Document linked to the Paiperless Account
    * Handle Promissory Note Signed event
-5. Check Verify issued document works as expected
-6. Registration Module
-    - Need to integrate virus scan to file uploads
-7. Trade Documents
-   * Integrate Virus scanning on initial file upload
-8. Add Data Extraction on initial file upload
+7. Check Verify issued document works as expected
+8. Virus Scan
+    * Need to integrate Virus Scan into Registration documents upload
+    * Need to integrate Virus Scan into Trade Documents File upload
+9. Add Data Extraction on initial file upload
    * Test data extraction and failure modes
-9. Account Analytics
-10. Update ReadMe with set up & deployment information
-11. Consider adding a Notifications feature that we can use to notify accounts of problems with documents or general issues
-12. Write Service and Controller Tests
+10. Account Analytics
+11. Need to ensure that if we suspend and account that all users related to that account are suspended - also for making accounts Active
+12. Need to ensure that when account users are being updated for an accountId, they are being updated by an account linked to the same accountId OR the user is a Voy Admin user
+13. Update ReadMe with set up & deployment information
+14. Consider adding a Notifications feature that we can use to notify accounts of problems with documents or general issues
+15. Write Service and Controller Tests
     * Can we get Cursor to create the tests?
-13. Consider adding a method to share issued documents with 3rd parties - this needs an email service
+16. Consider adding a method to share issued documents with 3rd parties - this needs an email service
     * Use time limited links?
 
 
@@ -44,6 +45,23 @@ ToDO
 
 ## Authentication Roles and Configuration
 ToDo: Add information about configuring applications and roles
+
+### Decoding the JWT token clientside and checking for permissions
+The following code snippet shows how the JWT can be decoded and the permissions accessed.
+``` typescript
+// Decode JWT token
+const decoded = jwt_decode(accessToken);
+
+// Check if user has permission for DealDesk module
+const hasDealDeskAccess = decoded.permissions.some(
+p => p.moduleId === 'deal-desk' && p.roleId === 'supervisor'
+);
+
+// Render UI based on permissions
+if (hasDealDeskAccess) {
+showDealDeskModule();
+}
+```
 
 ## Trade Trust setup
 The Paiperless application uses the TradeTrust packages to issue verifiable documents and mint transferable documents
@@ -119,3 +137,89 @@ __Note:__
 1. We may change this so that we have a base layer plus a Prod layer that allows the volume to be mapped to some persistent storage
 
 
+# Development
+## Security
+The platform has 2 layers of security that protects access to the API.
+1. Client API Keys
+2. User Permissions
+
+The Client API Keys restrict access to specific applications whereas the User Permissions restricts based on the business module and role that a user account might hold.
+
+### Client API Keys
+The Trade Docs Platform serves multiple client applications which are a mixture of public facing (Paiperless) and internal facing (Paiperless Portal and Vault).
+Some API endpoints are for internal use only, others should not be used internally and some are public.
+
+At a technical level, this is achieved through the `api-key-auth` module and decorators that can be applied to Controller endpoints.
+The `ApiKeyGuard` Guard added to an endpoint indicates that the request is protected by Client API Keys.
+The key needs to be provided by clients as the `x-api-key` header in the request.
+To determine which application groups are allowed to access the endpoint we specify these using the `@ClientAccess()` decorator and pass a set of application group labels.
+
+So a controller method with the following decorators is guarded by the ApiKeyGuard and only Client API keys that belong to one of the groups `'paiperless-portal'` or `'internal-only'` can access.
+If there is no API key provided. not recognised or the provided key is valid but does not belong to one of the groups then a HTTP 403 Forbidden response is returned 
+```typescript
+@UseGuards(ApiKeyGuard)
+@ClientAccess('paiperless-portal', 'internal-only')
+@Get('account/:accountId')
+async getAccountUsersByAccountId(
+  @Param('accountId') accountId: string,
+): Promise<AccountUsersSearchResultsDto> {
+  return await this.accountUsersService.getAccountUsersByAccountId(accountId, searchParams);
+}
+```
+
+#### Generating new API Keys
+Keys for client applications can be generated using the CLI script 
+
+`npx run script:generate-api-key '<clientName>' <groups>`
+
+Where `<clientName>` is the name given to the application for identification purposes (for example `paiperless`) and `<groups>` is a space delimited list of application groups.
+Example Usage:
+```bash
+npx run script:generate-api-key "paiperless-portal" shared internal-only paiperless-portal-only
+```
+This will generate output similar to the following:
+```bash
+✅ API key created for "paiperless-portal"
+🚨 Save this API key securely — you won’t see it again:
+a1b2c3d4:9f8e7c6b5a4...
+```
+This generates a new API Key attached to the client application and stores this in the `clients` collection but only the hash of the API is stored and used for comparison.
+The API key should be copied and saved securely as it is not recoverable. If lost, then a new key would be generated.
+
+### User Permissions
+While the Client API Key prevents client applications from accessing API endpoints they should not have access to, the `UserPermissionGuard` ensures that controllers check the user's permissions when endpoints are called.
+Aside from a few public API endpoints, all endpoints require a JWT token to be provided as a Bearer Token in the `Authorization` header.
+The JTW token is generated when the user authenticates and includes information such as:
+* Linked Account
+* User Name
+* Permissions
+The Permissions define the modules that the user account has access to and what the role they have. We currently support 3 roles:
+1. __Agent__ - the lowest level of authority and is an operation role used to carry out tasks that don't typically involve payments. For example, they can add new Trade Documents by can't issue a Trade Document.
+2. __Supervisor__ - represents an operational role that can perform tasks that involve costs. For example, on Paiperless a Supervisor can  A Supervisor can Issue Trade Documents and Request Funding.
+3. __Manager__ - represents an administrative role that can perform administrative tasks on the account. For example, on Paiperless a Manager can update the Account Details and add/remove user accounts.
+
+In the current implementation, the roles are hierarchical so a Supervisor is an Agent and a Supervisor.
+
+A module isn't strictly an application, for Paiperless App, we have the Trade Documents module and the Finance Module which can be assigned to different users.
+User Permissions are managed within the Paiperless application (for customer accounts) and within the Paiperless Portal for Paiperless accounts.
+
+When a user logs in, their permissions are retrieved and stored in the JWT token. This allows client applications to make decisions about which features to they can access.
+However, to enforce this we check these permissions at request time. 
+
+We configure endpoints with User Permission checks using Guards and decorators. 
+* The `JwtAuthGuard` enforces that a JWT token must be provided
+* The `UserPermissionGuard` enforces that user permissions should be checked.
+* The `@UserAccess()` decorator is used to specify the module and role that the user must have in order to access the endpoint
+
+For example:
+```typescript
+@UseGuards(JwtAuthGuard, UserPermissionGuard)
+@Controller('finance')
+export class FinanceController {
+  @Get('review')
+  @UserAccess({ module: 'Finance', minRole: 'Supervisor' }) // Supervisor or Manager
+  reviewStuff(@Req() req) {
+    return `Welcome ${req.user.name}, your level grants access to review.`;
+  }
+}
+```

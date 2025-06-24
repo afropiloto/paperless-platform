@@ -152,6 +152,12 @@ export class DealProcessingService {
     }
   }
 
+  // ToDo: This needs to use the PromissoryNoteContentDto
+  //  Also we need to create this as a Trade Document and then
+  //  1. Issue the Prom Note as a Transferable Document
+  //  2. Create a Deal Signing Event on chain
+  //  3. Sign the document on behalf of Paiperless
+  //  4. Create a Deal Signing record to track Deal Signing
   async issuePromissoryNote(id: string) {
     try {
       // Retrieve the stored Promissory Note details

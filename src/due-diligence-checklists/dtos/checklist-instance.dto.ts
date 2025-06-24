@@ -1,6 +1,5 @@
 import { Exclude, Expose, Transform, Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
-import { DealPromissoryNoteDetailsDto } from '../../deal-desk/dto/deal-processing-response.dto';
 import { DueDiligenceChecklistType } from '../types/due-diligence-checklists.types';
 
 @Exclude()

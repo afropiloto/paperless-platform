@@ -2,7 +2,7 @@ import {
   Body,
   Controller, FileTypeValidator, Get, Logger, MaxFileSizeValidator, Param,
   ParseFilePipe,
-  Post, UploadedFile,
+  Post, Res, UploadedFile,
   UseInterceptors,
 } from '@nestjs/common';
 import { ApiBody, ApiConsumes, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
@@ -12,6 +12,8 @@ import { CreateRegistrationDto } from './dtos/create-registration.dto';
 import { GeneralResponseDto } from '../common/common-dto';
 import { UploadRegistrationDocumentDto } from './dtos/upload-registration-document.dto';
 import { RegistrationDetailsDto } from './dtos/registration-details.dto';
+import { TradeDocumentFileVariant } from '../trade-documents/trade-document-file.types';
+import { Response } from 'express';
 
 @ApiTags('Registration')
 @Controller('registration')
@@ -81,6 +83,37 @@ export class RegistrationController {
     );
 
   }
+
+  @Get(':registrationId/files/:fileId')
+  @ApiOperation({
+                 summary:
+                 'Retrieves the registration document file content',
+               })
+  @ApiResponse({ status: 200, description: 'Document File retrieved' })
+  @ApiResponse({
+    status: 400,
+    description: 'registrationId or fileId is invalid',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Registration Document not be found',
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Not authorized to retrieve Registration Document details',
+  })
+  async getRegistrationDocumentFile(
+    @Param('registrationId') registrationId: string,
+    @Param('fileId') fileId: string,
+    @Res() res: Response
+  ) {
+
+    const {stream, headers} = await this.registrationService.getDocumentFileStream(registrationId, fileId);
+    res.set(headers);
+
+    return stream.pipe(res);
+  }
+
 
   @Get(':registrationId')
   @ApiOperation({ summary: 'Retrieves Registration Details'})

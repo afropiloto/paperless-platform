@@ -1,21 +1,32 @@
-import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { isValidObjectId } from 'mongoose';
 import { AccountUsersRepository } from './account-users.repository';
-import { CreateAccountUserDto, UpdateAccountUserDto, AccountUserResponseDto } from './dtos/account-user.dto';
+import {
+  AccountUserResponseDto,
+  AccountUsersSearchDto,
+  CreateAccountUserDto,
+  UpdateAccountUserDto,
+} from './dtos/account-user.dto';
 import { AccountUsersSearchResultsDto } from './dtos/account-users-search-results.dto';
-import { SearchQueryDto } from '../common/dtos/search.dto';
 import { PermissionsValidationService } from './services/permissions-validation.service';
 
 @Injectable()
 export class AccountUsersService {
   private readonly logger = new Logger(AccountUsersService.name);
-  
+
   constructor(
     private readonly accountUsersRepository: AccountUsersRepository,
     private readonly permissionsValidationService: PermissionsValidationService,
   ) {}
 
-  async createAccountUser(createAccountUserDto: CreateAccountUserDto): Promise<AccountUserResponseDto> {
+  async createAccountUser(
+    createAccountUserDto: CreateAccountUserDto,
+  ): Promise<AccountUserResponseDto> {
     this.logger.debug({ createAccountUserDto });
 
     // Validate accountId format
@@ -24,14 +35,22 @@ export class AccountUsersService {
     }
 
     // Validate permissions
-    if (createAccountUserDto.permissions && createAccountUserDto.permissions.length > 0) {
-      this.permissionsValidationService.validatePermissions(createAccountUserDto.permissions);
+    if (
+      createAccountUserDto.permissions &&
+      createAccountUserDto.permissions.length > 0
+    ) {
+      this.permissionsValidationService.validatePermissions(
+        createAccountUserDto.permissions,
+      );
     }
 
     return await this.accountUsersRepository.create(createAccountUserDto);
   }
 
-  async updateAccountUser(id: string, updateAccountUserDto: UpdateAccountUserDto): Promise<AccountUserResponseDto> {
+  async updateAccountUser(
+    id: string,
+    updateAccountUserDto: UpdateAccountUserDto,
+  ): Promise<AccountUserResponseDto> {
     this.logger.debug({ id, updateAccountUserDto });
 
     // Validate id format
@@ -46,8 +65,13 @@ export class AccountUsersService {
     }
 
     // Validate permissions if they are being updated
-    if (updateAccountUserDto.permissions && updateAccountUserDto.permissions.length > 0) {
-      this.permissionsValidationService.validatePermissions(updateAccountUserDto.permissions);
+    if (
+      updateAccountUserDto.permissions &&
+      updateAccountUserDto.permissions.length > 0
+    ) {
+      this.permissionsValidationService.validatePermissions(
+        updateAccountUserDto.permissions,
+      );
     }
 
     return await this.accountUsersRepository.update(id, updateAccountUserDto);
@@ -69,15 +93,31 @@ export class AccountUsersService {
     return accountUser;
   }
 
-  async getAccountUsersByAccountId(accountId: string, searchParams: SearchQueryDto): Promise<AccountUsersSearchResultsDto> {
-    this.logger.debug({ accountId, searchParams });
-
+  async getAccountUsersByAccountId(
+    accountId: string,
+    searchParams: AccountUsersSearchDto,
+  ): Promise<AccountUsersSearchResultsDto> {
     // Validate accountId format
     if (!isValidObjectId(accountId)) {
       throw new BadRequestException('Invalid account ID format');
     }
 
-    return await this.accountUsersRepository.findByAccountId(accountId, searchParams);
+    return await this.accountUsersRepository.findByAccountId(
+      accountId,
+      searchParams,
+    );
+  }
+
+  async findAccountUserByWalletAddress(
+    walletAddress: string,
+  ): Promise<AccountUserResponseDto | null> {
+    this.logger.debug({ walletAddress });
+
+    if (!walletAddress) {
+      throw new BadRequestException('Wallet address is required');
+    }
+
+    return await this.accountUsersRepository.findByWalletAddress(walletAddress);
   }
 
   // Helper methods for getting permission configuration

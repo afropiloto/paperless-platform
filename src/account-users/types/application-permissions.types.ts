@@ -25,6 +25,6 @@ export interface ApplicationPermissionsConfig {
 }
 
 export interface UserPermission {
-  moduleId: string;
-  roleId: string;
+  module: string;
+  role: string;
 } 
