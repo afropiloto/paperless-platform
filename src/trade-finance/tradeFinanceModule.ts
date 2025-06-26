@@ -13,6 +13,7 @@ import { TradeDocument, TradeDocumentSchema } from '../trade-documents/schema/tr
   ],
   controllers: [TradeFinanceController],
   providers: [TradeFinanceRepository, TradeFinanceService],
+  exports:[TradeFinanceService]
 })
 export class TradeFinanceModule {
 

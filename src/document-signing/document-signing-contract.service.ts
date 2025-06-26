@@ -1,6 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ethers } from 'ethers-v5';
 import { DocumentSigningStatus } from './types/document-signing.types';
+import { ConfigService } from '@nestjs/config';
+import { getPaiperlessSigner } from '../utils/web3-utils';
 
 // ABI for the DocumentSigningRegistry contract
 const DOCUMENT_SIGNING_ABI = [
@@ -37,15 +39,17 @@ export class DocumentSigningContractService {
   private contractAddress: string;
   private contract: ethers.Contract;
   private contractOwnerSigner: ethers.Signer;
+  private provider: ethers.providers.JsonRpcProvider;
   private readonly logger = new Logger(DocumentSigningContractService.name);
 
-  constructor(contractAddress: string, provider: ethers.Signer) {
-    this.contractAddress = contractAddress;
-    this.contractOwnerSigner = provider;
+  constructor(private configService: ConfigService) {
+    this.provider = new ethers.providers.JsonRpcProvider(this.configService.get<string>("DOCUMENT_SIGNING_RPC_URL"))
+    this.contractAddress = this.configService.get<string>("DOCUMENT_SIGNING_CONTRACT_ADDRESS");
+    this.contractOwnerSigner = getPaiperlessSigner(this.provider);
     this.contract = new ethers.Contract(
       this.contractAddress,
       DOCUMENT_SIGNING_ABI,
-      provider,
+      this.provider,
     );
   }
 
@@ -148,19 +152,19 @@ export class DocumentSigningContractService {
 
   /**
    * Signs a document that was previously created
-   * @param documentId The ID of the document to sign
+   * @param documentSigningId The ID of the document to sign
    * @param pdfBuffer The PDF document buffer (to verify hash)
    * @param signer The Ethers Signer for the event
    * @returns Transaction receipt of the signing operation
    */
   async signDocument(
-    documentId: string,
+    documentSigningId: string,
     pdfBuffer: Buffer,
     signer: ethers.Signer,
   ): Promise<ethers.ContractReceipt> {
     try {
       this.logger.debug(
-        `Signing document: ${documentId} with wallet: ${await signer.getAddress()});`,
+        `Signing document: ${documentSigningId} with wallet: ${await signer.getAddress()});`,
       );
       const contract = new ethers.Contract(
         this.contractAddress,
@@ -171,7 +175,7 @@ export class DocumentSigningContractService {
       const documentHash = ethers.utils.keccak256(pdfBuffer);
 
       // Get document details to verify
-      const details = await contract.getDocumentDetails(documentId);
+      const details = await contract.getDocumentDetails(documentSigningId);
       const storedHash = details[0]; // First return value is the document hash
 
       // Verify document hash matches
@@ -195,7 +199,7 @@ export class DocumentSigningContractService {
       const signature = await signer.signMessage(messageHash);
 
       // Submit the signature to the contract
-      const tx = await contract.signDocument(documentId, signature);
+      const tx = await contract.signDocument(documentSigningId, signature);
 
       // Wait for transaction to be mined
       return await tx.wait();
@@ -203,7 +207,7 @@ export class DocumentSigningContractService {
       console.error('Error signing document:', error);
       this.logger.error({
         message: 'Error signing document',
-        documentId,
+        documentId: documentSigningId,
         signer: await signer.getAddress(),
         error: error.error,
       });
@@ -252,5 +256,9 @@ export class DocumentSigningContractService {
    */
   async getRequiredSigners(documentId: string): Promise<string[]> {
     return await this.contract.getRequiredSigners(documentId);
+  }
+
+  getProvider() {
+    return this.provider;
   }
 }

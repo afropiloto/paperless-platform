@@ -5,7 +5,7 @@ import { DealProcessing } from './schemas/deal-processing.schema';
 import { DealProcessingStatus, FundingDecisionType } from './types/deal-desk.types';
 import { Account } from '../accounts/schemas/account.schema';
 import { TradeFinance } from '../trade-finance/schemas/trade-finance.schema';
-import { DealProcessingResponseDto, PromissoryNoteState, DealProcessingSearchResultsDto, DealProcessingSummaryResponseDto } from './dto/deal-processing-response.dto';
+import { DealProcessingResponseDto, DealProcessingSearchResultsDto, DealProcessingSummaryResponseDto } from './dto/deal-processing-response.dto';
 import { plainToInstance } from 'class-transformer';
 import { NewDealProcessing } from './dto/create-deal-processing.dto';
 import { SearchQueryDto, SortDirection } from '../common/dtos/search.dto';
@@ -24,7 +24,6 @@ export class DealProcessingRepository {
   ) {}
 
   async create(dealProcessing: NewDealProcessing): Promise<DealProcessingResponseDto> {
-    this.logger.debug({ dealProcessing });
     try {
       const createdDealProcessing = new this.dealProcessingModel(
         {...dealProcessing},
@@ -101,7 +100,7 @@ export class DealProcessingRepository {
             sections: 1,
             fundingDecision: 1,
             dueDiligenceChecklistId: 1,
-            promissoryNote: 1,
+            promissoryNoteId: 1,
             createdAt: 1,
             updatedAt: 1,
           },
@@ -111,14 +110,13 @@ export class DealProcessingRepository {
       const result = await this.dealProcessingModel
         .aggregate(aggregationPipeline)
         .exec();
-      this.logger.debug({ result });
 
       if (!result || result.length === 0) {
         throw new NotFoundException(`Deal processing with id ${id} not found`);
       }
 
 
-      return plainToInstance(DealProcessingResponseDto, result[0]);
+      return plainToInstance(DealProcessingResponseDto, {...result[0], promissoryNote: {documentId: result[0].promissoryNoteId}});
     } catch (error) {
       this.logger.error(
         `Failed to find deal processing by id ${id}: ${error.message}`,
@@ -265,17 +263,15 @@ export class DealProcessingRepository {
 
   async updateFundingDecision(
     id: string,
-    decision: FundingDecisionType,
+    dealDecision: FundingDecisionType,
     note: string,
     user: string,
-  ): Promise<DealProcessing> {
+    newDealStatus: DealProcessingStatus
+  ): Promise<DealProcessingResponseDto> {
     try {
-      this.logger.debug({ decision });
-      const dealDecision = this.getDealDecision(decision);
-      const dealStatus = this.getDealProcessingStatus(dealDecision);
 
-      this.logger.debug({ dealStatus });
-      return await this.dealProcessingModel
+
+      const updatedDocument =  await this.dealProcessingModel
         .findByIdAndUpdate(
           id,
           {
@@ -288,12 +284,14 @@ export class DealProcessingRepository {
                   createdAt: new Date()
                 }
               },
-              status: dealStatus,
+              status: newDealStatus,
             },
           },
           { new: true },
         )
         .exec();
+
+      return plainToInstance(DealProcessingResponseDto, updatedDocument);
     } catch (error) {
       this.logger.error(
         `Failed to update funding decision for deal processing ${id}: ${error.message}`,
@@ -304,27 +302,16 @@ export class DealProcessingRepository {
 
   async savePromissoryNoteDetails(
     id: string,
-    content: any,
-    status: PromissoryNoteState,
-    issuedFile?: any,
-  ): Promise<DealProcessing> {
+    tradeDocumentId: string
+  ): Promise<DealProcessingResponseDto> {
     try {
-      const updateData: any = {
-        'promissoryNote.content': content,
-        'promissoryNote.status': status,
-      };
+      this.logger.debug({id, tradeDocumentId});
+    const result = await this.dealProcessingModel.findByIdAndUpdate(
+      id,
+      {promissoryNoteId: tradeDocumentId},
+      { new: true }).exec();
 
-      if (issuedFile) {
-        updateData['promissoryNote.issuedFile'] = issuedFile;
-      }
-
-      return await this.dealProcessingModel
-        .findByIdAndUpdate(
-          id,
-          { $set: updateData },
-          { new: true },
-        )
-        .exec();
+      return plainToInstance(DealProcessingResponseDto, result)
     } catch (error) {
       this.logger.error(
         `Failed to save promissory note details for deal ${id}: ${error.message}`,
@@ -333,29 +320,7 @@ export class DealProcessingRepository {
     }
   }
 
-  private getDealProcessingStatus(decision: FundingDecisionType) {
-    switch (decision) {
-      case FundingDecisionType.APPROVED:
-        return DealProcessingStatus.AWAITING_AGREEMENT;
-      case FundingDecisionType.DECLINED:
-        return DealProcessingStatus.REJECTED;
-      default:
-        return DealProcessingStatus.IN_PROGRESS;
-    }
-  }
 
-  private getDealDecision(decision: FundingDecisionType) {
-    switch (decision.toString().toLowerCase()) {
-      case 'approve':
-      case 'approved':
-        return FundingDecisionType.APPROVED;
-      case 'decline':
-      case 'declined':
-        return FundingDecisionType.DECLINED;
-      default:
-        return FundingDecisionType.PENDING;
-    }
-  }
 
   async getDealAnalytics(): Promise<{ totalNewDeals: number; totalInProgressDeals: number; totalAwaitingAgreementDeals: number }> {
     try {
@@ -407,5 +372,15 @@ export class DealProcessingRepository {
       this.logger.error(`Failed to get deal analytics: ${error.message}`);
       throw error;
     }
+  }
+
+  async setSigningDetails(dealDeskId: string, signingDetailsId: string, status: DealProcessingStatus) {
+    await this.dealProcessingModel.findByIdAndUpdate(dealDeskId, {signingEventId: signingDetailsId, status: status})
+      .catch((error) => {
+        this.logger.error(
+          `Failed to update signing details for deal processing ${dealDeskId}: ${error.message}`,
+        );
+        throw error;
+      });
   }
 }

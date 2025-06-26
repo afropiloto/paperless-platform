@@ -6,7 +6,7 @@ export class CreateAuditEventDto {
   eventType: AuditEventType;
 
   @IsString()
-  accountId: string;
+  accountId?: string;
 
   @IsOptional()
   @IsString()

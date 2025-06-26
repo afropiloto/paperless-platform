@@ -15,6 +15,7 @@ import {
 } from 'class-validator';
 
 import {
+  TradeDocumentStatus,
   TradeDocumentType,
 } from '../../types/trade-documents.types';
 import { TradeTrustDocumentClass } from '../../trade-trust/trade-trust.types';
@@ -35,7 +36,7 @@ export class DocumentAmountDto {
   @Expose()
   @IsString()
   @IsNotEmpty()
-  currency: number;
+  currency: string;
 }
 
 export class PartyDetailsDto {
@@ -68,50 +69,28 @@ export class PartyDetailsDto {
 // Promissory Note DTO
 // *****************************************************************************
 export class PromissoryNoteLoanDetailsDto {
-  @ApiProperty({ description: 'Issue Date' })
-  @Expose()
-  @IsDate()
-  @Type(() => Date)
-  issueDate: Date;
-
-  @ApiProperty({ description: 'Maturity Date' })
-  @Expose()
-  @IsDate()
-  @Type(() => Date)
-  matuirityDate: Date;
-
   @ApiProperty({ description: 'Promise Amount' })
   @Expose()
   @IsNumber()
   @Type(() => DocumentAmountDto)
   amount: DocumentAmountDto;
 
-  @ApiProperty({ description: 'Issued By' })
-  @Expose()
-  @Type(() => PartyDetailsDto)
-  issuedBy: PartyDetailsDto;
-
-  @ApiProperty({ description: 'Payable To' })
-  @Expose()
-  @Type(() => PartyDetailsDto)
-  payableTo: PartyDetailsDto;
-
   @ApiProperty({ description: 'Place of Payment' })
   @Expose()
   @IsString()
   @IsOptional()
-  placeOfPayment: string;
+  placeOfPayment?: string;
 
   @ApiProperty({ description: 'Interest Rate for Loan' })
   @Expose()
   @IsNumber()
   interestRate: number;
 
-  @ApiProperty({ description: 'Terms and conditions' })
+  @ApiProperty({ description: 'Payment Terms' })
   @Expose()
   @IsString()
-  @IsOptional()
-  termsAndConditions?: string;
+  paymentTerms: string;
+
 }
 
 
@@ -420,7 +399,6 @@ export class PromissoryNoteContentDto {
   @Type(() => Date)
   maturityDate: Date;
 
-
   @ApiProperty({ description: 'Lender Details' })
   @Expose()
   @IsNotEmpty()
@@ -438,6 +416,12 @@ export class PromissoryNoteContentDto {
   @IsNotEmpty()
   @Type(() => PromissoryNoteLoanDetailsDto)
   loanDetails: PromissoryNoteLoanDetailsDto;
+
+  @ApiProperty({ description: 'Terms and conditions' })
+  @Expose()
+  @IsString()
+  @IsOptional()
+  specialConditions?: string;
 }
 
 export class OtherDocumentContentDto {
@@ -474,14 +458,14 @@ export class TradeDocumentDto {
   id: string;
 
   @ApiProperty({ description: 'Date the document was created' })
-  @Transform(({ value }) => value.toISOString(), { toPlainOnly: true })
+  @IsDate()
   @Expose()
-  createdAt: string;
+  createdAt: Date;
 
   @ApiProperty({ description: 'Date the document was last updated' })
-  @Transform(({ value }) => value.toISOString(), { toPlainOnly: true })
+  @IsDate()
   @Expose()
-  updatedAt: string;
+  updatedAt: Date;
 
   @ApiProperty({ description: 'Account Id' })
   @Expose()
@@ -501,8 +485,8 @@ export class TradeDocumentDto {
 
   @ApiProperty({ description: 'Current Document Status' })
   @Expose()
-  @IsString()
-  status: string;
+  @IsEnum(TradeDocumentStatus)
+  status: TradeDocumentStatus;
 
   @ApiProperty({ description: 'Document Content based on document type' })
   @Expose()
@@ -563,6 +547,11 @@ export class TradeDocumentDto {
   @IsOptional()
   @Type(() => TradeDocumentFileDTO)
   tradeTrustFile?: TradeDocumentFileDTO;
+
+  @ApiProperty({description: 'Internal Document Signing ID referencing the Signing Event for multi-party document signing'})
+  @Expose()
+  @IsOptional()
+  documentSigningId?: string
 }
 
 // *****************************************************************************

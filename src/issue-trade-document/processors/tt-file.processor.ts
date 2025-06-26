@@ -12,7 +12,7 @@ import { IssueDetailsDto } from '../../trade-documents/dtos/trade-document.dto';
 import { AuditEventType } from '../../audit/audit-event-type.enum';
 import { TradeTrustService } from '../../trade-trust/trade-trust.service';
 import { AuditService } from '../../audit/audit.service';
-import { IssueJobData } from '../issue-trade-document.types';
+import { IssueJobData } from '../../common/event-flows/issue-event-flow';
 import { TT_FILE_QUEUE } from '../../constants/app.constants';
 
 
@@ -58,7 +58,7 @@ export class TtFileProcessor extends WorkerHost {
     }
 
     const tradeDocumentFile =
-      await this.tradeDocumentsService.getTradeDocumentFile(
+      await this.tradeDocumentsService.getTradeDocumentFileVariantDetails(
         accountId,
         documentId,
         TradeDocumentFileVariant.ISSUED,

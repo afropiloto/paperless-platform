@@ -32,6 +32,9 @@ import { AccountsModule } from '../accounts/accounts.module';
     BullModule.registerFlowProducer({
       name: 'issue-trade-document'
     }),
+    BullModule.registerFlowProducer({
+      name: 'issue-multi-sign-trade-document'
+    }),
     AuditModule,
     FileStorageModule,
     TradeDocumentsModule,
@@ -45,6 +48,7 @@ import { AccountsModule } from '../accounts/accounts.module';
     IssuedFileProcessor,
     MintDocumentProcessor,
     FinaliseIssueProcessor
-  ]
+  ],
+  exports: [IssueTradeDocumentService]
 })
 export class IssueTradeDocumentModule {}

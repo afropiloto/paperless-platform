@@ -11,6 +11,12 @@ import { CommonModule } from '../common/common.module';
 import { FileStorageModule } from '../file-storage/file-storage.module';
 import { DueDiligenceChecklistsModule } from '../due-diligence-checklists/due-diligence-checklists.module';
 import { DueDiligenceChecklistsService } from '../due-diligence-checklists/due-diligence-checklists.service';
+import { TradeDocumentsModule } from '../trade-documents/trade-documents.module';
+import { ConfigModule } from '@nestjs/config';
+import { TradeFinanceModule } from '../trade-finance/tradeFinanceModule';
+import { AccountsModule } from '../accounts/accounts.module';
+import { IssueTradeDocumentModule } from '../issue-trade-document/issue-trade-document.module';
+import { DocumentSigningModule } from '../document-signing/document-signing.module';
 
 @Module({
   imports: [
@@ -21,7 +27,14 @@ import { DueDiligenceChecklistsService } from '../due-diligence-checklists/due-d
     ]),
     DueDiligenceChecklistsModule,
     CommonModule,
-    FileStorageModule
+    TradeDocumentsModule,
+    TradeFinanceModule,
+    FileStorageModule,
+    ConfigModule,
+    AccountsModule,
+    IssueTradeDocumentModule,
+    DocumentSigningModule,
+    FileStorageModule,
   ],
   controllers: [
     DealProcessingController,

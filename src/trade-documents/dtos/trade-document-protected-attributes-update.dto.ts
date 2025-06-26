@@ -1,15 +1,23 @@
-import { IsString } from 'class-validator';
+import { IsOptional, IsString } from 'class-validator';
 import { TradeDocumentStatus } from '../../types/trade-documents.types';
 
 
 export class TradeDocumentProtectedAttributesUpdateDto {
   @IsString()
-  documentTrackingId: string;
+  @IsOptional()
+  documentTrackingId?: string;
 
   @IsString()
-  verifiableDocumentHash: string
+  @IsOptional()
+  verifiableDocumentHash?: string
 
   @IsString()
-  status: TradeDocumentStatus;
+  @IsOptional()
+  status?: TradeDocumentStatus;
+
+  @IsString()
+  @IsOptional()
+  documentSigningId?: string;
+
 
 }

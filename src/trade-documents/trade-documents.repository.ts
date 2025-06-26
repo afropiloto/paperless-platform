@@ -46,6 +46,7 @@ export class TradeDocumentsRepository {
   ) {
     const filter = { accountId: accountId, _id: documentId };
     const unsets = getUnsets(tradeDocument.documentType);
+
     const updatedDocument = await this.tradeDocumentModel.findOneAndUpdate(
       filter,
       {

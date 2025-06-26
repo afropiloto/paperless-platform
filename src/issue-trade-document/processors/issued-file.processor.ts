@@ -5,7 +5,6 @@ import { Inject, Logger } from '@nestjs/common';
 import { FILE_STORAGE_SERVICE } from '../../file-storage/file-storage.constants';
 import { FileStorageService } from '../../file-storage/file-storage.interface';
 import { AuditService } from '../../audit/audit.service';
-import { IssueJobData } from '../issue-trade-document.types';
 import { TradeDocumentFileVariant } from '../../trade-documents/trade-document-file.types';
 import { ConfigService } from '@nestjs/config';
 import { createQRCode } from '../../utils/issued-pdf/createQRCode';
@@ -18,6 +17,7 @@ import { TradeDocumentProtectedAttributesUpdateDto } from '../../trade-documents
 import { AuditEventType } from '../../audit/audit-event-type.enum';
 import { ISSUED_FILE_QUEUE } from '../../constants/app.constants';
 import { FileData } from '../../types/trade-documents.types';
+import { IssueJobData } from '../../common/event-flows/issue-event-flow';
 
 @Processor(ISSUED_FILE_QUEUE)
 export class IssuedFileProcessor extends WorkerHost {

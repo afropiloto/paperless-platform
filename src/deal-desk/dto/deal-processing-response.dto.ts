@@ -4,18 +4,13 @@ import {
   DealProcessingStatus,
   FundingDecisionType,
 } from '../types/deal-desk.types';
-import { IsDate, IsEnum, IsString } from 'class-validator';
-import { Logger } from '@nestjs/common';
+import { IsDate, IsEnum, IsOptional, IsString } from 'class-validator';
 import { ChecklistInstanceDto } from '../../due-diligence-checklists/dtos/checklist-instance.dto';
 import { TradeDocumentFileDTO } from '../../trade-documents/dtos/trade-document-file.dto';
 import { SearchResultsMetadata } from '../../common/dtos/search.dto';
 import { NoteResponseDto } from '../../common/dto/note-response.dto';
-
-export enum PromissoryNoteState {
-  IN_PROGRESS = 'IN_PROGRESS',
-  ISSUED = 'ISSUED',
-  SIGNED = 'SIGNED',
-}
+import { PromissoryNoteContentDto } from '../../trade-documents/dtos/trade-document.dto';
+import { TradeDocumentStatus } from '../../types/trade-documents.types';
 
 @Exclude()
 export class PromissoryNotePartyDto {
@@ -122,19 +117,23 @@ export class DealPromissoryNoteDto {
 
 @Exclude()
 export class DealPromissoryNoteDetailsDto {
-  private static readonly logger = new Logger(
-    DealPromissoryNoteDetailsDto.name,
-  );
+
+  @ApiProperty({ description: 'Trade Document Id for Promissory Note' })
+  @IsOptional()
+  @Expose()
+  @Type(() => PromissoryNoteContentDto)
+  documentId?: string;
 
   @ApiProperty({ description: 'Content for the promissory note' })
+  @IsOptional()
   @Expose()
-  @Type(() => DealPromissoryNoteDto)
-  content: DealPromissoryNoteDto;
+  @Type(() => PromissoryNoteContentDto)
+  content?: PromissoryNoteContentDto;
 
   @ApiProperty({ description: 'Status of the promissory note' })
   @Expose()
-  @IsEnum(PromissoryNoteState)
-  status: PromissoryNoteState;
+  @IsEnum(TradeDocumentStatus)
+  status: TradeDocumentStatus;
 
   @ApiProperty({ description: 'Issued Promissory Note file details' })
   @Expose()
@@ -206,10 +205,6 @@ export class DealProcessingResponseDto {
   accountId: string;
 
   @ApiProperty({
-    description: 'Account ID associated with the deal processing',
-    example: 'account123',
-  })
-  @ApiProperty({
     description: 'Current status of the deal processing',
     enum: ['New', 'In Progress', 'Awaiting Decision', 'Approved', 'Rejected'],
     example: 'In Progress',
@@ -260,7 +255,14 @@ export class DealProcessingResponseDto {
   })
   @Expose()
   @Type(() => DealPromissoryNoteDetailsDto)
+  @IsOptional()
   promissoryNote?: DealPromissoryNoteDetailsDto;
+
+  @ApiProperty({description: "Internal Id for signing event details"})
+  @IsString()
+  @IsOptional()
+  @Expose()
+  signingEventId?: string;
 
   @Expose()
   @Type(() => TradeDocumentFileDTO)

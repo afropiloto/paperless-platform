@@ -3,11 +3,11 @@ import { Job } from 'bullmq';
 import { Logger } from '@nestjs/common';
 import { TradeDocumentsService } from '../../trade-documents/trade-documents.service';
 import { AuditService } from '../../audit/audit.service';
-import { IssueJobData } from '../issue-trade-document.types';
 import { IssueDetailsDto } from '../../trade-documents/dtos/trade-document.dto';
 import { TradeDocumentStatus } from '../../types/trade-documents.types';
 import { AuditEventType } from '../../audit/audit-event-type.enum';
 import { FINALISE_ISSUE_QUEUE } from '../../constants/app.constants';
+import { IssueJobData } from '../../common/event-flows/issue-event-flow';
 
 @Processor(FINALISE_ISSUE_QUEUE)
 export class FinaliseIssueProcessor extends WorkerHost {

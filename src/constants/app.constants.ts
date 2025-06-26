@@ -8,11 +8,18 @@ export const ISSUED_FILE_QUEUE = 'issued-file-queue';
 export const MINT_DOCUMENT_QUEUE = 'mint-document-queue';
 export const FINALISE_ISSUE_QUEUE = 'finalise-issue-queue';
 
+// Document Signing
+export const CREATE_DOCUMENT_SIGNING_EVENT_QUEUE = 'create-document-signing-event-queue';
+export const CREATE_DOCUMENT_SIGNING_FINALISE_EVENT = 'finalise-signing-event-creation';
+export const CREATE_DOCUMENT_SIGNING_ON_CHAIN_EVENT = 'create-on-chain-signing-event';
+export const CREATE_DOCUMENT_SIGNING_OFF_CHAIN_EVENT = 'create-off-chain-document-signing-event';
+
+
+
+export const SIGN_DOCUMENT_ON_BEHALF_QUEUE = 'sign-document-on-behalf-queue';
+
+export const CREATE_DOCUMENT_SIGNING_EVENT = 'create-document-signing-event';
+export const SIGN_DOCUMENT_EVENT = 'sign-document-event';
 
 export const DEEP_VIRUS_SCAN_QUEUE_NAME='deep-virus-scan'
 
-export const TRADE_TRUST_PREPARE_ISSUE_EVENT = "trade-trust-prepare-issue-event";
-export const   CREATE_TT_FILE_EVENT = "create-tt-file-event";
-export const CREATE_ISSUED_FILE_EVENT = "create-issued-file-event";
-export const MINT_TRANSFERABLE_DOCUMENT_EVENT="mint-transferable-document-event";
-export const ISSUE_TRADE_DOCUMENT_EVENT = "issue-trade-document-event";

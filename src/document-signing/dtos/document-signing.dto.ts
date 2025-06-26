@@ -1,7 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsDate, IsEnum, IsEthereumAddress, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { Expose, Type } from 'class-transformer';
-import { Document } from 'mongoose';
 import { DocumentSigningRole, DocumentSigningStatus } from '../types/document-signing.types';
 import { SearchResultsMetadata } from 'src/common/dtos/search.dto';
 
@@ -34,17 +33,18 @@ export class  DocumentSigningCreationDetailsDto {
   @Expose()
   description: string;
 
+
+  @ApiProperty({description: "Internal Account ID originating the document signing", example: "6787b17870f5941b216cb61d"})
+  @IsNotEmpty()
+  @IsString()
+  @Expose()
+  accountId: string;
+
   @ApiProperty({description: "Internal Id of the document being signed", example: "6787b17870f5941b216cb61d"})
   @IsNotEmpty()
   @IsString()
   @Expose()
   documentId: string;
-
-  @ApiProperty({description: "Ethereum Address for document signing"})
-  @IsNotEmpty()
-  @IsEthereumAddress()
-  @Expose()
-  documentSigningAddress: string;
 
   @ApiProperty({description: "Expiry Date for the signing"})
   @IsDate()
@@ -58,8 +58,29 @@ export class  DocumentSigningCreationDetailsDto {
 
 }
 
+export class UpdateSigningDetailsDto {
+
+  @ApiProperty({description: "DocumentId on of the document being signed on the Contract", example: "b216cb61d678f5941b216cb61d7b17870f59416787b17870"})
+  @IsNotEmpty()
+  @IsString()
+  @Expose()
+  signingDocumentId?: string;
+
+  @ApiProperty({description: "Last known status of the document signing"})
+  @IsEnum(DocumentSigningStatus)
+  @Expose()
+  lastKnownStatus?: DocumentSigningStatus;
+}
 
 export class DocumentSigningDetailsDto extends DocumentSigningCreationDetailsDto {
+
+  @ApiProperty({description: "Internal id for signing"})
+  @IsNotEmpty()
+  @IsString()
+  @Type(() => String)
+  @Expose()
+  id: string;
+
   @ApiProperty({description: "Date the Signing Details were created"})
   @IsNotEmpty()
   @IsString()
@@ -76,6 +97,12 @@ export class DocumentSigningDetailsDto extends DocumentSigningCreationDetailsDto
   @IsEnum(DocumentSigningStatus)
   @Expose()
   lastKnownStatus: DocumentSigningStatus;
+
+  @ApiProperty({description: "DocumentId on of the document being signed on the Contract", example: "b216cb61d678f5941b216cb61d7b17870f59416787b17870"})
+  @IsNotEmpty()
+  @IsString()
+  @Expose()
+  signingDocumentId: string;
 
 }
 

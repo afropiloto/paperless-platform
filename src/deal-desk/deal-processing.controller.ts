@@ -28,12 +28,14 @@ import {
 import { plainToInstance } from 'class-transformer';
 import { CreateDealProcessingDto } from './dto/create-deal-processing.dto';
 import { FundingDecisionType } from './types/deal-desk.types';
-import { UpdatePromissoryNoteDto } from './dto/update-promissory-note.dto';
+import { UpdateDealPromissoryNoteDto } from './dto/update-deal-promissory-note.dto';
 import { Response } from 'express';
 import { DealAnalyticsDto } from './dto/deal-analytics.dto';
 import { ChecklistInstanceDto } from '../due-diligence-checklists/dtos/checklist-instance.dto';
 
 import { SearchQueryDto } from '../common/dtos/search.dto';
+import { PromissoryNoteContentDto } from '../trade-documents/dtos/trade-document.dto';
+import { GeneralResponseDto } from '../common/common-dto';
 
 @ApiTags('Deal Processing')
 @Controller('deal-processing')
@@ -68,7 +70,7 @@ export class DealProcessingController {
     @Query() searchParams: SearchQueryDto
   ): Promise<DealProcessingSearchResultsDto> {
     const results = await this.dealProcessingService.getDealProcessingList(searchParams);
-    this.logger.debug({results});
+
     return plainToInstance(DealProcessingSearchResultsDto, results, {
       excludeExtraneousValues: true,
     });
@@ -152,7 +154,7 @@ export class DealProcessingController {
     @Param('id') id: string,
     @Body() body: { decision: FundingDecisionType; note: string; user: string },
   ): Promise<DealProcessingResponseDto> {
-    this.logger.debug({ body });
+
     const dealProcessing =
       await this.dealProcessingService.updateFundingDecision(
         id,
@@ -165,20 +167,16 @@ export class DealProcessingController {
     });
   }
 
-  @Patch(':id/promissory-note')
+  @Post(':dealId/promissory-note')
   @ApiOperation({
-    summary: 'Update promissory note details',
+    summary: 'Creates a promissory note for the deal',
     description:
-      'Creates or updates the promissory note details for a deal processing record',
+      'Creates a promissory note for the deal containing the standard information',
   })
   @ApiParam({
     name: 'id',
     description: 'The ID of the deal processing record',
     type: String,
-  })
-  @ApiBody({
-    type: UpdatePromissoryNoteDto,
-    description: 'The promissory note details to update',
   })
   @ApiResponse({
     status: 200,
@@ -189,23 +187,10 @@ export class DealProcessingController {
     status: 404,
     description: 'Deal processing record not found',
   })
-  async updatePromissoryNote(
-    @Param('id') id: string,
-    @Body() updateDto: UpdatePromissoryNoteDto,
-  ): Promise<DealProcessingResponseDto> {
-    this.logger.debug({ id, updateDto });
-    const result = await this.dealProcessingService.updatePromissoryNote(
-      id,
-      updateDto,
-    );
-    this.logger.debug('Before transformation:', { result });
-    const transformed = plainToInstance(DealProcessingResponseDto, result, {
-      excludeExtraneousValues: true,
-      enableImplicitConversion: true,
-    });
-    this.logger.debug('After transformation:', { transformed });
-    return transformed;
+  async createPromissoryNote( @Param('dealId') dealId: string) {
+    return this.dealProcessingService.createPromissoryNote(dealId);
   }
+
 
   @Patch(':id/promissory-note/issue')
   @ApiOperation({
@@ -227,9 +212,67 @@ export class DealProcessingController {
   })
   async issuePromissoryNote(
     @Param('id') id: string,
+  ): Promise<GeneralResponseDto> {
+    return await this.dealProcessingService.issuePromissoryNote(id);
+
+  }
+
+  @Patch(':id/promissory-note')
+  @ApiOperation({
+    summary: 'Update promissory note details',
+    description:
+      'Creates or updates the promissory note details for a deal processing record',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'The ID of the deal processing record',
+    type: String,
+  })
+  @ApiBody({
+    type: UpdateDealPromissoryNoteDto,
+    description: 'The promissory note details to update',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'The promissory note details have been successfully updated',
+    type: DealProcessingResponseDto,
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Deal processing record not found',
+  })
+  async updatePromissoryNote(
+    @Param('id') id: string,
+    @Body() updateDto: PromissoryNoteContentDto,
   ): Promise<DealProcessingResponseDto> {
-    this.logger.debug({dealId: id})
-    const result = await this.dealProcessingService.issuePromissoryNote(id);
+    return await this.dealProcessingService.updatePromissoryNote(
+      id,
+      updateDto,
+    );
+  }
+
+  @Patch(':id/promissory-note/sign')
+  @ApiOperation({
+    description: 'Signs the issued promissory note on behalf of Paiperless',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'The ID of the deal processing record',
+    type: String,
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'The promissory note has been issued',
+    type: DealProcessingResponseDto,
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Deal processing record not found',
+  })
+  async signPromissoryNote(
+    @Param('id') id: string,
+  ): Promise<DealProcessingResponseDto> {
+    const result = await this.dealProcessingService.signPromissoryNote(id);
     return plainToInstance(DealProcessingResponseDto, result, {
       excludeExtraneousValues: true,
       enableImplicitConversion: true,

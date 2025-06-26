@@ -27,6 +27,7 @@ import {
 } from './dtos/document-signing.dto';
 import { DocumentSigningStatus } from './types/document-signing.types';
 import { SearchQueryDto } from 'src/common/dtos/search.dto';
+import { GeneralResponseDto } from '../common/common-dto';
 
 @ApiTags('Document Signing')
 @Controller('document-signing')
@@ -202,7 +203,7 @@ export class DocumentSigningController {
   })
   async create(
     @Body(ValidationPipe) creationDetails: DocumentSigningCreationDetailsDto
-  ): Promise<DocumentSigningDetailsDto> {
-    return await this.documentSigningService.create(creationDetails);
+  ): Promise<GeneralResponseDto> {
+    return await this.documentSigningService.createDocumentSigningEvent(creationDetails);
   }
 }

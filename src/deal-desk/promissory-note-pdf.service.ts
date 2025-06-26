@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import PDFDocument from 'pdfkit';
-import { PromissoryNote } from './types/promissory-note.interface';
+import { PromissoryNoteContentDto } from '../trade-documents/dtos/trade-document.dto';
 
 @Injectable()
 export class PromissoryNotePdfService {
@@ -18,7 +18,7 @@ export class PromissoryNotePdfService {
     }
   }
 
-  async generatePromissoryNotePdf(promissoryNote: PromissoryNote): Promise<Buffer> {
+  async generatePromissoryNotePdf(promissoryNote: PromissoryNoteContentDto): Promise<Buffer> {
     return new Promise((resolve, reject) => {
       try {
         const chunks: Buffer[] = [];
@@ -55,17 +55,17 @@ export class PromissoryNotePdfService {
            .moveDown(2);
 
         // Add amount and currency
-        doc.text(`PRINCIPAL AMOUNT: ${promissoryNote.currency} ${promissoryNote.amount.toLocaleString()}`)
+        doc.text(`PRINCIPAL AMOUNT: ${promissoryNote.loanDetails.amount.currency} ${promissoryNote.loanDetails.amount.value.toLocaleString()}`)
            .moveDown();
 
         // Add interest rate
-        doc.text(`INTEREST RATE: ${promissoryNote.interestRate}% per annum`)
+        doc.text(`INTEREST RATE: ${promissoryNote.loanDetails.interestRate}% per annum`)
            .moveDown();
 
         // Add payment terms
         doc.text('PAYMENT TERMS:')
            .moveDown(0.5)
-           .text(promissoryNote.paymentTerms)
+           .text(promissoryNote.loanDetails.paymentTerms)
            .moveDown();
 
         // Add special conditions if any

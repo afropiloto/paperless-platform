@@ -112,7 +112,10 @@ export class TradeDocument {
   verifiableDocumentHash: string;
 
   @Prop({required: false})
-  documentTrackingId: string;
+  documentTrackingId?: string;
+
+  @Prop({require: false})
+  documentSigningId?: string;
 
 }
 

@@ -1,6 +1,6 @@
 import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { Job } from 'bullmq';
-import { IssueJobData } from '../issue-trade-document.types';
+import { IssueJobData } from '../../common/event-flows/issue-event-flow';
 import { Logger } from '@nestjs/common';
 import { TradeDocumentsService } from '../../trade-documents/trade-documents.service';
 import { TradeTrustService } from '../../trade-trust/trade-trust.service';

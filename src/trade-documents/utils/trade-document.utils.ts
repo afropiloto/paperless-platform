@@ -16,6 +16,7 @@ export function getTradeDocumentContentField(tradeDocumentType: string): string 
 }
 
 export function getUnsets(tradeDocumentType: string) {
+
   switch (tradeDocumentType.toLowerCase()) {
     case TradeDocumentType.INVOICE.toLowerCase():
       return {

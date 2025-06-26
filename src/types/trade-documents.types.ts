@@ -11,6 +11,7 @@ export enum TradeDocumentStatus {
   IN_PROGRESS="In Progress",
   READY_TO_ISSUE="Ready to Issue",
   ISSUED="Issued",
+  SIGNED="Signed",
   PROCESSING="Processing",
 }
 export enum TradeDocumentType {
@@ -70,8 +71,8 @@ export interface PromissoryNotePartyDetails {
   companyName: string;
   address: string;
   country: string;
-  signatoryName: string;
-  dateSigned: string;
+  signatoryName?: string;
+  dateSigned?: string;
 }
 
 export interface PromissoryNoteLoanDetails {
@@ -80,8 +81,8 @@ export interface PromissoryNoteLoanDetails {
   loanPeriod: string;
   loanPeriodUnit: LoanPeriodUnit;
   interestRate: number;
-  paymentSchedule: string;
-  loanTerms: string;
+  paymentSchedule?: string;
+  loanTerms?: string;
 }
 
 export interface PromissoryNoteContent {

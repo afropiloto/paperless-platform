@@ -21,10 +21,16 @@ export class DocumentSigning extends Document {
   description: string;
 
   @Prop({ required: true, type: String })
-  documentSigningAddress: string;
+  contractAddress: string;
 
   @Prop({ type: String, required: true })
   documentId: string;
+
+  @Prop({type: String, required: true})
+  accountId: string;
+
+  @Prop({ type: String, required: true })
+  signingDocumentId: string;
 
   @Prop({
     type: [String],

@@ -4,8 +4,6 @@ import {
   DealProcessingStatus,
   FundingDecisionType,
 } from '../types/deal-desk.types';
-import { PromissoryNoteState } from '../dto/deal-processing-response.dto';
-import { TradeDocumentFile } from '../../common/schemas/trade-document-file.schema';
 import { NoteEntry } from '../../common/schemas/note-entry.schema';
 
 
@@ -20,22 +18,6 @@ export class FundingDecisionDetails extends Document {
 
   @Prop({ type: NoteEntry })
   decisionNotes?: NoteEntry;
-}
-
-@Schema({ timestamps: true })
-export class PromissoryNoteDetails extends Document {
-  @Prop({ type: Object, default: {} })
-  content: any;
-
-  @Prop({
-    type: String,
-    enum: PromissoryNoteState,
-    default: PromissoryNoteState.IN_PROGRESS,
-  })
-  status: PromissoryNoteState;
-
-  @Prop({ type: TradeDocumentFile })
-  issuedFile?: TradeDocumentFile;
 }
 
 @Schema({ timestamps: true })
@@ -67,8 +49,11 @@ export class DealProcessing extends Document {
   @Prop({ type: Date })
   fundingDecisionDate: Date;
 
-  @Prop({ type: PromissoryNoteDetails, required: false })
-  promissoryNote: PromissoryNoteDetails;
+  @Prop({type: String, required: false})
+  signingEventId?: string;
+
+  @Prop({ type: String, required: false })
+  promissoryNoteId?: string;
 }
 
 export const DealProcessingSchema =

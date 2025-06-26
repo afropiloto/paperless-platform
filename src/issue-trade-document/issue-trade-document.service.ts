@@ -31,15 +31,18 @@ import {
 
 import { GeneralResponseDto } from '../common/common-dto';
 import { plainToInstance } from 'class-transformer';
-import {
-  FINALISE_ISSUE_QUEUE,
-  ISSUED_FILE_QUEUE,
-  MINT_DOCUMENT_QUEUE,
-  TRADE_DOCUMENT_QUEUE,
-  TT_FILE_QUEUE,
-} from '../constants/app.constants';
+
 import { generateTrackingId } from '../utils/issued-pdf/document-tracking';
-import { IssueJobData } from './issue-trade-document.types';
+import {
+  getIssueMultiSignTradeDocumentEventFlow,
+  getIssueTradeDocumentEventFlow,
+  IssueJobData,
+} from '../common/event-flows/issue-event-flow';
+import { DocumentSigningCreationDetailsDto } from '../document-signing/dtos/document-signing.dto';
+import {
+  CreateDocumentSigningEventJobData
+} from '../document-signing/types/signing-events.types';
+
 
 export interface IssueTradeDocumentDetails {
   accountId: string;
@@ -54,7 +57,9 @@ export class IssueTradeDocumentService {
     private readonly auditService: AuditService,
     private readonly tradeDocumentsService: TradeDocumentsService,
     @InjectFlowProducer('issue-trade-document')
-    private readonly flowProducer: FlowProducer,
+    private readonly issueDocumentFlowProducer: FlowProducer,
+    @InjectFlowProducer('issue-multi-sign-trade-document')
+    private readonly issueMultiSignDocumentFlowProducer: FlowProducer,
   ) {}
 
   private isReadyToIssue(tradeDocument: TradeDocumentDto): {
@@ -220,51 +225,66 @@ export class IssueTradeDocumentService {
     //  4. finalise-issue
     //  Because we want a strict order of steps, we express this in reverse order and make steps the child of the previous step
     const jobData: IssueJobData = { accountId, documentId, isTransferrable, issueDate, documentTrackingId, documentReference }
-    await this.flowProducer.add({
-      name: 'issue-trade-document',
-      queueName: TRADE_DOCUMENT_QUEUE,
-      data: jobData,
-      children: [
-        {
-          name: 'finalise-issue',
-          queueName: FINALISE_ISSUE_QUEUE,
-          data: jobData,
-          opts: {
-            attempts: 3,
-            backoff: { type: 'exponential', delay: 1000 },
-          }, children: [
-            {
-              name: 'mint-document',
-              queueName: MINT_DOCUMENT_QUEUE,
-              data: jobData,
-              opts: {
-                attempts: 3,
-                backoff: { type: 'exponential', delay: 1000 },
-              },
-              children: [
-                {
-                  name: 'produce-tt-file',
-                  queueName: TT_FILE_QUEUE,
-                  data: jobData,
-                  children: [
-                    {
-                      name: 'produce-issued-file',
-                      queueName: ISSUED_FILE_QUEUE,
-                      data: jobData
-                    }
-                  ]
-                }
-              ]
-            }
-          ]
-        }]
-    })
-
-
+    await this.issueDocumentFlowProducer.add(getIssueTradeDocumentEventFlow(jobData))
 
     return plainToInstance(GeneralResponseDto, {
       success: true,
       message: 'Trade Document scheduled for Issuing',
     });
   }
+
+  async issueMultiSignTradeDocument(data: IssueTradeDocumentDetails, documentSigningDetails: DocumentSigningCreationDetailsDto) {
+    const { accountId, documentId } = data;
+
+    const document = await this.tradeDocumentsService.getDocumentById(
+      accountId,
+      documentId,
+    );
+    if (!document) {
+      throw new NotFoundException('The trade document could not be found');
+    }
+    const documentStatus = this.isReadyToIssue(document);
+    if (!documentStatus.readyToIssue) {
+      throw new BadRequestException(
+        `The trade document could not be ready to issue: ${documentStatus.message}`,
+      );
+    }
+
+    const isTransferrable =
+      getTradeTrustDocumentClass(document.documentType) ===
+      TradeTrustDocumentClass.TRANSFERABLE;
+
+    const issueDate = new Date();
+    const documentTrackingId = generateTrackingId();
+    const documentReference = document.documentReference;
+
+    // Set the document status to Processing to prevent further actions until complete
+    await this.tradeDocumentsService.updateTradeDocumentStatus(
+      accountId,
+      documentId,
+      TradeDocumentStatus.PROCESSING,
+    );
+
+    // The flow we are looking for here a strict sequence of steps where each step finishes before the next one
+    //  1. produce-issued-file
+    //  2. produce-tt-file
+    //  3. mint-document (this only occurs if the trade document is transferrable)
+    //  4. finalise-issue
+    //  Because we want a strict order of steps, we express this in reverse order and make steps the child of the previous step
+    const issueJobData: IssueJobData = { accountId, documentId, isTransferrable, issueDate, documentTrackingId, documentReference }
+    const signingJobData: CreateDocumentSigningEventJobData = {
+      documentId,
+      accountId,
+      expiryDate: documentSigningDetails.expiryDate,
+      parties: documentSigningDetails.parties.map((party) => { return {walletAddress: party.walletAddress, name: party.name, role: party.role } ; }),
+    }
+
+    await this.issueMultiSignDocumentFlowProducer.add(getIssueMultiSignTradeDocumentEventFlow(issueJobData, signingJobData))
+
+    return plainToInstance(GeneralResponseDto, {
+      success: true,
+      message: 'Multi-Sign Trade Document scheduled for Issuing',
+    });
+  }
+
 }

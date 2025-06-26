@@ -2,7 +2,12 @@ import { Injectable, Logger } from '@nestjs/common';
 import { DocumentSigning } from './schemas/document-signing.schema';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { DocumentSigningDetailsDto, DocumentSigningSearchResultsDto, DocumentSigningCreationDetailsDto } from './dtos/document-signing.dto';
+import {
+  DocumentSigningDetailsDto,
+  DocumentSigningSearchResultsDto,
+  DocumentSigningCreationDetailsDto,
+  UpdateSigningDetailsDto,
+} from './dtos/document-signing.dto';
 import { DocumentSigningStatus } from './types/document-signing.types';
 import { SearchQueryDto, SearchResultsMetadata } from 'src/common/dtos/search.dto';
 
@@ -137,7 +142,6 @@ export class DocumentSigningRepository {
     try {
       const documentSigningData = {
         description: creationDetails.description,
-        documentSigningAddress: creationDetails.documentSigningAddress,
         documentId: creationDetails.documentId,
         signers: creationDetails.parties,
         lastKnownStatus: DocumentSigningStatus.PENDING,
@@ -156,8 +160,10 @@ export class DocumentSigningRepository {
 
   private mapToDocumentSigningDetailsDto(documentSigning: DocumentSigning): DocumentSigningDetailsDto {
     return {
+      id: documentSigning._id.toString(),
+      accountId: documentSigning.accountId,
+      signingDocumentId: documentSigning.signingDocumentId,
       description: documentSigning.description,
-      documentSigningAddress: documentSigning.documentSigningAddress,
       documentId: documentSigning.documentId,
       parties: documentSigning.signers,
       expiryDate: documentSigning.expiryDate,
@@ -165,5 +171,26 @@ export class DocumentSigningRepository {
       updatedAt: (documentSigning as any).updatedAt,
       lastKnownStatus: documentSigning.lastKnownStatus
     };
+  }
+
+  async update(signingId, updates: UpdateSigningDetailsDto) {
+    try {
+      const updatedDocumentSigning = await this.documentSigningModel
+        .findByIdAndUpdate(
+          signingId,
+          { updates },
+          { new: true, runValidators: true }
+        )
+        .exec();
+
+      if (!updatedDocumentSigning) {
+        return null;
+      }
+
+      return this.mapToDocumentSigningDetailsDto(updatedDocumentSigning);
+    } catch (error) {
+      this.logger.error(`Error updating Document Signing Records ${signingId}:`, error);
+      throw error;
+    }
   }
 }

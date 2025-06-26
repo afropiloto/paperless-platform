@@ -165,6 +165,7 @@ export class TradeDocumentsService {
       throw new BadRequestException('The document could not be updated');
     }
 
+
     const updatedDocument = await this.tradeDocumentsRepo.updateTradeDocumentById(
       accountId,
       documentId,
@@ -430,8 +431,21 @@ export class TradeDocumentsService {
     }
   }
 
-  async getTradeDocumentFile(accountId: string, documentId: string, variant: TradeDocumentFileVariant) {
+
+  async getTradeDocumentFileVariantDetails(accountId: string, documentId: string, variant: TradeDocumentFileVariant) {
     return this.tradeDocumentsRepo.getDocumentFileById(accountId, documentId, variant);
+  }
+
+  async getTradeDocumentFile(accountId: string, documentId: string, variant: TradeDocumentFileVariant){
+    const fileVariantDetails = await this.getTradeDocumentFileVariantDetails(accountId, documentId, variant);
+    const fileBuffer = await this.fileStorageService.downloadFile(fileVariantDetails.storedFileName);
+    const fileDetails: FileData = {
+      originalname: fileVariantDetails.originalFileName,
+      buffer: fileBuffer,
+      size: fileBuffer.byteLength,
+      mimetype: fileVariantDetails.mimeType,
+    }
+    return fileDetails
   }
 
   async updateTradeDocumentIssueDetails(accountId: string, documentId: string, issueDetails: IssueDetailsDto) {
@@ -440,6 +454,6 @@ export class TradeDocumentsService {
 
   async updateProtectedAttributes(accountId: string, documentId: string, updates: TradeDocumentProtectedAttributesUpdateDto) {
     return this.tradeDocumentsRepo.updateProtectedTradeDocumentAttributesById(accountId, documentId, updates)
-
   }
+
 }

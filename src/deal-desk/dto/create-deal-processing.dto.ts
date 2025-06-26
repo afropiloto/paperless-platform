@@ -1,6 +1,5 @@
 import { IsMongoId, IsNotEmpty } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-import { Types } from 'mongoose';
 import { DealProcessingStatus, FundingDecisionType } from '../types/deal-desk.types';
 
 export class CreateDealProcessingDto {
