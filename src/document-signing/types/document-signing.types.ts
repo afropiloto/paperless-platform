@@ -10,3 +10,8 @@ export enum DocumentSigningStatus {
   EXPIRED="EXPIRED",
   REVOKED="REVOKED",
 }
+
+export interface DocumentSigningFilterByParams {
+  walletAddress?: string;
+  accountId?: string;
+}

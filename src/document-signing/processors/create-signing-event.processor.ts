@@ -13,7 +13,11 @@ import { DocumentSigningContractService } from '../document-signing-contract.ser
 import { TradeDocumentsService } from '../../trade-documents/trade-documents.service';
 import { CreateDocumentSigningEventJobData } from '../types/signing-events.types';
 import { DocumentSigningStatus } from '../types/document-signing.types';
-import { DocumentSigningCreationDetailsDto } from '../dtos/document-signing.dto';
+import {
+  DocumentSigningCreationDetailsDto,
+  DocumentSigningEventContractDetails,
+  UpdateSigningDetailsDto,
+} from '../dtos/document-signing.dto';
 import { TradeDocumentStatus } from '../../types/trade-documents.types';
 import { FileStorageService } from '../../file-storage/file-storage.interface';
 import { subtractDates } from '../../utils/date-utils';
@@ -149,7 +153,15 @@ export class CreateDocumentSigningEventProcessor extends WorkerHost {
     );
 
     // Add eventDocumentId to Signing Event
-    await this.documentSigningService.updateById(document.documentSigningId, {signingDocumentId: eventDocumentId});
+    const payload: UpdateSigningDetailsDto = {
+      contractDetails: {
+        documentId: eventDocumentId,
+        contractAddress: this.documentSigningContractService.getContractAddress(),
+        rpcUrl: this.documentSigningContractService.getRpcUrl(),
+        chainId: await this.documentSigningContractService.getChainId()
+      },
+    };
+    await this.documentSigningService.updateById(document.documentSigningId, payload);
 
     await this.auditService.log({
       eventType: AuditEventType.ON_CHAIN_SIGNING_EVENT_CREATED,

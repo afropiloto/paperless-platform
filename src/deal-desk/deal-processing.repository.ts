@@ -100,6 +100,7 @@ export class DealProcessingRepository {
             sections: 1,
             fundingDecision: 1,
             dueDiligenceChecklistId: 1,
+            signingEventId: 1,
             promissoryNoteId: 1,
             createdAt: 1,
             updatedAt: 1,

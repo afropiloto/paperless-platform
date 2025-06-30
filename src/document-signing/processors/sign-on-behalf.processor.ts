@@ -40,7 +40,7 @@ export class SignOnBehalfOfPaiperless extends WorkerHost {
     }
     const tradeDocumentId = signingDetails.documentId;
     const accountId = signingDetails.accountId;
-    const documentSigningId = signingDetails.signingDocumentId;
+    const documentSigningId = signingDetails.contractDetails.documentId;
 
     // Get the document to be signed
     const fileDetails = await this.tradeDocumentService.getTradeDocumentFile(accountId, tradeDocumentId, TradeDocumentFileVariant.ISSUED)

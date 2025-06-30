@@ -15,13 +15,25 @@ export class SignerDetails {
 
 }
 
+@Schema({timestamps: false, _id: false})
+export class DocumentSigningContract {
+  @Prop({type: String, required: true})
+  rpcUrl: string;
+
+  @Prop({type: Number, required: true})
+  chainId: number;
+
+  @Prop({type: String, required: true})
+  contractAddress: string;
+
+  @Prop({type: String, required: true})
+  documentId: string;
+}
+
 @Schema({ timestamps: true })
 export class DocumentSigning extends Document {
   @Prop({ required: true, type: String })
   description: string;
-
-  @Prop({ required: true, type: String })
-  contractAddress: string;
 
   @Prop({ type: String, required: true })
   documentId: string;
@@ -29,15 +41,15 @@ export class DocumentSigning extends Document {
   @Prop({type: String, required: true})
   accountId: string;
 
-  @Prop({ type: String, required: true })
-  signingDocumentId: string;
+  @Prop({ type: DocumentSigningContract, required: false})
+  contractDetails: DocumentSigningContract;
 
   @Prop({
-    type: [String],
+    type: [SignerDetails],
     required: true,
     default: [],
   })
-  signers: SignerDetails[];
+  parties: SignerDetails[];
 
   @Prop({type: String, enum: DocumentSigningStatus, required: true})
   lastKnownStatus: DocumentSigningStatus;

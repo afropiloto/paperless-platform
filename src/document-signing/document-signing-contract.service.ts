@@ -37,13 +37,15 @@ const DOCUMENT_SIGNING_ABI = [
 @Injectable()
 export class DocumentSigningContractService {
   private contractAddress: string;
+  private rpcUrl: string;
   private contract: ethers.Contract;
   private contractOwnerSigner: ethers.Signer;
   private provider: ethers.providers.JsonRpcProvider;
   private readonly logger = new Logger(DocumentSigningContractService.name);
 
   constructor(private configService: ConfigService) {
-    this.provider = new ethers.providers.JsonRpcProvider(this.configService.get<string>("DOCUMENT_SIGNING_RPC_URL"))
+    this.rpcUrl = this.configService.get<string>("DOCUMENT_SIGNING_RPC_URL")
+    this.provider = new ethers.providers.JsonRpcProvider(this.rpcUrl)
     this.contractAddress = this.configService.get<string>("DOCUMENT_SIGNING_CONTRACT_ADDRESS");
     this.contractOwnerSigner = getPaiperlessSigner(this.provider);
     this.contract = new ethers.Contract(
@@ -260,5 +262,17 @@ export class DocumentSigningContractService {
 
   getProvider() {
     return this.provider;
+  }
+
+  getContractAddress() {
+    return this.contractAddress;
+  }
+
+  getRpcUrl() {
+    return this.rpcUrl;
+  }
+
+  async getChainId() {
+    return (await this.provider.getNetwork()).chainId;
   }
 }

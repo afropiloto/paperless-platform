@@ -6,17 +6,23 @@ import {
   DocumentSigningSearchResultsDto,
   UpdateSigningDetailsDto,
 } from './dtos/document-signing.dto';
-import { DocumentSigningStatus } from './types/document-signing.types';
+import {
+  DocumentSigningFilterByParams,
+  DocumentSigningStatus,
+} from './types/document-signing.types';
 import { SearchQueryDto } from 'src/common/dtos/search.dto';
 import { InjectFlowProducer, InjectQueue } from '@nestjs/bullmq';
 import { FlowProducer, Queue } from 'bullmq';
 import {
   SIGN_DOCUMENT_EVENT,
   SIGN_DOCUMENT_ON_BEHALF_QUEUE,
-} from '../constants/app.constants'
+} from '../constants/app.constants';
 import { TradeDocumentsService } from '../trade-documents/trade-documents.service';
 import { TradeDocumentFileVariant } from '../trade-documents/trade-document-file.types';
-import { CreateDocumentSigningEventJobData, SignDocumentOnBehalfJobData } from './types/signing-events.types';
+import {
+  CreateDocumentSigningEventJobData,
+  SignDocumentOnBehalfJobData,
+} from './types/signing-events.types';
 import { getCreateMultiSignEventFlow } from '../common/event-flows/issue-event-flow';
 import { GeneralResponseDto } from '../common/common-dto';
 
@@ -35,8 +41,6 @@ export class DocumentSigningService {
   ) {}
 
   async findById(id: string): Promise<DocumentSigningDetailsDto> {
-    this.logger.log(`Finding document signing by id: ${id}`);
-
     const documentSigning = await this.documentSigningRepository.findById(id);
 
     if (!documentSigning) {
@@ -54,8 +58,8 @@ export class DocumentSigningService {
       `Finding document signings for wallet address: ${walletAddress}`,
     );
 
-    return await this.documentSigningRepository.findByWalletAddress(
-      walletAddress,
+    return await this.documentSigningRepository.findByIdentifier(
+      { walletAddress },
       searchQuery,
     );
   }
@@ -68,10 +72,13 @@ export class DocumentSigningService {
       `Finding expiring document signings for wallet address: ${walletAddress} within ${daysUntilExpiry} days`,
     );
 
-    return await this.documentSigningRepository.findExpiringSoonByWalletAddress(
-      walletAddress,
-      daysUntilExpiry,
-    );
+    const results =
+      await this.documentSigningRepository.findExpiringSoonByWalletAddress(
+        walletAddress,
+        daysUntilExpiry,
+      );
+
+    return results;
   }
 
   async updateLastKnownStatus(
@@ -95,6 +102,7 @@ export class DocumentSigningService {
     this.logger.log(
       `Successfully updated document signing ${id} status to ${lastKnownStatus}`,
     );
+
     return updatedDocumentSigning;
   }
 
@@ -127,31 +135,44 @@ export class DocumentSigningService {
       }
 
       // Validate the document has an issued document
-      const fileDetails = await
-        this.tradeDocumentService.getTradeDocumentFileVariantDetails(
+      const fileDetails =
+        await this.tradeDocumentService.getTradeDocumentFileVariantDetails(
           creationDetails.accountId,
           creationDetails.documentId,
           TradeDocumentFileVariant.ISSUED,
         );
 
       if (!fileDetails || !fileDetails.storedFileName) {
-        throw new Error("The Trade Document has not been issued and so cannot be used for Signing")
+        throw new Error(
+          'The Trade Document has not been issued and so cannot be used for Signing',
+        );
       }
       const signingJobData: CreateDocumentSigningEventJobData = {
         documentId: creationDetails.documentId,
         accountId: creationDetails.accountId,
         expiryDate: creationDetails.expiryDate,
         parties: creationDetails.parties.map((party) => {
-          return { walletAddress: party.walletAddress, name: party.name, role: party.role };
+          return {
+            walletAddress: party.walletAddress,
+            name: party.name,
+            role: party.role,
+          };
         }),
-      }
+      };
 
-      await this.createDocSigningEventFlowProducer.add(getCreateMultiSignEventFlow(signingJobData));
+      await this.createDocSigningEventFlowProducer.add(
+        getCreateMultiSignEventFlow(signingJobData),
+      );
 
-      return {success: true, message: 'Document signing event is being created'} as GeneralResponseDto;
-    }
-    catch(error) {
-      this.logger.error({message: 'Failed to create document signing event', error})
+      return {
+        success: true,
+        message: 'Document signing event is being created',
+      } as GeneralResponseDto;
+    } catch (error) {
+      this.logger.error({
+        message: 'Failed to create document signing event',
+        error,
+      });
       throw error;
     }
   }
@@ -161,23 +182,31 @@ export class DocumentSigningService {
    */
   async signDocumentOnBehalf(signingId: string) {
     // Check that signing details
-    const signingDetails = await this.documentSigningRepository.findById(signingId);
-    if (!signingDetails) {throw new Error("Signing Details not found")}
-    if ([DocumentSigningStatus.SIGNED, DocumentSigningStatus.EXPIRED].includes(signingDetails.lastKnownStatus)) {
-      throw new Error(`Unable to sign document as the status of the signing event is ${signingDetails.lastKnownStatus}`)
+    const signingDetails =
+      await this.documentSigningRepository.findById(signingId);
+    if (!signingDetails) {
+      throw new Error('Signing Details not found');
+    }
+    if (
+      [DocumentSigningStatus.SIGNED, DocumentSigningStatus.EXPIRED].includes(
+        signingDetails.lastKnownStatus,
+      )
+    ) {
+      throw new Error(
+        `Unable to sign document as the status of the signing event is ${signingDetails.lastKnownStatus}`,
+      );
     }
     if (signingDetails.lastKnownStatus === DocumentSigningStatus.PENDING) {
-      throw new Error("Unable to sign document, the Document Signing Event is not ready");
+      throw new Error(
+        'Unable to sign document, the Document Signing Event is not ready',
+      );
     }
 
     // Attempt signing
     const jobData: SignDocumentOnBehalfJobData = {
-      signingId: signingId
+      signingId: signingId,
     };
-    const job = await this.signDocumentQueue.add(
-      SIGN_DOCUMENT_EVENT,
-      jobData,
-    );
+    const job = await this.signDocumentQueue.add(SIGN_DOCUMENT_EVENT, jobData);
     this.logger.log({
       message: 'Signing Document document on behalf of Paiperless',
       documentId: signingDetails.documentId,
@@ -197,7 +226,33 @@ export class DocumentSigningService {
    * Function to create a record in the documentsignings collection
    * @param creationDetails
    */
-  async createDocumentSigningOffChainDetails(creationDetails: DocumentSigningCreationDetailsDto) {
-    return await this.documentSigningRepository.create(creationDetails)
+  async createDocumentSigningOffChainDetails(
+    creationDetails: DocumentSigningCreationDetailsDto,
+  ) {
+    return await this.documentSigningRepository.create(creationDetails);
+  }
+
+  async findByTradeDocumentId(id: string): Promise<DocumentSigningDetailsDto> {
+    this.logger.debug({ id });
+    const documentSigning =
+      await this.documentSigningRepository.findByTradeDocumentId(id);
+
+    if (!documentSigning) {
+      throw new NotFoundException(
+        `Document signing for trade document with id ${id} not found`,
+      );
+    }
+
+    return documentSigning;
+  }
+
+  async findByIdentifier(
+    searchParams: DocumentSigningFilterByParams,
+    searchQuery: SearchQueryDto,
+  ) {
+    return await this.documentSigningRepository.findByIdentifier(
+      searchParams,
+      searchQuery,
+    );
   }
 }

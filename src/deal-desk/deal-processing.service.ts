@@ -112,6 +112,7 @@ export class DealProcessingService {
   async getDealProcessing(id: string): Promise<DealProcessingResponseDto> {
     try {
       const dealProcessing = await this.dealProcessingRepository.findById(id);
+      this.logger.debug({dealProcessing})
 
       dealProcessing.dueDiligenceChecks =
         await this.dueDiligenceChecklistsService.getChecklistInstance(
