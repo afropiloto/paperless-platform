@@ -73,7 +73,6 @@ export class OnboardingRepository {
       const result = await this.onboardingProcessingModel
         .aggregate(aggregationPipeline)
         .exec();
-      this.logger.debug({ result });
 
       if (!result || result.length === 0) {
         throw new NotFoundException(`Onboarding processing with id ${id} not found`);
@@ -190,7 +189,7 @@ export class OnboardingRepository {
   }
 
 
-  private getDealProcessingStatus(decision: OnboardingDecision) {
+  private getOnboardingProcessingStatus(decision: OnboardingDecision) {
     switch (decision) {
       case OnboardingDecision.APPROVED:
         return OnboardingStatus.COMPLETED;
@@ -201,7 +200,7 @@ export class OnboardingRepository {
     }
   }
 
-  private getDealDecision(decision: OnboardingDecision) {
+  private getOnboardingDecision(decision: OnboardingDecision) {
     switch (decision.toString().toLowerCase()) {
       case 'approve':
       case 'approved':
@@ -220,31 +219,28 @@ export class OnboardingRepository {
     user?: string
   ): Promise<OnboardingProcessingResponseDto>{
     try {
-      this.logger.debug({ decision });
-      const dealDecision = this.getDealDecision(decision);
-      const dealStatus = this.getDealProcessingStatus(dealDecision);
+      const onboardingDecision = this.getOnboardingDecision(decision);
+      const onboardingStatus = this.getOnboardingProcessingStatus(onboardingDecision);
 
-      this.logger.debug({ dealStatus });
       const result =  await this.onboardingProcessingModel
         .findByIdAndUpdate(
           id,
           {
             $set: {
-              fundingDecision: {
-                decision: dealDecision,
+              onboardingDecision: {
+                decision: onboardingDecision,
                 decisionNotes: {
                   note,
                   user,
                   createdAt: new Date()
                 }
               },
-              status: dealStatus,
+              status: onboardingStatus,
             },
           },
           { new: true },
         )
         .exec();
-
       return plainToInstance(OnboardingProcessingResponseDto, result);
     } catch (error) {
       this.logger.error(
@@ -297,4 +293,9 @@ export class OnboardingRepository {
     }
   }
 
+  async findByRegistrationId(registrationId: string) {
+    const result = await this.onboardingProcessingModel.findOne({registrationId}).lean().exec();
+    if (!result) {return null}
+    return plainToInstance(OnboardingProcessing, result);
+  }
 }

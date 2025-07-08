@@ -36,7 +36,7 @@ export class IssuedFileProcessor extends WorkerHost {
   async process(job: Job<IssueJobData>): Promise<void> {
     const { accountId, documentId, issueDate, documentTrackingId, documentReference } = job.data;
 
-    this.logger.debug({
+    this.logger.log({
       message: 'Preparing Issued File',
       accountId,
       documentId,
@@ -81,7 +81,6 @@ export class IssuedFileProcessor extends WorkerHost {
     }
 
     // generate a new Issue file
-    this.logger.debug("Generating new issue file")
     const issuedFile = await this.generateTrackableDocument(
       documentTrackingId,
       accountDetails.accountName,
@@ -90,7 +89,6 @@ export class IssuedFileProcessor extends WorkerHost {
     );
 
     // store issue file
-    this.logger.debug("storing new issue file")
     await this.tradeDocumentsService.updateTradeDocumentFileById(
       accountId,
       documentId,
@@ -99,7 +97,6 @@ export class IssuedFileProcessor extends WorkerHost {
     );
 
     // Create document hash and store
-    this.logger.debug("Computing document hash")
     const documentHash = await computeVerifiableHash(issuedFile);
     await this.tradeDocumentsService.updateProtectedAttributes(
       accountId,
@@ -131,7 +128,6 @@ export class IssuedFileProcessor extends WorkerHost {
     // Generate QR code
     const verifyUrl = `${this.configService.get<string>('APP_VERIFICATION_URL')}/${documentTrackingId}`;
     const qrCodeBase64 = await createQRCode(verifyUrl);
-    this.logger.debug({accountName, issueDate, documentTrackingId, verifyUrl})
     // Embed verification information and document into new PDF
     return await generateVerifiablePDF(
       originalFile,

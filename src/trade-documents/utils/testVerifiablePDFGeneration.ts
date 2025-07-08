@@ -47,11 +47,9 @@ async function testVerifiablePDFGeneration(
 
     // Convert source file to data URL
     const dataUrl = await convertFileToDataUrl(sourceFilePath);
-    logger.debug('Successfully converted file to data URL');
 
     // Generate QR code
     const qrCode = await generateQRCode(qrCodeContent);
-    logger.debug('Successfully generated QR code');
 
     // Generate verifiable PDF
     const verifiablePdfBytes = await generateVerifiablePDF(
@@ -60,13 +58,11 @@ async function testVerifiablePDFGeneration(
       documentTrackingId,
       qrCode
     );
-    logger.debug('Successfully generated verifiable PDF');
 
     // Save the verifiable PDF
     const outputFileName = `verifiable_${path.basename(sourceFilePath)}`;
     const outputPath = path.join(outputDir, outputFileName);
     await fs.writeFile(outputPath, verifiablePdfBytes);
-    logger.debug(`Verifiable PDF saved to: ${outputPath}`);
 
   } catch (error) {
     logger.error('Error in test harness:', error);

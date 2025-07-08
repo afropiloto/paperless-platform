@@ -22,7 +22,7 @@ export class FinaliseIssueProcessor extends WorkerHost {
   async process(job: Job<IssueJobData>): Promise<void> {
     const { accountId, documentId } = job.data;
 
-    this.logger.debug({
+    this.logger.log({
       message: 'Finalising Trade Document Issue',
       accountId: accountId,
       documentId: documentId

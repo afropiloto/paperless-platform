@@ -306,7 +306,6 @@ export class DealProcessingRepository {
     tradeDocumentId: string
   ): Promise<DealProcessingResponseDto> {
     try {
-      this.logger.debug({id, tradeDocumentId});
     const result = await this.dealProcessingModel.findByIdAndUpdate(
       id,
       {promissoryNoteId: tradeDocumentId},
@@ -384,4 +383,18 @@ export class DealProcessingRepository {
         throw error;
       });
   }
+
+  deleteDeal(accountId: string, dealId: string) {
+    return this.dealProcessingModel.findOneAndDelete({accountId, dealId})
+  }
+
+  async findByIDealId(accountId: string, dealId: string) {
+    const result = await this.dealProcessingModel.findOne({ accountId, dealId }).exec();
+    if (!result) {
+      return null;
+    }
+    return plainToInstance(DealProcessingResponseDto, result)
+
+  }
+
 }

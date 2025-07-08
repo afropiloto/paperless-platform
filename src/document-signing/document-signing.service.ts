@@ -151,6 +151,7 @@ export class DocumentSigningService {
         documentId: creationDetails.documentId,
         accountId: creationDetails.accountId,
         expiryDate: creationDetails.expiryDate,
+        description: creationDetails.description,
         parties: creationDetails.parties.map((party) => {
           return {
             walletAddress: party.walletAddress,
@@ -233,7 +234,7 @@ export class DocumentSigningService {
   }
 
   async findByTradeDocumentId(id: string): Promise<DocumentSigningDetailsDto> {
-    this.logger.debug({ id });
+
     const documentSigning =
       await this.documentSigningRepository.findByTradeDocumentId(id);
 

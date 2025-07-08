@@ -46,7 +46,6 @@ export class DueDiligenceChecklistInstanceRepository {
           `Item at index ${itemIndex} not found in section ${sectionIndex}`,
         );
       }
-      this.logger.debug({ sectionIndex, itemIndex, note, user });
 
       // Add new note
       const newNote = {
@@ -106,7 +105,6 @@ export class DueDiligenceChecklistInstanceRepository {
         )
         .exec();
 
-        this.logger.debug({updatedChecklist})
       return updatedChecklist
     } catch (error) {
       this.logger.error(

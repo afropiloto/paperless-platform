@@ -1,39 +1,45 @@
 # Trade Documents Platform
 
-# Issues:
-1. After issuing an invoice the status goes to Issued but something is then reverting it back to In Progress
+# Testing
+1. Registration - register -> Onboard Reject
+2. Registration - register -> Accept Reject - check Account is created
+3. Upload Trade Document -> Issue -> Fund -> Reject
+4. Upload Trade Document -> Issue -> Fund -> Accept -> Promissory Note -> Signed
+
+
+
+
+
 
 
 # Todo:
 1. Setup ai.paiperless.com with dns-txt record for identify verification
 2. Document signing
-  * Add service to interact with the Document Signing service to read data.
-  * Update retrieval methods to get current data from chain. Do this for In Progress items only but where an updated status is returned, update the status in the database.
-3.  Audit - ensure we are auditing the right things - including login
-4. Email Module - add EmailerService that integrates with an email provider to send emails.
-5. Security
+   * Add service to interact with the Document Signing service to read data.
+   * Update retrieval methods to get current data from chain. Do this for In Progress items only but where an updated status is returned, update the status in the database.
+3. Extend document types to include Bill of Lading and Warehouse receipts
+4. Migrate data extraction to extend.ai
+5. Audit - ensure we are auditing the right things - including login
+6. Email Module - add EmailerService that integrates with an email provider to send emails.
+7. Security
    * Need to add setup API Key guards on endpoints
    * Need to add JWT guard to controllers
    * Need to add UserPermissionGuards to controller methods
-   * We need a Paiperless Account with users creating
-6. Deal Desk Module
-   * When a submitted deal is withdrawn, then update the deal using the deal-desk to be withdrawn
-   * Create and Issue the Prom Note as a Trade Document linked to the Paiperless Account
-   * Handle Promissory Note Signed event
-7. Check Verify issued document works as expected
-8. Virus Scan
+   * We need a Paiperless Account with users creating 
+8. Check Verify issued document works as expected
+9. Virus Scan
     * Need to integrate Virus Scan into Registration documents upload
     * Need to integrate Virus Scan into Trade Documents File upload
-9. Add Data Extraction on initial file upload
-   * Test data extraction and failure modes
-10. Account Analytics
-11. Need to ensure that if we suspend and account that all users related to that account are suspended - also for making accounts Active
-12. Need to ensure that when account users are being updated for an accountId, they are being updated by an account linked to the same accountId OR the user is a Voy Admin user
-13. Update ReadMe with set up & deployment information
-14. Consider adding a Notifications feature that we can use to notify accounts of problems with documents or general issues
-15. Write Service and Controller Tests
+10. Add Data Extraction on initial file upload
+    * Test data extraction and failure modes
+11. Account Analytics
+12. Need to ensure that if we suspend and account that all users related to that account are suspended - also for making accounts Active
+13. Need to ensure that when account users are being updated for an accountId, they are being updated by an account linked to the same accountId OR the user is a Voy Admin user
+14. Update ReadMe with set up & deployment information
+15. Consider adding a Notifications feature that we can use to notify accounts of problems with documents or general issues
+16. Write Service and Controller Tests
     * Can we get Cursor to create the tests?
-16. Consider adding a method to share issued documents with 3rd parties - this needs an email service
+17. Consider adding a method to share issued documents with 3rd parties - this needs an email service
     * Use time limited links?
 
 
@@ -158,12 +164,13 @@ So a controller method with the following decorators is guarded by the ApiKeyGua
 If there is no API key provided. not recognised or the provided key is valid but does not belong to one of the groups then a HTTP 403 Forbidden response is returned 
 ```typescript
 @UseGuards(ApiKeyGuard)
-@ClientAccess('paiperless-portal', 'internal-only')
-@Get('account/:accountId')
-async getAccountUsersByAccountId(
-  @Param('accountId') accountId: string,
-): Promise<AccountUsersSearchResultsDto> {
-  return await this.accountUsersService.getAccountUsersByAccountId(accountId, searchParams);
+@Controller('finance')
+export class FinanceController {
+  @Get('review')
+  @ClientAccess('paiperless-portal', 'internal-only') // Only Paiperless or Portal can access
+  reviewStuff(@Req() req) {
+    return `Welcome ${req.user.name}, your level grants access to review.`;
+  }
 }
 ```
 

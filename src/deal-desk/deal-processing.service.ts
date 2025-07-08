@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  forwardRef,
   Inject,
   Injectable,
   Logger,
@@ -28,7 +29,8 @@ import { ChecklistInstanceDto } from '../due-diligence-checklists/dtos/checklist
 
 import { SearchQueryDto } from '../common/dtos/search.dto';
 import {
-  PromissoryNoteContentDto, TradeDocumentClaimantsDto,
+  PromissoryNoteContentDto,
+  TradeDocumentClaimantsDto,
   UpsertTradeDocumentDto,
 } from '../trade-documents/dtos/trade-document.dto';
 import { TradeDocumentsService } from '../trade-documents/trade-documents.service';
@@ -49,12 +51,10 @@ import {
 } from '../issue-trade-document/issue-trade-document.service';
 import { GeneralResponseDto } from '../common/common-dto';
 import { DocumentSigningService } from '../document-signing/document-signing.service';
-import {
-  DocumentSigningCreationDetailsDto,
-  SignerDetailsDto,
-} from '../document-signing/dtos/document-signing.dto';
-import { DocumentSigningRole } from '../document-signing/types/document-signing.types';
+
 import { FILE_STORAGE_SERVICE } from '../file-storage/file-storage.constants';
+import { DocumentSigningCreationDetailsDto } from '../document-signing/dtos/document-signing.dto';
+import { DocumentSigningRole } from '../document-signing/types/document-signing.types';
 
 @Injectable()
 export class DealProcessingService {
@@ -66,6 +66,7 @@ export class DealProcessingService {
     private readonly issueTradeDocumentService: IssueTradeDocumentService,
     private readonly documentSigningService: DocumentSigningService,
     private readonly accountsService: AccountsService,
+    @Inject(forwardRef(() => TradeFinanceService))
     private readonly tradeFinanceService: TradeFinanceService,
     private readonly dealProcessingRepository: DealProcessingRepository,
     private readonly dueDiligenceChecklistsService: DueDiligenceChecklistsService,
@@ -112,7 +113,6 @@ export class DealProcessingService {
   async getDealProcessing(id: string): Promise<DealProcessingResponseDto> {
     try {
       const dealProcessing = await this.dealProcessingRepository.findById(id);
-      this.logger.debug({dealProcessing})
 
       dealProcessing.dueDiligenceChecks =
         await this.dueDiligenceChecklistsService.getChecklistInstance(
@@ -121,9 +121,10 @@ export class DealProcessingService {
 
       if (dealProcessing.promissoryNote?.documentId) {
         const promNote = await this.tradeDocumentsService.getDocumentById(
-          dealProcessing.accountId,
+          this.configService.get<string>('PAIPERLESS_ACCOUNT_ID'),
           dealProcessing.promissoryNote.documentId,
         );
+
         dealProcessing.promissoryNote.status = promNote.status;
         dealProcessing.promissoryNote.content =
           promNote.documentContent as PromissoryNoteContentDto;
@@ -236,16 +237,15 @@ export class DealProcessingService {
       // Make update to Promissory Note in tradedocuments collection
       const documentId = dealProcessingDetails.promissoryNote.documentId;
       const currentDocument = await this.tradeDocumentsService.getDocumentById(
-        dealProcessingDetails.accountId,
+        this.configService.get<string>('PAIPERLESS_ACCOUNT_ID'),
         documentId,
       );
       const updatedTradeDocument: UpsertTradeDocumentDto = {
         ...currentDocument,
         documentContent: promissoryNoteContent,
       };
-      this.logger.debug({ updatedTradeDocument });
       await this.tradeDocumentsService.updateTradeDocumentById(
-        dealProcessingDetails.accountId,
+        this.configService.get<string>('PAIPERLESS_ACCOUNT_ID'),
         documentId,
         updatedTradeDocument,
       );
@@ -348,13 +348,13 @@ export class DealProcessingService {
         name: paiperlessAccount.accountName,
         walletAddress: paiperlessAccount.walletAddress,
         contactEmail: paiperlessAccount.contact.emailAddress,
-      }
-    }
+      },
+    };
     const tradeDocument: UpsertTradeDocumentDto = {
       documentType: TradeDocumentType.PROMISSORY_NOTE,
       documentReference: dealDetails.dealReference,
       documentContent: promissoryNoteContent,
-      claimants: claimants
+      claimants: claimants,
     };
     const tradeDocumentDetails =
       await this.tradeDocumentsService.createTradeDocument(
@@ -417,13 +417,20 @@ export class DealProcessingService {
    * @param dealDeskId the DealDeskId
    */
   async issuePromissoryNote(dealDeskId: string) {
+    const promNoteAccountId = this.configService.get<string>(
+      'PAIPERLESS_ACCOUNT_ID',
+    );
     try {
       const dealProcessingDetails =
         await this.dealProcessingRepository.findById(dealDeskId);
       if (!dealProcessingDetails) {
         throw new NotFoundException('Deal Processing details not found');
       }
-
+      const issuerAccount =
+        await this.accountsService.findByAccountId(promNoteAccountId);
+      const borrowerAccount = await this.accountsService.findByAccountId(
+        dealProcessingDetails.accountId,
+      );
       if (
         dealProcessingDetails.status !==
           DealProcessingStatus.AWAITING_AGREEMENT ||
@@ -444,12 +451,16 @@ export class DealProcessingService {
         );
       }
 
+      const dealDetails = await this.tradeFinanceService.getDealById(dealProcessingDetails.accountId, dealProcessingDetails.dealId);
+
       const promNote = await this.tradeDocumentsService.getDocumentById(
-        dealProcessingDetails.accountId,
+        promNoteAccountId,
         dealProcessingDetails.promissoryNote.documentId,
       );
       if (!promNote || !promNote.status) {
-        throw new BadRequestException(`The Promissory Note does not exist or is not in the correct status to issue`);
+        throw new BadRequestException(
+          `The Promissory Note does not exist or is not in the correct status to issue`,
+        );
       }
 
       if (promNote.status !== TradeDocumentStatus.IN_PROGRESS) {
@@ -459,21 +470,54 @@ export class DealProcessingService {
       }
       // Create the Prom Note file and upload
       const promNoteFileBuffer =
-        await this.promissoryNotePdfService.generatePromissoryNotePdf(promNote.documentContent as PromissoryNoteContentDto);
+        await this.promissoryNotePdfService.generatePromissoryNotePdf(
+          promNote.documentContent as PromissoryNoteContentDto,
+        );
       const promNoteFileDetails: FileData = {
         originalname: `${promNote.documentReference}.pdf`,
         buffer: promNoteFileBuffer,
-        mimetype: "application/pdf",
-        size: promNoteFileBuffer.byteLength
-      }
-      await this.tradeDocumentsService.updateTradeDocumentFileById(dealProcessingDetails.accountId, dealProcessingDetails.promissoryNote.documentId, promNoteFileDetails)
+        mimetype: 'application/pdf',
+        size: promNoteFileBuffer.byteLength,
+      };
+      await this.tradeDocumentsService.updateTradeDocumentFileById(
+        promNoteAccountId,
+        dealProcessingDetails.promissoryNote.documentId,
+        promNoteFileDetails,
+      );
 
       const issueDetails: IssueTradeDocumentDetails = {
-        accountId: dealProcessingDetails.accountId,
+        accountId: promNoteAccountId,
         documentId: dealProcessingDetails.promissoryNote.documentId,
       };
+
+      const documentSigningDetails: DocumentSigningCreationDetailsDto = {
+        documentId: dealProcessingDetails.promissoryNote.documentId,
+        accountId: promNoteAccountId,
+        description: `Promissory Note for Finance Deal. Your Account: ${dealProcessingDetails.accountName}. Your Reference: ${dealDetails.dealReference}. Our Reference: ${dealProcessingDetails.dealId}`,
+        parties: [
+          {
+            name: issuerAccount.accountName,
+            walletAddress: issuerAccount.walletAddress,
+            role: DocumentSigningRole.ISSUER,
+          },
+          {
+            name: borrowerAccount.accountName,
+            walletAddress: borrowerAccount.walletAddress,
+            role: DocumentSigningRole.SIGNER,
+          },
+        ],
+        expiryDate: addDays(
+          new Date(),
+          this.configService.get<number>(
+            'PROMISSORY_NOTE_SIGNING_EVENT_DURATION',
+          ),
+        ),
+      };
       const issuedDocument =
-        await this.issueTradeDocumentService.issueTradeDocument(issueDetails);
+        await this.issueTradeDocumentService.issueMultiSignTradeDocument(
+          issueDetails,
+          documentSigningDetails,
+        );
 
       return plainToInstance(GeneralResponseDto, issuedDocument);
     } catch (error) {
@@ -612,5 +656,13 @@ export class DealProcessingService {
       );
 
     return plainToInstance(GeneralResponseDto, issuedDocument);
+  }
+
+  async deleteDealProcessing(accountId: string, dealId: string) {
+    return this.dealProcessingRepository.deleteDeal(accountId, dealId);
+  }
+
+  getDealProcessingByDealId(accountId: string, dealId: string) {
+    return this.dealProcessingRepository.findByIDealId(accountId, dealId);
   }
 }

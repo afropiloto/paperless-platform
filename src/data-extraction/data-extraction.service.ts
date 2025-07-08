@@ -67,7 +67,7 @@ export class DataExtractionService {
       await this.getBlobFromDataUrl(dataUrl),
       documentTitle,
     );
-    this.logger.debug({
+    this.logger.log({
       message: 'Sending to GRAIP',
       flowId,
       documentTitle,
@@ -90,7 +90,7 @@ export class DataExtractionService {
 
 
     if (response.status === 201) {
-      this.logger.debug({graipPostResponseData: response.data})
+
       const requestId = response.data.id;
       return { success: true, requestId };
     } else {
@@ -155,7 +155,7 @@ export class DataExtractionService {
         DATA_EXTRACTION_GRAIP_CALLBACK_EVENT,
         jobDetails,
       );
-      this.logger.debug({
+      this.logger.log({
         message: 'Added to Graip Data Extraction Callback Queue',
         jobDetails,
       });
@@ -315,7 +315,6 @@ export class DataExtractionService {
   async checkExtractionCallback(
     jobDetails: GraipDataExtractionCallBackJob,
   ): Promise<DataExtractionResponse> {
-    this.logger.debug({ message: 'Checking Extraction Callback', jobDetails });
     const { documentType, flowId, requestId } =
       jobDetails;
     const results = await this.checkGraipForData(flowId, requestId);

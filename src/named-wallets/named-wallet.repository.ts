@@ -17,7 +17,6 @@ export class NamedWalletsRepository {
 
 
   async getAccountWallets(accountId: string, searchParams: SearchQueryDto) {
-    this.logger.debug({searchParams, accountId});
     const dataFacet = []
     if (searchParams.orderBy !== undefined && searchParams.orderBy.length > 0) {
       dataFacet.push({

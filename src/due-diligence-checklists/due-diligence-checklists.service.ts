@@ -96,7 +96,7 @@ export class DueDiligenceChecklistsService {
   }
 
   async updateChecklistInstance(checklistId: string, updates: ChecklistItemUpdateDto[]) {
-    this.logger.debug({checklistId, updates})
+
     try {
       const currentChecklist = await this.checklistInstanceRepository.findById(checklistId);
 

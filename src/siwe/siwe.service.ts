@@ -53,7 +53,7 @@ export class SiweService {
         });
         throw new UnauthorizedException("Invalid SIWE authentication.");
       }
-      this.logger.debug({walletAddress: siweMessage.address, verified: verified})
+
       return siweMessage.address;
 
     } catch (error) {

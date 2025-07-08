@@ -45,7 +45,7 @@ export class RegistrationRepository {
     if (!updatedRecord) {
       throw new NotFoundException('Registration not found');
     }
-    this.logger.debug({updatedRecord})
+
     return plainToInstance(RegistrationDetailsDto, updatedRecord);
   }
 
@@ -55,9 +55,8 @@ export class RegistrationRepository {
 
   async getFileDetailsById(registrationId: string, fileId: string) {
     const registrationDetails =  await this.findByRegistrationId(registrationId);
-    this.logger.debug({registrationDetails})
+
     const registrationFileDetails = registrationDetails.documents.filter((document) => document._id.toString() === fileId);
-    this.logger.debug({registrationFileDetails})
 
     if (registrationFileDetails.length !== 1) {throw new NotFoundException('Registration File not found');}
     return registrationFileDetails ? plainToInstance(RegistrationDocumentDetails, registrationFileDetails[0]) : null

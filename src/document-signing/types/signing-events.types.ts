@@ -1,4 +1,3 @@
-import { PartyDetailsDto } from '../../trade-documents/dtos/trade-document.dto';
 import { DocumentSigningRole } from './document-signing.types';
 
 export interface PartyDetails {
@@ -10,6 +9,7 @@ export interface PartyDetails {
 export interface CreateDocumentSigningEventJobData {
   documentId: string;
   accountId: string;
+  description: string;
   expiryDate: Date;
   parties: PartyDetails[]
 }

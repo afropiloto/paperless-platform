@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { DealProcessing, DealProcessingSchema } from './schemas/deal-processing.schema';
 import { DealProcessingRepository } from './deal-processing.repository';
@@ -28,7 +28,7 @@ import { DocumentSigningModule } from '../document-signing/document-signing.modu
     DueDiligenceChecklistsModule,
     CommonModule,
     TradeDocumentsModule,
-    TradeFinanceModule,
+    forwardRef(() => TradeFinanceModule),
     FileStorageModule,
     ConfigModule,
     AccountsModule,
@@ -44,6 +44,8 @@ import { DocumentSigningModule } from '../document-signing/document-signing.modu
     DealProcessingService,
     PromissoryNotePdfService,
     DueDiligenceChecklistsService,
-  ]
+  ],
+  exports: [DealProcessingService]
+
 })
 export class DealDeskModule {}

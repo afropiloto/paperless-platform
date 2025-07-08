@@ -10,11 +10,10 @@ export const FINALISE_ISSUE_QUEUE = 'finalise-issue-queue';
 
 // Document Signing
 export const CREATE_DOCUMENT_SIGNING_EVENT_QUEUE = 'create-document-signing-event-queue';
+
 export const CREATE_DOCUMENT_SIGNING_FINALISE_EVENT = 'finalise-signing-event-creation';
 export const CREATE_DOCUMENT_SIGNING_ON_CHAIN_EVENT = 'create-on-chain-signing-event';
 export const CREATE_DOCUMENT_SIGNING_OFF_CHAIN_EVENT = 'create-off-chain-document-signing-event';
-
-
 
 export const SIGN_DOCUMENT_ON_BEHALF_QUEUE = 'sign-document-on-behalf-queue';
 
@@ -23,3 +22,27 @@ export const SIGN_DOCUMENT_EVENT = 'sign-document-event';
 
 export const DEEP_VIRUS_SCAN_QUEUE_NAME='deep-virus-scan'
 
+export enum AccountsQueue {
+  NEW_ACCOUNT_QUEUE = 'new-account-queue',
+}
+
+export enum AccountsEvents {
+  NEW_ACCOUNT_APPROVED = 'new-account-approved',
+}
+
+export enum DealDeskQueues  {
+  CUSTOMER_FUNDING_REQUESTS="customer-funding-requests"
+}
+
+export enum DealDeskEvents {
+  NEW_FUNDING_REQUEST="NEW_FUNDING_REQUEST",
+  WITHDRAW_FUNDING_REQUEST="WITHDRAW_FUNDING_REQUEST",
+}
+
+export enum OnboardingQueues {
+  NEW_ONBOARDING_REQUESTS="new-onboarding-request-queue",
+}
+
+export enum OnboardingEvents {
+  NEW_REGISTRATION = 'new-registration',
+}

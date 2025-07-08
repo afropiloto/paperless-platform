@@ -51,11 +51,10 @@ export class TenantController {
 
 
     const didJsonPath = path.resolve(baseDir, 'did.json');
-    this.logger.debug({baseDir, didJsonPath})
+
     try {
       const fileContents = await fs.readFile(didJsonPath, 'utf-8');
-      const didJson = JSON.parse(fileContents);
-      this.logger.debug({didJson})
+
       return plainToInstance(DidDto, JSON.parse(fileContents));
     } catch (error) {
       this.logger.error({ message: `Failed to read DID file from ${didJsonPath.toString()}`, error: error.message });

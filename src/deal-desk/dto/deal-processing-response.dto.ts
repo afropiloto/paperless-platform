@@ -213,10 +213,6 @@ export class DealProcessingResponseDto {
   status: DealProcessingStatus;
 
   @ApiProperty({
-    description: 'Due diligence checklist',
-    type: [ChecklistInstanceDto],
-  })
-  @ApiProperty({
     description:
       'Due Diligence Checklist ID associated with the deal processing',
     example: '507f1f77bcf86cd799439012',
@@ -232,14 +228,6 @@ export class DealProcessingResponseDto {
   @Expose()
   @Type(() => ChecklistInstanceDto)
   dueDiligenceChecks?: ChecklistInstanceDto;
-
-  @ApiProperty({
-    description:
-      'The version of the Due Diligence Checklist used for this deal',
-    example: 1,
-  })
-  @Expose()
-  dueDiligenceChecklistVersion: number;
 
   @ApiProperty({
     description: 'Funding decision information',

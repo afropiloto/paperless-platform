@@ -7,6 +7,9 @@ import { RegistrationDetailsDto } from './dtos/registration-details.dto';
 import { UploadRegistrationDocumentDto } from './dtos/upload-registration-document.dto';
 import { AccountsService } from '../accounts/accounts.service';
 import { RegistrationDocumentFileDetails } from './models/registration-document-file-details';
+import { OnboardingEvents, OnboardingQueues } from '../constants/app.constants';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Queue } from 'bullmq';
 
 @Injectable()
 export class RegistrationService {
@@ -17,6 +20,8 @@ export class RegistrationService {
     private readonly registrationRepository: RegistrationRepository,
     @Inject(FILE_STORAGE_SERVICE)
     private readonly fileStorageService: FileStorageService,
+    @InjectQueue(OnboardingQueues.NEW_ONBOARDING_REQUESTS)
+    private readonly onboardingQueue: Queue
   ) {}
 
   async createRegistration(
@@ -32,7 +37,12 @@ export class RegistrationService {
       throw new BadRequestException('Registration or Account for this wallet address already exists');
     }
 
-    return this.registrationRepository.create(createRegistrationDto);
+    const registrationDetails = await this.registrationRepository.create(createRegistrationDto);
+
+    const jobDetails = await this.onboardingQueue.add(OnboardingEvents.NEW_REGISTRATION, {registrationId: registrationDetails.registrationId});
+    this.logger.log({message: "Onboarding request created", jobId: jobDetails.id})
+
+    return registrationDetails;
   }
 
   async uploadDocument(registrationId: string, file: Express.Multer.File, metadata: UploadRegistrationDocumentDto): Promise<RegistrationDetailsDto> {

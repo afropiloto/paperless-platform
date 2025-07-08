@@ -27,7 +27,6 @@ export class AccountUsersService {
   async createAccountUser(
     createAccountUserDto: CreateAccountUserDto,
   ): Promise<AccountUserResponseDto> {
-    this.logger.debug({ createAccountUserDto });
 
     // Validate accountId format
     if (!isValidObjectId(createAccountUserDto.accountId)) {
@@ -51,7 +50,6 @@ export class AccountUsersService {
     id: string,
     updateAccountUserDto: UpdateAccountUserDto,
   ): Promise<AccountUserResponseDto> {
-    this.logger.debug({ id, updateAccountUserDto });
 
     // Validate id format
     if (!isValidObjectId(id)) {
@@ -78,7 +76,6 @@ export class AccountUsersService {
   }
 
   async getAccountUserById(id: string): Promise<AccountUserResponseDto> {
-    this.logger.debug({ id });
 
     // Validate id format
     if (!isValidObjectId(id)) {
@@ -111,7 +108,7 @@ export class AccountUsersService {
   async findAccountUserByWalletAddress(
     walletAddress: string,
   ): Promise<AccountUserResponseDto | null> {
-    this.logger.debug({ walletAddress });
+
 
     if (!walletAddress) {
       throw new BadRequestException('Wallet address is required');

@@ -19,7 +19,7 @@ export class LocalFileStorageService implements FileStorageService {
       path.join(__dirname, '../../../storage/uploads');
     this.ensureUploadDirExists()
       .then(()=>{
-        this.logger.debug({message: "Upload folder exists"})
+
       });
   }
 
@@ -46,7 +46,7 @@ export class LocalFileStorageService implements FileStorageService {
 
       // Delete file securely
       await fs.unlink(path.join(this.uploadDir, filePathOrUrl));
-      this.logger.debug({message: `File securely deleted: ${filePathOrUrl}`});
+      this.logger.log({message: `File securely deleted: ${filePathOrUrl}`});
     } catch (error) {
       this.logger.error({message: `Failed to delete file: ${filePathOrUrl}`, error: error.message});
     }

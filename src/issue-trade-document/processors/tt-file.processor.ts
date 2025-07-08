@@ -32,7 +32,7 @@ export class TtFileProcessor extends WorkerHost {
 
   async process(job: Job<IssueJobData>): Promise<void> {
     const { accountId, documentId, isTransferrable, documentReference} = job.data;
-    this.logger.debug({
+    this.logger.log({
       message: 'Preparing .TT File',
       accountId,
       documentId,

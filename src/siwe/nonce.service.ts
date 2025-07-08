@@ -28,7 +28,6 @@ export class NonceService {
 
     // Generate and store new nonce
     const nonce = randomBytes(16).toString('hex');
-    this.logger.debug({message: "creating a new Nonce", wallet, nonce});
     const newRecord = await this.nonceRepository.addNonceForWallet(wallet, nonce);
 
     return newRecord.nonce;

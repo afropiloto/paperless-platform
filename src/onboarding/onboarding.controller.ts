@@ -98,20 +98,17 @@ export class OnboardingController {
     status: HttpStatus.NOT_FOUND,
     description: 'Onboarding processing record not found',
   })
-  async updateFundingDecision(
+  async updateOnboardingDecision(
     @Param('id') id: string,
     @Body() body: UpdateOnboardingDecisionDto,
   ): Promise<OnboardingProcessingResponseDto> {
-    this.logger.debug({ body });
-    const dealProcessing =
-      await this.onboardingService.updateFundingDecision(
+
+    return this.onboardingService.updateOnboardingDecision(
         id,
         body.decision,
         body.note,
         body.user ? body.user : 'unknown',
       );
-    return plainToInstance(OnboardingProcessingResponseDto, dealProcessing, {
-      excludeExtraneousValues: true,
-    });
+
   }
 }

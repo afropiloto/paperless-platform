@@ -23,7 +23,7 @@ export class DueDiligenceChecklistRepository {
       } else {
         version = latestOfType.version + 1
       }
-      this.logger.debug({createDto, version, checklistType})
+
       const createdChecklist = new this.dueDiligenceChecklistModel({version: version, checklistType: checklistType, ...createDto});
       return await createdChecklist.save();
     } catch (error) {

@@ -1,15 +1,15 @@
 import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { Logger } from '@nestjs/common';
 import { Job } from 'bullmq';
-import { DocumentSigningService } from '../document-signing.service';
-import { AuditService } from '../../audit/audit.service';
-import { AuditEventType } from '../../audit/audit-event-type.enum';
-import { DocumentSigningContractService } from '../document-signing-contract.service';
-import { TradeDocumentsService } from '../../trade-documents/trade-documents.service';
-import { TradeDocumentFileVariant } from '../../trade-documents/trade-document-file.types';
-import { getPaiperlessSigner } from '../../utils/web3-utils';
-import {SignDocumentOnBehalfJobData } from '../types/signing-events.types';
-import { SIGN_DOCUMENT_ON_BEHALF_QUEUE } from '../../constants/app.constants';
+import { DocumentSigningService } from '../document-signing/document-signing.service';
+import { AuditService } from '../audit/audit.service';
+import { AuditEventType } from '../audit/audit-event-type.enum';
+import { DocumentSigningContractService } from '../document-signing/document-signing-contract.service';
+import { TradeDocumentsService } from '../trade-documents/trade-documents.service';
+import { TradeDocumentFileVariant } from '../trade-documents/trade-document-file.types';
+import { getPaiperlessSigner } from '../utils/web3-utils';
+import {SignDocumentOnBehalfJobData } from '../document-signing/types/signing-events.types';
+import { SIGN_DOCUMENT_ON_BEHALF_QUEUE } from '../constants/app.constants';
 
 
 

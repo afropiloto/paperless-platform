@@ -96,16 +96,7 @@ export class IssueTradeDocumentService {
         message: 'Trade Document must have a documentType set',
       };
     }
-    this.logger.debug({
-      tradeDocument,
-      isInvoiceContent: tradeDocument.documentContent instanceof InvoiceContent,
-      isBOEContent:
-        tradeDocument.documentContent instanceof BillOfExchangeContent,
-      isPromNoteContent:
-        tradeDocument.documentContent instanceof PromissoryNoteContent,
-      isOtherContent:
-        tradeDocument.documentContent instanceof OtherDocumentContent,
-    });
+
     switch (tradeDocument.documentType.toLowerCase()) {
       case TradeDocumentType.INVOICE.toLowerCase():
         if (
@@ -275,6 +266,7 @@ export class IssueTradeDocumentService {
     const signingJobData: CreateDocumentSigningEventJobData = {
       documentId,
       accountId,
+      description: documentSigningDetails.description,
       expiryDate: documentSigningDetails.expiryDate,
       parties: documentSigningDetails.parties.map((party) => { return {walletAddress: party.walletAddress, name: party.name, role: party.role } ; }),
     }

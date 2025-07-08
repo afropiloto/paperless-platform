@@ -1,8 +1,8 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ethers } from 'ethers-v5';
 import { DocumentSigningStatus } from './types/document-signing.types';
 import { ConfigService } from '@nestjs/config';
-import { getPaiperlessSigner } from '../utils/web3-utils';
+import { getDocumentSigningSigner } from '../utils/web3-utils';
 
 // ABI for the DocumentSigningRegistry contract
 const DOCUMENT_SIGNING_ABI = [
@@ -36,22 +36,23 @@ const DOCUMENT_SIGNING_ABI = [
  */
 @Injectable()
 export class DocumentSigningContractService {
-  private contractAddress: string;
-  private rpcUrl: string;
+  private readonly contractAddress: string;
+  private readonly rpcUrl: string;
   private contract: ethers.Contract;
   private contractOwnerSigner: ethers.Signer;
-  private provider: ethers.providers.JsonRpcProvider;
+  private readonly provider: ethers.providers.JsonRpcProvider;
   private readonly logger = new Logger(DocumentSigningContractService.name);
 
-  constructor(private configService: ConfigService) {
+  constructor(@Inject() private configService: ConfigService) {
+
     this.rpcUrl = this.configService.get<string>("DOCUMENT_SIGNING_RPC_URL")
     this.provider = new ethers.providers.JsonRpcProvider(this.rpcUrl)
     this.contractAddress = this.configService.get<string>("DOCUMENT_SIGNING_CONTRACT_ADDRESS");
-    this.contractOwnerSigner = getPaiperlessSigner(this.provider);
+    this.contractOwnerSigner = getDocumentSigningSigner(this.provider);
     this.contract = new ethers.Contract(
       this.contractAddress,
       DOCUMENT_SIGNING_ABI,
-      this.provider,
+      this.contractOwnerSigner,
     );
   }
 
@@ -67,6 +68,13 @@ export class DocumentSigningContractService {
     signerAddresses: string[],
     expirationDays: number = 30,
   ): Promise<string> {
+
+    this.logger.debug({
+      contractAddress: this.contractAddress,
+      contractProvider: await this.contract.provider.getNetwork()
+
+    })
+
     try {
       // Calculate hash of the document
       const documentHash = ethers.utils.keccak256(pdfBuffer);
@@ -165,9 +173,6 @@ export class DocumentSigningContractService {
     signer: ethers.Signer,
   ): Promise<ethers.ContractReceipt> {
     try {
-      this.logger.debug(
-        `Signing document: ${documentSigningId} with wallet: ${await signer.getAddress()});`,
-      );
       const contract = new ethers.Contract(
         this.contractAddress,
         DOCUMENT_SIGNING_ABI,

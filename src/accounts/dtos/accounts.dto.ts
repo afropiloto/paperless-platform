@@ -1,7 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Expose, Type } from 'class-transformer';
-import { IsEmail, IsEnum, IsEthereumAddress, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsArray, IsEmail, IsEnum, IsEthereumAddress, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { AccountStatus } from '../types/account.types';
+import { ApplicationModule } from '../../account-users/schemas';
 
 
 export class CompanyAddressDto {
@@ -133,6 +134,12 @@ export class AccountCreationDto {
   @Expose()
   @Type(() => CompanyContactDetailsDto)
   contact: CompanyContactDetailsDto;
+
+  @ApiProperty({description: "List of modules that the account has access to"})
+  @Expose()
+  @IsArray()
+  @IsEnum(ApplicationModule)
+  applicationModules: ApplicationModule[]
 
   @ApiProperty({description: "The current state of the account"})
   @Expose()

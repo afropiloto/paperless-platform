@@ -27,6 +27,10 @@ import { OnboardingModule } from './onboarding/onboarding.module';
 import { AccountUsersModule } from './account-users/account-users.module';
 import { ApiKeyAuthModule } from './api-key-auth/api-key-auth.module';
 import { DocumentSigningModule } from './document-signing/document-signing.module';
+import { AccountsEventsModule } from './accounts-events/accounts-events.module';
+import { OnboardingEventsModule } from './onboarding-events/onboarding-events.module';
+import { DealDeskEventsModule } from './deal-desk-events/deal-desk-events.module';
+import { DocumentSigningEventsModule } from './document-signing-events/document-signing-events.module';
 
 @Module({
   imports: [
@@ -79,6 +83,10 @@ import { DocumentSigningModule } from './document-signing/document-signing.modul
     AccountUsersModule,
     ApiKeyAuthModule,
     DocumentSigningModule,
+    AccountsEventsModule,
+    OnboardingEventsModule,
+    DealDeskEventsModule,
+    DocumentSigningEventsModule,
   ],
   controllers: [AppController],
   providers: [],

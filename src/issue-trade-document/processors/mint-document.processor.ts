@@ -22,13 +22,12 @@ export class MintDocumentProcessor extends WorkerHost {
 
   async process(job: Job<IssueJobData>): Promise<void> {
     const { accountId, documentId, isTransferrable } = job.data;
-    this.logger.debug({ accountId, documentId, isTransferrable })
     if (!isTransferrable) {
       // Only mint transferable documents
       return;
     }
 
-    this.logger.debug({
+    this.logger.log({
       message: 'Minting Verifiable Document',
       accountId: job.data.accountId,
       documentId: job.data.documentId,
@@ -40,14 +39,14 @@ export class MintDocumentProcessor extends WorkerHost {
       ['issueDetails', 'claimants'],
     );
 
-    this.logger.debug({issueDetails: documentDetails.issueDetails, claimants: documentDetails.claimants})
+
     const { receipt, chainId, contractAddress } =
       await this.tradeTrustService.mintTransferableDocument(
         documentDetails.issueDetails.merkleRoot,
         documentDetails.claimants.beneficiary.walletAddress,
         documentDetails.claimants.owner.walletAddress,
       );
-    this.logger.debug({receipt, chainId, contractAddress})
+
     // Update the document to be Issued
     const issueDetails: IssueDetailsDto = {
       ...documentDetails.issueDetails,

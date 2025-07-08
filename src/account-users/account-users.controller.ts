@@ -62,13 +62,12 @@ export class AccountUsersController {
   async createAccountUser(
     @Body() createAccountUserDto: CreateAccountUserDto
   ): Promise<AccountUserResponseDto> {
-    this.logger.debug({ createAccountUserDto });
     return await this.accountUsersService.createAccountUser(createAccountUserDto);
   }
 
-  @ApiKeyProtectedSwagger()
-  @UseGuards(ApiKeyGuard)
-  @ClientAccess('paiperless-portal', 'internal-only')
+  //@ApiKeyProtectedSwagger()
+  //@UseGuards(ApiKeyGuard)
+  //@ClientAccess('paiperless-portal', 'internal-only')
   @Get('account/:accountId')
   @ApiOperation({ 
     summary: 'Get account users by account ID',
@@ -97,7 +96,6 @@ export class AccountUsersController {
     @Param('accountId') accountId: string,
     @Query() searchParams: AccountUsersSearchDto,
   ): Promise<AccountUsersSearchResultsDto> {
-    this.logger.debug("getAccountUsersByAccountId")
     return await this.accountUsersService.getAccountUsersByAccountId(accountId, searchParams);
   }
 
@@ -126,7 +124,7 @@ export class AccountUsersController {
     description: 'Account user not found'
   })
   async getAccountUserById(@Param('id') id: string): Promise<AccountUserResponseDto> {
-    this.logger.debug({ id });
+
     return await this.accountUsersService.getAccountUserById(id);
   }
 
@@ -157,7 +155,6 @@ export class AccountUsersController {
   async getAccountUserByWalletAddress(
     @Param('walletAddress') walletAddress: string
   ): Promise<AccountUserResponseDto> {
-    this.logger.debug({ walletAddress });
     return await this.accountUsersService.findAccountUserByWalletAddress(walletAddress);
   }
 
@@ -197,7 +194,6 @@ export class AccountUsersController {
     @Param('id') id: string,
     @Body() updateAccountUserDto: UpdateAccountUserDto
   ): Promise<AccountUserResponseDto> {
-    this.logger.debug({ id, updateAccountUserDto });
     return await this.accountUsersService.updateAccountUser(id, updateAccountUserDto);
   }
 

@@ -13,11 +13,12 @@ import {
   OnboardingProcessingSearchResultsDto,
 } from './dtos/onboarding-processing-response.dto';
 import { SearchQueryDto } from '../common/dtos/search.dto';
-import { DealAnalyticsDto } from '../deal-desk/dto/deal-analytics.dto';
-import { plainToInstance } from 'class-transformer';
 import { ChecklistItemUpdateDto } from '../due-diligence-checklists/dtos/update-checklist.dto';
 import { ChecklistInstanceDto } from '../due-diligence-checklists/dtos/checklist-instance.dto';
 import { OnboardingAnalyticsDto } from './dtos/analytics.dto';
+import { AccountsEvents, AccountsQueue } from '../constants/app.constants';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Queue } from 'bullmq';
 
 @Injectable()
 export class OnboardingService {
@@ -27,6 +28,8 @@ export class OnboardingService {
     private readonly onboardingRepository: OnboardingRepository,
     private readonly registrationService: RegistrationService,
     private dueDiligenceChecklistsService: DueDiligenceChecklistsService,
+    @InjectQueue(AccountsQueue.NEW_ACCOUNT_QUEUE)
+    private newAccountsQueue: Queue
   ) {}
 
   async createOnboardingProcessing(createDto: CreateOnboardingProcessingDto) {
@@ -80,23 +83,35 @@ export class OnboardingService {
     }
   }
 
-  async updateFundingDecision(
+  async updateOnboardingDecision(
     id: string,
     decision: OnboardingDecision,
     note: string,
     user: string,
   ): Promise<OnboardingProcessingResponseDto> {
-    this.logger.debug({ decision, note, user });
+
     try {
-      return await this.onboardingRepository.updateOnboardingDecision(
-        id,
-        decision,
-        note,
-        user,
-      );
+      const onboarding =
+        await this.onboardingRepository.updateOnboardingDecision(
+          id,
+          decision,
+          note,
+          user,
+        );
+
+      if (
+        onboarding.onboardingDecision.decision === OnboardingDecision.APPROVED
+      )
+      {
+        // Add notification to the Accounts Queue to handle new account setup
+        const job = await this.newAccountsQueue.add(AccountsEvents.NEW_ACCOUNT_APPROVED, {registrationId: onboarding.registrationId})
+        this.logger.log(`New Account Job created with Id ${job.id}`)
+      }
+
+        return onboarding;
     } catch (error) {
       this.logger.error(
-        `Failed to update funding decision for deal ${id}: ${error.message}`,
+        `Failed to update onboarding decision for deal ${id}: ${error.message}`,
       );
       throw error;
     }
@@ -130,5 +145,9 @@ export class OnboardingService {
       );
       throw error;
     }
+  }
+
+  async getOnboardingProcessingByRegistrationId(registrationId: string) {
+    return await this.onboardingRepository.findByRegistrationId(registrationId);
   }
 }

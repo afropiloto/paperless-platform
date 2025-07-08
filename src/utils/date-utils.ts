@@ -7,7 +7,7 @@ export function addDays(fromDate: Date, numDays: number): Date {
   return newDate;
 }
 
-export function subtractDates(firstDate: Date, secondDate: Date,): number {
+export function subtractDates(firstDate: Date, secondDate: Date): number {
   const millisecondsDiff = secondDate.getTime() - firstDate.getTime()
 
   return Math.round(millisecondsDiff / (24 * 60 * 60 * 60));

@@ -1,7 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { AccountStatus } from '../types/account.types';
-
-
+import { ApplicationModule } from '../../account-users/types';
 
 @Schema({timestamps: false, _id: false})
 export class CompanyAddress {
@@ -62,6 +61,9 @@ export class Account {
 
   @Prop({required: true, type: ContactDetails})
   contact: ContactDetails;
+
+  @Prop({required: true, default: [], type: [String]})
+  applicationModules: ApplicationModule[]
 
   @Prop({required: true, type: String, enum: AccountStatus, default: AccountStatus.SUSPENDED})
   status: AccountStatus;

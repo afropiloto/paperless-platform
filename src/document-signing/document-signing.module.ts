@@ -10,6 +10,7 @@ import {
   CREATE_DOCUMENT_SIGNING_EVENT_QUEUE,
   SIGN_DOCUMENT_ON_BEHALF_QUEUE,
 } from '../constants/app.constants';
+import { DocumentSigningContractService } from './document-signing-contract.service';
 
 @Module({
   imports: [
@@ -25,8 +26,8 @@ import {
     }),
     TradeDocumentsModule,
   ],
-  providers: [DocumentSigningService, DocumentSigningRepository],
+  providers: [DocumentSigningService, DocumentSigningContractService, DocumentSigningRepository],
   controllers: [DocumentSigningController],
-  exports: [DocumentSigningService]
+  exports: [DocumentSigningService, DocumentSigningContractService]
 })
 export class DocumentSigningModule {}

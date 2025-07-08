@@ -10,14 +10,17 @@ import {
   ParseFilePipeBuilder,
   Patch,
   Post,
-  Put, Query, Res,
+  Put,
+  Query,
+  Res,
   UploadedFile,
   UseInterceptors,
 } from '@nestjs/common';
 import {
   ApiBody,
   ApiConsumes,
-  ApiOperation, ApiQuery,
+  ApiOperation,
+  ApiQuery,
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
@@ -33,7 +36,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { GeneralResponseDto } from '../common/common-dto';
 import { TRADE_DOCUMENT_SUMMARY_INCLUDE_FIELDS } from './trade-document.constants';
 import { TradeDocumentFileVariant } from './trade-document-file.types';
-import {Response} from 'express';
+import { Response } from 'express';
 import { plainToInstance } from 'class-transformer';
 import { SearchQueryDto } from '../common/dtos/search.dto';
 
@@ -41,9 +44,7 @@ import { SearchQueryDto } from '../common/dtos/search.dto';
 @Controller('trade-documents')
 export class TradeDocumentsController {
   private readonly logger = new Logger(TradeDocumentsController.name);
-  constructor(
-    private readonly tradeDocumentsService: TradeDocumentsService
-  ) {}
+  constructor(private readonly tradeDocumentsService: TradeDocumentsService) {}
 
   // *******************************************************************************************************************
   // Trade Document File endpoints
@@ -70,10 +71,14 @@ export class TradeDocumentsController {
     @Param('accountId') accountId: string,
     @Param('documentId') documentId: string,
     @Param('fileVariant') fileVariant: TradeDocumentFileVariant,
-    @Res() res: Response
+    @Res() res: Response,
   ) {
-
-    const {stream, headers} = await this.tradeDocumentsService.getTradeDocumentFileStream(accountId, documentId, fileVariant);
+    const { stream, headers } =
+      await this.tradeDocumentsService.getTradeDocumentFileStream(
+        accountId,
+        documentId,
+        fileVariant,
+      );
     res.set(headers);
 
     return stream.pipe(res);
@@ -124,9 +129,11 @@ export class TradeDocumentsController {
       documentId,
       file,
     );
-    return {success: true, message: "Trade Document file uploaded"} as GeneralResponseDto
+    return {
+      success: true,
+      message: 'Trade Document file uploaded',
+    } as GeneralResponseDto;
   }
-
 
   @Post('/:accountId/file')
   @UseInterceptors(FileInterceptor('file'))
@@ -138,44 +145,45 @@ export class TradeDocumentsController {
         file: {
           type: 'string',
           format: 'binary',
-          description: 'The file to upload (jpg, jpeg, png, pdf, doc, docx)'
+          description: 'The file to upload (jpg, jpeg, png, pdf, doc, docx)',
         },
         documentReference: {
           type: 'string',
-          description: 'Reference identifier for the document'
+          description: 'Reference identifier for the document',
         },
         documentType: {
           type: 'string',
           enum: Object.values(TradeDocumentType),
-          description: 'Type of trade document'
-        }
+          description: 'Type of trade document',
+        },
       },
-      required: ['file', 'documentReference', 'documentType']
-    }
+      required: ['file', 'documentReference', 'documentType'],
+    },
   })
   @ApiOperation({
     summary: 'Creates a new trade document with an uploaded file',
-    description: 'Upload a file and provide metadata to create a new trade document'
+    description:
+      'Upload a file and provide metadata to create a new trade document',
   })
   @ApiResponse({
     status: 200,
-    description: 'Trade document created successfully with file'
+    description: 'Trade document created successfully with file',
   })
   @ApiResponse({
     status: 422,
-    description: 'File type not supported or file too large'
+    description: 'File type not supported or file too large',
   })
   @ApiResponse({
     status: 400,
-    description: 'Missing required fields or invalid data'
+    description: 'Missing required fields or invalid data',
   })
   @ApiResponse({
     status: 404,
-    description: 'Account not found'
+    description: 'Account not found',
   })
   @ApiResponse({
     status: 403,
-    description: 'Not authorized to access Trade Document'
+    description: 'Not authorized to access Trade Document',
   })
   async createTradeDocumentFromFile(
     @Param('accountId') accountId: string,
@@ -192,28 +200,26 @@ export class TradeDocumentsController {
           errorHttpStatusCode: HttpStatus.UNPROCESSABLE_ENTITY,
         }),
     )
-      file: Express.Multer.File,
+    file: Express.Multer.File,
   ) {
-    this.logger.debug({
-      message: 'Received file upload request',
-      accountId,
-      createFromFile,
-      fileName: file?.originalname,
-      fileMimeType: file?.mimetype,
-      fileSize: file?.size
-    });
-    
     if (!file) {
       throw new BadRequestException('No file uploaded');
     }
-    
+
     if (!createFromFile.documentReference || !createFromFile.documentType) {
-      throw new BadRequestException('Missing required fields: documentReference and documentType are required');
+      throw new BadRequestException(
+        'Missing required fields: documentReference and documentType are required',
+      );
     }
 
-    const newDocument = await this.tradeDocumentsService.createTradeDocumentFromFile(accountId, file, createFromFile);
-    this.logger.debug({newDocument})
-    return newDocument
+    const newDocument =
+      await this.tradeDocumentsService.createTradeDocumentFromFile(
+        accountId,
+        file,
+        createFromFile,
+      );
+
+    return newDocument;
   }
 
   // *******************************************************************************************************************
@@ -241,17 +247,16 @@ export class TradeDocumentsController {
     @Param('documentId') documentId: string,
   ): Promise<TradeDocumentDto> {
 
-    const result = await this.tradeDocumentsService.getDocumentById(
+    return await this.tradeDocumentsService.getDocumentById(
       accountId,
       documentId,
     );
-    this.logger.debug({result})
-    return result
   }
 
   @Get(':accountId/')
   @ApiOperation({
-    summary: 'Retrieves summary information about existing trade document for an account based on a search criteria.',
+    summary:
+      'Retrieves summary information about existing trade document for an account based on a search criteria.',
   })
   @ApiResponse({ status: 200, description: 'Trade Documents retrieved' })
   @ApiResponse({
@@ -266,14 +271,17 @@ export class TradeDocumentsController {
     status: 403,
     description: 'Not authorized to retrieve Trade Document details',
   })
-  @ApiQuery({type: SearchQueryDto})
-  async getTradeDocumentsForAccount(@Param('accountId') accountId: string,
-                                    @Query() searchParams: SearchQueryDto
-
-  ){
-    return this.tradeDocumentsService.searchTradeDocumentsByAccountId(accountId, searchParams, TRADE_DOCUMENT_SUMMARY_INCLUDE_FIELDS);
+  @ApiQuery({ type: SearchQueryDto })
+  async getTradeDocumentsForAccount(
+    @Param('accountId') accountId: string,
+    @Query() searchParams: SearchQueryDto,
+  ) {
+    return this.tradeDocumentsService.searchTradeDocumentsByAccountId(
+      accountId,
+      searchParams,
+      TRADE_DOCUMENT_SUMMARY_INCLUDE_FIELDS,
+    );
   }
-
 
   @Delete(':accountId/:documentId')
   @ApiOperation({
@@ -296,14 +304,13 @@ export class TradeDocumentsController {
     @Param('accountId') accountId: string,
     @Param('documentId') documentId: string,
   ): Promise<GeneralResponseDto> {
-
     // Proceed to delete document
     await this.tradeDocumentsService.deleteDocumentById(accountId, documentId);
 
-   return plainToInstance(GeneralResponseDto, {
-    success: true,
-    message: 'Successfully deleted document',
-   })
+    return plainToInstance(GeneralResponseDto, {
+      success: true,
+      message: 'Successfully deleted document',
+    });
   }
 
   @Patch(':accountId/:documentId')
@@ -328,14 +335,12 @@ export class TradeDocumentsController {
     @Param('documentId') documentId: string,
     @Body() tradeDocument: UpsertTradeDocumentDto,
   ): Promise<TradeDocumentDto> {
-
     // Proceed to update document
     return await this.tradeDocumentsService.updateTradeDocumentById(
       accountId,
       documentId,
       tradeDocument,
     );
-
   }
 
   @Post(':accountId')
@@ -363,7 +368,6 @@ export class TradeDocumentsController {
       content,
     );
   }
-
 }
 
 

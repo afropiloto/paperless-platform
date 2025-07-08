@@ -67,9 +67,9 @@ export class NamedWalletsController {
   @ApiResponse({ status: 401, description: 'Not authorised to update Named Wallets for Account' })
   @ApiResponse({ status: 404, description: 'Account or wallet not found' })
   async updateNamedWallet(@Param('accountId') accountId: string, @Param('walletId') walletId: string, @Body() updateNamedWalletDto: UpdateNamedWalletDto) :Promise<NamedWalletDto> {
-    this.logger.debug({accountId, walletId, updateNamedWalletDto});
+
     const response =  await this.namedWalletsService.updateNamedWallet(accountId, walletId, updateNamedWalletDto);
-    this.logger.debug({response})
+
     return response;
   }
 

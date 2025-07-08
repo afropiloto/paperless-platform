@@ -7,6 +7,7 @@ import { plainToInstance } from 'class-transformer';
 import { TradeDocumentStatus, TradeDocumentType } from '../types/trade-documents.types';
 import { TradeFinanceDealDto } from './dtos/trade-finance-deal.dto';
 import { SearchQueryDto } from '../common/dtos/search.dto';
+import { CreateTradeFinanceDealDto } from './dtos/create-trade-finance-deal.dto';
 
 const financeableTradeDocumentsStates = [TradeDocumentStatus.ISSUED]
 
@@ -119,6 +120,7 @@ export class TradeFinanceRepository {
       }
       result['metadata'] = { ...result['metadata'][0] };
       return result;
+
     } catch (error) {
       this.logger.error({
         msg: 'Failed to retrieve Trade Documents for account',
@@ -132,14 +134,17 @@ export class TradeFinanceRepository {
     }
   }
 
-  async createDeal(accountId: string, dealData: Partial<TradeFinance>): Promise<TradeFinanceDealDto> {
+  async createDeal(accountId: string, dealData: CreateTradeFinanceDealDto): Promise<TradeFinanceDealDto> {
+
     try {
       const deal = new this.tradeFinanceRepo({
         ...dealData,
         accountId,
       });
+
       const savedDeal = await deal.save();
-      return plainToInstance(TradeFinanceDealDto, {id: savedDeal._id, ...savedDeal.toObject()}, { excludeExtraneousValues: true });
+
+      return plainToInstance(TradeFinanceDealDto, {id: savedDeal._id.toString(), ...savedDeal.toObject()}, { excludeExtraneousValues: true });
     } catch (error) {
       this.logger.error({
         msg: 'Failed to create trade finance deal',
@@ -170,6 +175,7 @@ export class TradeFinanceRepository {
   }
 
   async updateDeal(accountId: string, dealId: string, updateData: Partial<TradeFinance>): Promise<TradeFinanceDealDto> {
+
     try {
       const deal = await this.tradeFinanceRepo.findOneAndUpdate(
         { _id: dealId, accountId },
@@ -193,9 +199,9 @@ export class TradeFinanceRepository {
   }
 
   async deleteDeal(accountId: string, dealId: string): Promise<void> {
-    this.logger.debug({accountId, dealId});
+
       const result = await this.tradeFinanceRepo.findOneAndDelete({ _id: dealId, accountId });
-      this.logger.debug(result);
+
       if (!result) {
         this.logger.error({
           msg: 'Failed to delete trade finance deal',
@@ -224,9 +230,10 @@ export class TradeFinanceRepository {
         .skip((searchParams.page - 1) * searchParams.limit)
         .limit(searchParams.limit);
 
-      const transformedDeals = deals.map(deal => 
-        plainToInstance(TradeFinanceDealDto, {id: deal._id, ...deal.toObject()}, { excludeExtraneousValues: true })
-      );
+      const transformedDeals = deals.map(deal => {
+        const dealObject = deal.toObject();
+        return plainToInstance(TradeFinanceDealDto, { ...dealObject, id: dealObject._id.toString() }, { excludeExtraneousValues: true });
+      });
 
       return {
         metadata: {

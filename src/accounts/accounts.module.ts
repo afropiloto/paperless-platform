@@ -4,6 +4,8 @@ import { Account, AccountSchema } from './schemas/account.schema';
 import { AccountsService } from './accounts.service';
 import { AccountsController } from './accounts.controller';
 import { AccountsRepository } from './accounts.repository';
+import { RegistrationModule } from '../registration/registration.module';
+import { AccountUsersModule } from '../account-users/account-users.module';
 
 
 @Module({

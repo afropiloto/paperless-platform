@@ -31,7 +31,7 @@ export class AccountsRepository {
 
   async createAccount(accountDetails: AccountCreationDto): Promise<AccountDetailsDto> {
     const newAccountDetails = await this.accountModel.create(accountDetails);
-    return plainToInstance(AccountDetailsDto, newAccountDetails);
+    return plainToInstance(AccountDetailsDto, {id: newAccountDetails._id, ...newAccountDetails.toObject()});
   }
 
   async accountExists(accountId: string): Promise<boolean> {
@@ -56,7 +56,7 @@ export class AccountsRepository {
   }
 
   async findAccounts(searchParams: SearchQueryDto, includes: string[]): Promise<AccountsSearchResultsDto> {
-    this.logger.debug({searchParams, includes})
+    
     const includesProjection = { id: '$_id', createdAt: 1, updatedAt: 1 };
     includes.forEach((include) => {
       includesProjection[include] = 1;

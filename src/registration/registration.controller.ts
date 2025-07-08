@@ -32,6 +32,7 @@ export class RegistrationController {
   async registerCustomer(
     @Body() createCustomerDto: CreateRegistrationDto,
   ) {
+
     return  await this.registrationService.createRegistration(createCustomerDto);
   }
 
@@ -127,9 +128,7 @@ export class RegistrationController {
     description: 'Registration Details not found'
   })
   async getRegistrationDetails(@Param('registrationId') registrationId: string) {
-    const response = await this.registrationService.getRegistrationDetails(registrationId);
-    this.logger.debug({response});
-    return response;
+    return await this.registrationService.getRegistrationDetails(registrationId);
 
   }
 

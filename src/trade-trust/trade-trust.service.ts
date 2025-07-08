@@ -77,7 +77,6 @@ export class TradeTrustService {
       const signedDocument = await signOA(wrappedOAContent,
         signerWallet
       );
-      this.logger.debug({signedDocument})
       return JSON.stringify(signedDocument);
   }
 
@@ -115,7 +114,7 @@ export class TradeTrustService {
       document["attachments"] = validAttachments;
     }
     const docToWrap = JSON.parse(JSON.stringify({ ...document, ...documentContent }));
-    this.logger.debug({docToWrap})
+
     try {
       const wrappedDocument = await wrapOADocument(docToWrap);
       const merkleRoot = `0x${wrappedDocument.signature.targetHash}`

@@ -53,7 +53,7 @@ export class TradeDocumentsService {
   private canPerformDataExtraction(documentType: string): boolean {
     switch (documentType?.toLowerCase()) {
       case TradeDocumentType.INVOICE:
-        return true;
+        return false;
       case TradeDocumentType.BILL_OF_EXCHANGE:
       case TradeDocumentType.PROMISSORY_NOTE:
       case TradeDocumentType.OTHER:
@@ -284,6 +284,7 @@ export class TradeDocumentsService {
     const performDataExtraction = this.canPerformDataExtraction(
       tradeDocument.documentType,
     );
+
     const currentStatus = performDataExtraction
       ? TradeDocumentStatus.PROCESSING
       : (tradeDocument.status as TradeDocumentStatus);
@@ -293,19 +294,6 @@ export class TradeDocumentsService {
       currentStatus,
     );
 
-    if (performDataExtraction) {
-      const jobId = await this.submitForDataExtraction(
-        accountId,
-        tradeDocumentId,
-        tradeDocument.documentType,
-      );
-      this.logger.log({
-        message: 'Submitted for Document Data Extraction',
-        accountId,
-        documentId: tradeDocumentId,
-        jobId,
-      });
-    }
 
     // Write Audit Log
     await this.auditService.log({

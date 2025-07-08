@@ -70,7 +70,7 @@ export class VerifyTradeDocumentService {
         [],
       );
     if (!verificationDetails) {
-      this.logger.debug({
+      this.logger.error({
         message: 'failed to obtain verification details',
         documentTrackingId,
       });
@@ -82,7 +82,6 @@ export class VerifyTradeDocumentService {
     }
     // Compare hashes
     if (fileDocumentHash !== verificationDetails.verifiableDocumentHash) {
-      this.logger.debug({ message: "document hashes don't match" });
       return {
         validationSuccess: false,
         documentHashMatches: false,

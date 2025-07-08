@@ -1,19 +1,25 @@
-import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { BadRequestException, forwardRef, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { TradeFinanceRepository } from './trade-finance.repository';
 import { plainToInstance } from 'class-transformer';
 import { TradeDocumentsSearchResultsDto } from '../trade-documents/dtos/search-trade-documents.dto';
 import { TRADE_DOCUMENT_SUMMARY_INCLUDE_FIELDS } from '../trade-documents/trade-document.constants';
 import { CreateTradeFinanceDealDto } from './dtos/create-trade-finance-deal.dto';
 import { TradeFinanceDealDto } from './dtos/trade-finance-deal.dto';
-import { SubmitTradeDetailFundingDto } from './dtos/submit-trade-detail-funding.dto';
 import { TradeFinanceDealStatus } from './types/trade-finance.types';
 import { SearchQueryDto } from '../common/dtos/search.dto';
+import { InjectQueue } from '@nestjs/bullmq';
+import { DealDeskEvents, DealDeskQueues } from '../constants/app.constants';
+import { Queue } from 'bullmq';
 
 @Injectable()
 export class TradeFinanceService {
   private readonly logger = new Logger(TradeFinanceService.name);
 
-  constructor(private readonly tradeFinanceRepository: TradeFinanceRepository) {}
+  constructor(
+    private readonly tradeFinanceRepository: TradeFinanceRepository,
+    @InjectQueue(DealDeskQueues.CUSTOMER_FUNDING_REQUESTS)
+    private customerFundingRequestsQueue: Queue) {}
+
 
   async getAvailableFinanceableDocuments(accountId: string, searchParams: SearchQueryDto) {
     const includes = []
@@ -137,8 +143,14 @@ export class TradeFinanceService {
     if (dealDetails.dealStatus !== TradeFinanceDealStatus.IN_PROGRESS) {throw new BadRequestException(
       `This trade deal cannot be submitted for funding as it has a state of ${dealDetails.dealStatus} rather than ${TradeFinanceDealStatus.IN_PROGRESS}`,
     )}
+
+    // Create a Deal processing record and update the deal
+
     // update deal status
     await this.tradeFinanceRepository.updateDeal(accountId, dealId, { dealStatus: TradeFinanceDealStatus.FUNDING_REQUESTED });
+
+    // Notify Deal Desk of the new funding request
+    await this.customerFundingRequestsQueue.add(DealDeskEvents.NEW_FUNDING_REQUEST, {accountId, dealId});
   }
 
   async withdrawFunding(accountId: string, dealId: string) {
@@ -150,6 +162,10 @@ export class TradeFinanceService {
     if (!allowedStates.includes(dealDetails.dealStatus)) {throw new BadRequestException(
       `This trade deal cannot be submitted for funding as it has a state of ${dealDetails.dealStatus} rather than one of the following: ${allowedStates.join(', ')}`,
     )}
+
+    // Notify Deal Desk of the withdrawn funding request
+    await this.customerFundingRequestsQueue.add(DealDeskEvents.WITHDRAW_FUNDING_REQUEST, {accountId, dealId});
+
     // update deal status
     await this.tradeFinanceRepository.updateDeal(accountId, dealId, { dealStatus: TradeFinanceDealStatus.IN_PROGRESS });
   }

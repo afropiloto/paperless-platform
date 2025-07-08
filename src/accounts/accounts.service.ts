@@ -31,7 +31,6 @@ export class AccountsService {
   }
 
   async updateAccount(accountId: string, updates: AccountUpdateDto | AccountStatusUpdateDto) {
-    this.logger.debug({accountId, updates});
 
     const exists = await this.accountExists(accountId);
     if (!exists) {

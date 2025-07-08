@@ -25,8 +25,6 @@ import {
 } from './dtos/verify-trade-document.dto';
 import { plainToInstance } from 'class-transformer';
 
-import { TradeDocumentFileDTO } from '../trade-documents/dtos/trade-document-file.dto';
-
 @Controller('verify/trade-document/')
 @ApiTags('Verify Trade Document')
 export class VerifyTradeDocumentController {
@@ -45,12 +43,9 @@ export class VerifyTradeDocumentController {
   @ApiResponse({ status: 200, description: 'Trade Document File validated' })
   @ApiResponse({ status: 404, description: 'Tracking ID not recognised' })
   async getTradeDocumentByTrackingId(@Param('trackingId') trackingId: string) {
-    const document =
-      await this.verifyTradeDocumentService.getTradeDocumentByTrackingId(
-        trackingId,
-      );
-    this.logger.debug(document);
-    return document;
+    return await this.verifyTradeDocumentService.getTradeDocumentByTrackingId(
+      trackingId,
+    );
   }
 
   @Get('/:trackingId/file')
@@ -65,8 +60,8 @@ export class VerifyTradeDocumentController {
     @Param('trackingId') trackingId: string,
   ) {
     return await this.verifyTradeDocumentService.getTradeDocumentFileByTrackingId(
-        trackingId);
-
+      trackingId,
+    );
   }
 
   @Post('/')

@@ -39,13 +39,10 @@ export class TradeFinanceController {
     @Param('accountId') accountId: string,
     @Query() searchParams: SearchQueryDto,
   ) {
-    const result =
-      await this.tradeFinanceService.getAvailableFinanceableDocuments(
+    return await this.tradeFinanceService.getAvailableFinanceableDocuments(
         accountId,
         searchParams,
       );
-    this.logger.debug({ result });
-    return result;
   }
 
   @Post('/:accountId/deals')
@@ -74,9 +71,8 @@ export class TradeFinanceController {
     @Param('accountId') accountId: string,
     @Body() createDealDto: CreateTradeFinanceDealDto,
   ): Promise<TradeFinanceDealDto> {
-    const result = await this.tradeFinanceService.createDeal(accountId, createDealDto);
-    this.logger.debug({ result });
-    return result;
+    return await this.tradeFinanceService.createDeal(accountId, createDealDto);
+
   }
 
   @Get('/:accountId/deals/:dealId')
@@ -110,9 +106,8 @@ export class TradeFinanceController {
     @Param('accountId') accountId: string,
     @Param('dealId') dealId: string,
   ): Promise<TradeFinanceDealDto> {
-    const result = await this.tradeFinanceService.getDealById(accountId, dealId);
-    this.logger.debug({ result });
-    return result;
+    return await this.tradeFinanceService.getDealById(accountId, dealId);
+
   }
 
   @Put('/:accountId/deals/:dealId')
@@ -152,9 +147,8 @@ export class TradeFinanceController {
     @Param('dealId') dealId: string,
     @Body() updateDealDto: Partial<CreateTradeFinanceDealDto>,
   ): Promise<TradeFinanceDealDto> {
-    const result = await this.tradeFinanceService.updateDeal(accountId, dealId, updateDealDto);
-    this.logger.debug({ result });
-    return result;
+    return await this.tradeFinanceService.updateDeal(accountId, dealId, updateDealDto);
+
   }
 
   @Delete('/:accountId/deals/:dealId')

@@ -103,7 +103,7 @@ export class DataExtractionProcessor extends WorkerHost {
         TradeDocumentFileVariant.ORIGINAL,
       );
 
-    this.logger.debug({
+    this.logger.log({
       message: `Processing Data Extraction Job ${job.id}`,
       accountId,
       documentId,
@@ -125,7 +125,7 @@ export class DataExtractionProcessor extends WorkerHost {
       });
       throw new Error('Failed to send document for data extraction.');
     }
-    this.logger.debug({
+    this.logger.log({
       message: 'Sent document for data extraction',
       accountId,
       documentId,
@@ -142,7 +142,7 @@ export class DataExtractionProcessor extends WorkerHost {
     job: Job<GraipDataExtractionCallBackJob>,
   ) {
     const { accountId, documentId, flowId, requestId } = job.data;
-    this.logger.debug({
+    this.logger.log({
       message: 'Processing callback',
       accountId,
       documentId,
@@ -156,7 +156,7 @@ export class DataExtractionProcessor extends WorkerHost {
         requestId,
       } as GraipDataExtractionCallBackJob);
     if (extractionResponse.success) {
-      this.logger.debug({
+      this.logger.log({
         message: 'Data Extraction Complete',
         accountId,
         documentId,
@@ -185,7 +185,7 @@ export class DataExtractionProcessor extends WorkerHost {
 
       return;
     } else {
-      this.logger.debug({
+      this.logger.log({
         message: 'Data Extraction not yet complete',
         accountId,
         documentId,

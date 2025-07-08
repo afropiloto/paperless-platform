@@ -28,8 +28,7 @@ export class AccountUser {
   @Prop({ 
     required: true, 
     type: String, 
-    lowercase: true,
-    unique: true 
+    lowercase: true
   })
   emailAddress: string;
 

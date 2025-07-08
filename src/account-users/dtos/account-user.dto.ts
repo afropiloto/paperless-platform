@@ -1,8 +1,8 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Exclude, Expose, Transform, Type } from 'class-transformer';
 import { IsArray, IsEmail, IsEnum, IsMongoId, IsOptional, IsString, ValidateNested, IsBoolean } from 'class-validator';
-import { AccountUserStatus } from '../schemas/account-user.schema';
-import { ApplicationModule, ApplicationRole } from '../schemas/application-permissions.schema';
+import { AccountUserStatus } from '../schemas';
+import { ApplicationModule, ApplicationRole } from '../schemas';
 import { SearchQueryDto } from '../../common/dtos/search.dto';
 
 // Legacy DTO for backward compatibility

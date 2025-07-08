@@ -8,7 +8,10 @@ import {
   DocumentSigningSearchResultsDto,
   UpdateSigningDetailsDto,
 } from './dtos/document-signing.dto';
-import { DocumentSigningFilterByParams, DocumentSigningStatus } from './types/document-signing.types';
+import {
+  DocumentSigningFilterByParams,
+  DocumentSigningStatus,
+} from './types/document-signing.types';
 import {
   SearchQueryDto,
   SearchResultsMetadata,
@@ -43,7 +46,6 @@ export class DocumentSigningRepository {
     }
   }
 
-
   async findByIdentifier(
     filterParams: DocumentSigningFilterByParams,
     searchQuery: SearchQueryDto,
@@ -61,7 +63,7 @@ export class DocumentSigningRepository {
       // Build query to find documents where the wallet address is in the parties array
       let query: any;
       if (filterParams.walletAddress) {
-       query['parties.walletAddress'] = filterParams.walletAddress;
+        query['parties.walletAddress'] = filterParams.walletAddress;
       }
       if (filterParams.accountId) {
         query['accountId'] = filterParams.accountId;
@@ -186,7 +188,9 @@ export class DocumentSigningRepository {
       );
       const savedDocumentSigning = await newDocumentSigning.save();
 
-      return this.mapToDocumentSigningDetailsDto(savedDocumentSigning);
+      const mapped = this.mapToDocumentSigningDetailsDto(savedDocumentSigning);
+      this.logger.debug({mapped})
+      return mapped;
     } catch (error) {
       this.logger.error('Error creating document signing:', error);
       throw error;
@@ -207,7 +211,7 @@ export class DocumentSigningRepository {
       const updatedDocumentSigning = await this.documentSigningModel
         .findByIdAndUpdate(
           signingId,
-          { updates },
+          updates,
           { new: true, runValidators: true },
         )
         .exec();
