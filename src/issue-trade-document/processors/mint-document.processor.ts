@@ -6,7 +6,7 @@ import { TradeDocumentsService } from '../../trade-documents/trade-documents.ser
 import { TradeTrustService } from '../../trade-trust/trade-trust.service';
 import { AuditService } from '../../audit/audit.service';
 import { IssueDetailsDto } from '../../trade-documents/dtos/trade-document.dto';
-import { AuditEventType } from '../../audit/audit-event-type.enum';
+import { AuditEventType, AuditSubject } from '../../audit/audit-event-type.enum';
 import { MINT_DOCUMENT_QUEUE } from '../../constants/app.constants';
 
 @Processor(MINT_DOCUMENT_QUEUE)
@@ -61,10 +61,11 @@ export class MintDocumentProcessor extends WorkerHost {
     );
 
     await this.auditService.log({
+      subject: AuditSubject.TRADE_DOCUMENT,
       eventType: AuditEventType.DOCUMENT_ISSUED,
+      identifier: documentId,
       accountId,
-      documentId,
-      details: { message: 'Transferable Document Minted', ...issueDetails },
+      details: {message: 'Transferable Document Minted', ...issueDetails },
     });
   }
 } 

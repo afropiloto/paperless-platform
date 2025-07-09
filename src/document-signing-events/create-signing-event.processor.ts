@@ -20,7 +20,7 @@ import {
 import { TradeDocumentStatus } from '../types/trade-documents.types';
 import { FileStorageService } from '../file-storage/file-storage.interface';
 import { subtractDates } from '../utils/date-utils';
-import { AuditEventType } from '../audit/audit-event-type.enum';
+import { AuditEventType, AuditSubject } from '../audit/audit-event-type.enum';
 import { FILE_STORAGE_SERVICE } from '../file-storage/file-storage.constants';
 
 @Processor(CREATE_DOCUMENT_SIGNING_EVENT_QUEUE)
@@ -102,10 +102,12 @@ export class CreateDocumentSigningEventProcessor extends WorkerHost {
     );
 
     await this.auditService.log({
+      subject: AuditSubject.TRADE_DOCUMENT,
       eventType: AuditEventType.ON_CHAIN_SIGNING_EVENT_OPENED,
-      documentId: data.documentId,
-      accountId: data.accountId,
+      identifier: data.documentId,
       details: {
+        documentId: data.documentId,
+        accountId: data.accountId,
         signingEventId: document.documentSigningId
       }
     });
@@ -176,10 +178,12 @@ export class CreateDocumentSigningEventProcessor extends WorkerHost {
       this.logger.debug(results);
 
       await this.auditService.log({
+        subject: AuditSubject.TRADE_DOCUMENT,
         eventType: AuditEventType.ON_CHAIN_SIGNING_EVENT_CREATED,
-        documentId: data.documentId,
-        accountId: data.accountId,
+        identifier: data.documentId,
         details: {
+          tradeDocumentId: data.documentId,
+          accountId: data.accountId,
           signingDocumentId: eventDocumentId,
           expiryDate: data.expiryDate,
           signers: signers,

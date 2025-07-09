@@ -1,39 +1,23 @@
 import { BadRequestException, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
-import {
-  CreateTradeDocumentFromFileDto, IssueDetailsDto,
-  UpsertTradeDocumentDto,
-} from './dtos/trade-document.dto';
-import {
-  FileData,
-  TradeDocumentStatus,
-  TradeDocumentType,
-} from '../types/trade-documents.types';
+import { CreateTradeDocumentFromFileDto, IssueDetailsDto, UpsertTradeDocumentDto } from './dtos/trade-document.dto';
+import { FileData, TradeDocumentStatus, TradeDocumentType } from '../types/trade-documents.types';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
-import {
-  DATA_EXTRACTION_EVENT,
-  DATA_EXTRACTION_QUEUE_NAME,
-} from '../constants/app.constants';
+import { DATA_EXTRACTION_EVENT, DATA_EXTRACTION_QUEUE_NAME } from '../constants/app.constants';
 import { DataExtractionJob } from '../data-extraction/data-extraction.types';
 import { TradeDocumentsRepository } from './trade-documents.repository';
 import { GeneralResponseDto } from '../common/common-dto';
 import { AuditService } from '../audit/audit.service';
-import { AuditEventType } from '../audit/audit-event-type.enum';
+import { AuditEventType, AuditSubject } from '../audit/audit-event-type.enum';
 import { plainToInstance } from 'class-transformer';
-import {
-  TradeDocumentsSearchResultsDto,
-} from './dtos/search-trade-documents.dto';
+import { TradeDocumentsSearchResultsDto } from './dtos/search-trade-documents.dto';
 import { AccountsService } from '../accounts/accounts.service';
-import {
-  TradeDocumentFileVariant,
-  TradeDocumentFileStatus,
-} from './trade-document-file.types';
+import { TradeDocumentFileStatus, TradeDocumentFileVariant } from './trade-document-file.types';
 import { FileStorageService } from '../file-storage/file-storage.interface';
 import { FILE_STORAGE_SERVICE } from '../file-storage/file-storage.constants';
 import { TradeDocumentFileDTO } from './dtos/trade-document-file.dto';
 import { TradeDocumentProtectedAttributesUpdateDto } from './dtos/trade-document-protected-attributes-update.dto';
 import { SearchQueryDto } from '../common/dtos/search.dto';
-
 
 
 @Injectable()
@@ -78,9 +62,10 @@ export class TradeDocumentsService {
     );
 
     await this.auditService.log({
-      eventType: AuditEventType.DOCUMENT_CREATED,
-      accountId,
-      documentId: newDocument.id,
+      subject: AuditSubject.TRADE_DOCUMENT,
+      eventType: AuditEventType.CREATED,
+      identifier: newDocument.id,
+      accountId
     });
 
     // Transform the response back to use documentContent
@@ -141,9 +126,10 @@ export class TradeDocumentsService {
       documentId,
     );
     await this.auditService.log({
-      eventType: AuditEventType.DOCUMENT_DELETED,
+      subject: AuditSubject.TRADE_DOCUMENT,
+      eventType: AuditEventType.DELETED,
+      identifier: documentId,
       accountId,
-      documentId,
     });
     return { success: success } as GeneralResponseDto;
   }
@@ -177,9 +163,10 @@ export class TradeDocumentsService {
     }
 
     await this.auditService.log({
-      eventType: AuditEventType.DOCUMENT_UPDATED,
+      subject: AuditSubject.TRADE_DOCUMENT,
+      eventType: AuditEventType.UPDATED,
+      identifier: documentId,
       accountId,
-      documentId,
     });
 
     return updatedDocument;
@@ -269,11 +256,12 @@ export class TradeDocumentsService {
       this.fileStorageService.deleteFile(currentFileDetails.storedFileName)
         .then(()=> {
           this.auditService.log({
-            eventType: AuditEventType.DOCUMENT_FILE_REPLACED,
+            subject: AuditSubject.TRADE_DOCUMENT,
+            eventType: AuditEventType.DOCUMENT_FILE_DELETED,
+            identifier: tradeDocumentId,
             accountId,
-            documentId: tradeDocumentId,
-            details: {originalFile: {fileName: currentFileDetails.originalFileName, fileType: currentFileDetails.mimeType, fileSize: currentFileDetails.size},
-            updatedFile: {fileName: tradeDocumentFileDetails.originalFileName, fileType: tradeDocumentFileDetails.mimeType, fileSize: tradeDocumentFileDetails.size}},
+            details: {
+              originalFile: {fileName: currentFileDetails.originalFileName, fileType: currentFileDetails.mimeType, fileSize: currentFileDetails.size}}
           })
         })
     }
@@ -297,10 +285,12 @@ export class TradeDocumentsService {
 
     // Write Audit Log
     await this.auditService.log({
-      eventType: AuditEventType.DOCUMENT_FILE_UPDATED,
+      subject: AuditSubject.TRADE_DOCUMENT,
+      eventType: AuditEventType.DOCUMENT_FILE_ADDED,
+      identifier: tradeDocumentId,
       accountId,
-      documentId: tradeDocumentId,
-      details: {originalFileName: fileName, fileType: mimeType, fileSize: fileSize},
+      details: {
+        updatedFile: {fileName: tradeDocumentFileDetails.originalFileName, fileType: tradeDocumentFileDetails.mimeType, fileSize: tradeDocumentFileDetails.size}},
     });
 
     return tradeDocument;
@@ -318,10 +308,12 @@ export class TradeDocumentsService {
         newStatus,
       );
     await this.auditService.log({
-      eventType: AuditEventType.DOCUMENT_STATE_UPDATED,
+      subject: AuditSubject.TRADE_DOCUMENT,
+      eventType: AuditEventType.STATUS_CHANGED,
+      identifier: documentId,
       accountId,
-      documentId,
-      details: { newState: newStatus },
+      details: {
+        newState: newStatus },
     });
     return updatedDocument;
   }
@@ -375,9 +367,12 @@ export class TradeDocumentsService {
     const updatedDocument = await this.updateTradeDocumentFileById(accountId, newDocument.id, file, TradeDocumentFileVariant.ORIGINAL);
 
     await this.auditService.log({
-      eventType: AuditEventType.DOCUMENT_CREATED,
+      subject: AuditSubject.TRADE_DOCUMENT,
+      eventType: AuditEventType.CREATED,
+      identifier: updatedDocument.id,
       accountId,
-      documentId: updatedDocument.id,
+      details: {accountId, documentId: updatedDocument.id}
+
     });
     return updatedDocument;
   }

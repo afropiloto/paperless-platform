@@ -4,6 +4,7 @@ import { AuditEvent, AuditEventSchema } from './schemas/audit-event.schema';
 import { AuditService } from './audit.service';
 import { AuditRepository } from './audit.repository';
 import { AuditContextService } from './audit-context.service';
+import { AuditController } from './audit.controller';
 
 @Global()
 @Module({
@@ -12,5 +13,6 @@ import { AuditContextService } from './audit-context.service';
   ],
   providers: [AuditService, AuditRepository, AuditContextService],
   exports: [AuditService, AuditContextService],
+  controllers: [AuditController],
 })
 export class AuditModule {}

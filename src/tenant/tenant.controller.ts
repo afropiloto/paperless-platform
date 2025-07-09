@@ -6,6 +6,7 @@ import { ConfigService } from '@nestjs/config';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { DidDto } from './dtos/DidDto';
+import { SUPPORTED_CHAINS } from '@trustvc/trustvc';
 
 
 @ApiTags('Tenant')
@@ -30,11 +31,14 @@ export class TenantController {
   @ApiOperation({ summary: 'Gets the current blockchain network configuration for the tenant' })
   @ApiResponse({ status: 200, description: 'Tenant network configuration retrieved' })
   async getChainConfig(): Promise<TenantChainConfigDto> {
+    const chainId =this.configService.get<number>('tenant.provider.chainId');
+    const chainInfo = SUPPORTED_CHAINS[chainId];
+
     const config = new TenantChainConfigDto();
     config.provider = new ProviderInfoDto();
-    config.provider.network = this.configService.get<string>('tenant.provider.network');
-    config.provider.providerType = this.configService.get<string>('tenant.provider.providerType');
-    config.provider.rpcUrl = this.configService.get<string>('tenant.provider.rpcUrl');
+    config.provider.network = chainInfo.name;
+    config.provider.chainId = chainId;
+    config.provider.rpcUrl = chainInfo.rpcUrl;
     config.tokenRegistryAddress= this.configService.get<string>('tenant.tokenRegistryAddress');
     config.documentStoreAddress = this.configService.get<string>('tenant.documentStoreAddress');
     return plainToInstance(TenantChainConfigDto, config)

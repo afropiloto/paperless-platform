@@ -8,7 +8,6 @@ import {
   Patch,
   Post,
   Query,
-   UseGuards,
 } from '@nestjs/common';
 import { 
   ApiBody, 
@@ -26,9 +25,6 @@ import {
   AccountUsersSearchDto 
 } from './dtos';
 import { AccountUsersSearchResultsDto } from './dtos';
-import { ApiKeyProtectedSwagger } from '../utils/swagger.decorators';
-import { ApiKeyGuard } from '../api-key-auth/api-key.guard';
-import { ClientAccess } from '../api-key-auth/decorators/client-access.decorator';
 
 @ApiTags('Account Users')
 @Controller('account-users')

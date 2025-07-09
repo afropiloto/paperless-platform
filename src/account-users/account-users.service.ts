@@ -11,9 +11,10 @@ import {
   AccountUsersSearchDto,
   CreateAccountUserDto,
   UpdateAccountUserDto,
-} from './dtos/account-user.dto';
-import { AccountUsersSearchResultsDto } from './dtos/account-users-search-results.dto';
+} from './dtos';
+import { AccountUsersSearchResultsDto } from './dtos';
 import { PermissionsValidationService } from './services/permissions-validation.service';
+import { AccountsService } from '../accounts/accounts.service';
 
 @Injectable()
 export class AccountUsersService {
@@ -22,6 +23,7 @@ export class AccountUsersService {
   constructor(
     private readonly accountUsersRepository: AccountUsersRepository,
     private readonly permissionsValidationService: PermissionsValidationService,
+    private readonly accountService: AccountsService
   ) {}
 
   async createAccountUser(
@@ -41,6 +43,11 @@ export class AccountUsersService {
       this.permissionsValidationService.validatePermissions(
         createAccountUserDto.permissions,
       );
+    }
+
+    // Check the Account exists
+    if (!(await this.accountService.accountExists(createAccountUserDto.accountId))) {
+      throw new NotFoundException('Linked AccountID not found');
     }
 
     return await this.accountUsersRepository.create(createAccountUserDto);

@@ -18,8 +18,7 @@ export default () => ({
     financeModule: false,
     provider: {
       network: process.env.CHAIN,
-      providerType: process.env.CHAIN_PROVIDER_TYPE,
-      rpcUrl: process.env.CHAIN_RPC_URL
+      chainId: process.env.CHAIN_ID
     },
     tokenRegistryAddress:process.env.TOKEN_REGISTRY_ADDRESS,
     documentStoreAddress:process.env.DOCUMENT_STORE_ADDRESS,

@@ -9,7 +9,7 @@ import { RegistrationService } from '../registration/registration.service';
 import { AccountUsersService } from '../account-users/account-users.service';
 import { AccountCreationDto } from '../accounts/dtos/accounts.dto';
 import { AccountStatus } from '../accounts/types/account.types';
-import { AuditEventType } from '../audit/audit-event-type.enum';
+import { AuditEventType, AuditSubject } from '../audit/audit-event-type.enum';
 import { CreateAccountUserDto } from '../account-users/dtos';
 import { ApplicationModule, ApplicationRole } from '../account-users/schemas';
 
@@ -94,9 +94,11 @@ export class NewAccountsProcessor extends WorkerHost {
       await this.accountUsersService.createAccountUser(defaultUser);
 
       await this.auditService.log({
-        eventType: AuditEventType.ACCOUNT_CREATED,
+        subject: AuditSubject.ONBOARDING,
+        eventType: AuditEventType.CREATED,
+        identifier: registrationId,
         accountId: newAccountDetails.id,
-        details: { registrationId },
+        details: { registrationId},
       });
     } catch (error) {
       // ToDo: Need to handle failures and roll back transactions

@@ -5,7 +5,7 @@ import { FundingRequestJobData } from '../deal-desk/types/deal-desk-event.types'
 import { Inject, Logger } from '@nestjs/common';
 import { AuditService } from '../audit/audit.service';
 import { DealProcessingService } from '../deal-desk/deal-processing.service';
-import { AuditEventType } from '../audit/audit-event-type.enum';
+import { AuditEventType, AuditSubject } from '../audit/audit-event-type.enum';
 
 @Processor(DealDeskQueues.CUSTOMER_FUNDING_REQUESTS)
 export class FundingRequestProcessor extends WorkerHost {
@@ -35,7 +35,9 @@ export class FundingRequestProcessor extends WorkerHost {
         dealId,
       });
 
-      await this.auditService.log({ eventType: AuditEventType.FUNDING_REQUESTED, accountId, details: { dealId, dealProcessingId: newDealProcessing._id} });
+      await this.auditService.log({
+        subject:AuditSubject.TRADE_FINANCE_DEAL,
+        eventType: AuditEventType.FUNDING_REQUESTED, identifier: dealId, details: {  accountId, dealId, dealProcessingId: newDealProcessing._id} });
     } catch (error) {
       this.logger.error({ message: `Processing failed for job ${job.id} for event ${job.name}`, data: job.data, error });
       throw error;
@@ -55,7 +57,11 @@ export class FundingRequestProcessor extends WorkerHost {
       dealId,
     );
 
-    await this.auditService.log({ eventType: AuditEventType.FUNDING_WITHDRAWN,accountId, details: {dealId}  });
+    await this.auditService.log({
+      subject: AuditSubject.TRADE_FINANCE_DEAL,
+      eventType: AuditEventType.FUNDING_WITHDRAWN,
+      identifier: dealId,
+      details: {accountId, dealId}  });
   }
 
   async process(job: Job<FundingRequestJobData>): Promise<void> {

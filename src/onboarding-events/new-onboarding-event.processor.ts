@@ -8,7 +8,7 @@ import { Job } from 'bullmq';
 import { Promise } from 'mongoose';
 import { OnboardingJobData } from './onboarding-events.types';
 import { CreateOnboardingProcessingDto } from '../onboarding/dtos/create-onboarding-processing.dto';
-import { AuditEventType } from '../audit/audit-event-type.enum';
+import { AuditEventType, AuditSubject } from '../audit/audit-event-type.enum';
 
 @Processor(OnboardingQueues.NEW_ONBOARDING_REQUESTS)
 export class NewOnboardingQueueProcessor extends WorkerHost {
@@ -46,7 +46,9 @@ export class NewOnboardingQueueProcessor extends WorkerHost {
       );
 
     await this.auditService.log({
-      eventType: AuditEventType.ONBOARDING_CREATED,
+      subject: AuditSubject.ONBOARDING,
+      eventType: AuditEventType.CREATED,
+      identifier: onboardingRecord._id,
       details: {registrationId: registrationDetails.registrationId, onboardingId: onboardingRecord._id},
     });
   }

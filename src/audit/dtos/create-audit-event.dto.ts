@@ -1,16 +1,23 @@
-import { AuditEventType } from '../audit-event-type.enum';
-import { IsEnum, IsString, IsOptional, IsObject } from 'class-validator';
+import { AuditEventType, AuditSubject } from '../audit-event-type.enum';
+import { IsEnum, IsString, IsOptional, IsObject, IsDate } from 'class-validator';
+import { Expose } from 'class-transformer';
+
+
+
 
 export class CreateAuditEventDto {
+  @IsEnum(AuditSubject)
+  subject: AuditSubject;
+
   @IsEnum(AuditEventType)
   eventType: AuditEventType;
 
   @IsString()
-  accountId?: string;
+  identifier: string;
 
-  @IsOptional()
   @IsString()
-  documentId?: string;
+  @IsOptional()
+  accountId?: string
 
   @IsString()
   @IsOptional()

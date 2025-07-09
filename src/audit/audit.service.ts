@@ -1,9 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { AuditRepository } from './audit.repository';
 import {
-  CreateAuditEventDto
+  CreateAuditEventDto,
 } from './dtos/create-audit-event.dto';
 import { AuditContextService } from './audit-context.service';
+import { AuditEventDto, AuditEventFilterDto } from './dtos/audit-event.dto';
 
 @Injectable()
 export class AuditService {
@@ -17,6 +18,10 @@ export class AuditService {
     auditEvent.originator = this.auditContext.context.clientLabel;
     auditEvent.userId = this.auditContext.context.userId;
     await this.auditRepo.create(auditEvent);
+  }
+
+  async getResourceAuditEventsBySubject(auditFiler: AuditEventFilterDto): Promise<AuditEventDto[]> {
+    return await this.auditRepo.findBy(auditFiler);
   }
 
 

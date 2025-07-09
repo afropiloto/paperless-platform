@@ -12,9 +12,9 @@ export class ProviderInfoDto {
   @Expose()
   network: string;
 
-  @ApiProperty({description: "Network Provider Type"})
+  @ApiProperty({description: "Chain ID for network"})
   @Expose()
-  providerType: string;
+  chainId: number;
 
   @ApiProperty({description: "Network RPC Url"})
   @Expose()

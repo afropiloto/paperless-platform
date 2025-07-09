@@ -9,12 +9,12 @@ import { TradeDocumentFileVariant } from '../../trade-documents/trade-document-f
 import { ConfigService } from '@nestjs/config';
 import { createQRCode } from '../../utils/issued-pdf/createQRCode';
 import { generateVerifiablePDF } from '../../utils/issued-pdf/generateVerifiablePDF';
-import {
-  computeVerifiableHash
-} from '../../utils/issued-pdf/document-tracking';
+import { computeVerifiableHash } from '../../utils/issued-pdf/document-tracking';
 import { AccountsService } from '../../accounts/accounts.service';
-import { TradeDocumentProtectedAttributesUpdateDto } from '../../trade-documents/dtos/trade-document-protected-attributes-update.dto';
-import { AuditEventType } from '../../audit/audit-event-type.enum';
+import {
+  TradeDocumentProtectedAttributesUpdateDto,
+} from '../../trade-documents/dtos/trade-document-protected-attributes-update.dto';
+import { AuditEventType, AuditSubject } from '../../audit/audit-event-type.enum';
 import { ISSUED_FILE_QUEUE } from '../../constants/app.constants';
 import { FileData } from '../../types/trade-documents.types';
 import { IssueJobData } from '../../common/event-flows/issue-event-flow';
@@ -109,9 +109,10 @@ export class IssuedFileProcessor extends WorkerHost {
 
     // Create Audit Record
     await this.auditService.log({
-      accountId,
-      documentId,
+      subject: AuditSubject.TRADE_DOCUMENT,
       eventType: AuditEventType.TRACKABLE_DOCUMENT_ISSUED,
+      identifier: documentId,
+      accountId,
       details: {
         documentTrackingId,
         documentHash,

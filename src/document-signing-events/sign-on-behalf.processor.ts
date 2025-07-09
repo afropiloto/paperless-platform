@@ -3,14 +3,13 @@ import { Logger } from '@nestjs/common';
 import { Job } from 'bullmq';
 import { DocumentSigningService } from '../document-signing/document-signing.service';
 import { AuditService } from '../audit/audit.service';
-import { AuditEventType } from '../audit/audit-event-type.enum';
+import { AuditEventType, AuditSubject } from '../audit/audit-event-type.enum';
 import { DocumentSigningContractService } from '../document-signing/document-signing-contract.service';
 import { TradeDocumentsService } from '../trade-documents/trade-documents.service';
 import { TradeDocumentFileVariant } from '../trade-documents/trade-document-file.types';
 import { getPaiperlessSigner } from '../utils/web3-utils';
-import {SignDocumentOnBehalfJobData } from '../document-signing/types/signing-events.types';
+import { SignDocumentOnBehalfJobData } from '../document-signing/types/signing-events.types';
 import { SIGN_DOCUMENT_ON_BEHALF_QUEUE } from '../constants/app.constants';
-
 
 
 @Processor(SIGN_DOCUMENT_ON_BEHALF_QUEUE)
@@ -55,10 +54,11 @@ export class SignOnBehalfOfPaiperless extends WorkerHost {
 
     // Log Audit Record
     await this.auditService.log({
+      subject: AuditSubject.TRADE_DOCUMENT,
       eventType: AuditEventType.DOCUMENT_SIGNED_ON_BEHALF,
-      documentId: tradeDocumentId,
-      accountId: accountId,
+      identifier: tradeDocumentId,
       details: {
+        accountId, tradeDocumentId,
         transactionHash: receipt.transactionHash,
         documentSigningId: documentSigningId,
         signedBy: await signer.getAddress()

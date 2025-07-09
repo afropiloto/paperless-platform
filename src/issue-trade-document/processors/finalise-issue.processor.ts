@@ -5,7 +5,7 @@ import { TradeDocumentsService } from '../../trade-documents/trade-documents.ser
 import { AuditService } from '../../audit/audit.service';
 import { IssueDetailsDto } from '../../trade-documents/dtos/trade-document.dto';
 import { TradeDocumentStatus } from '../../types/trade-documents.types';
-import { AuditEventType } from '../../audit/audit-event-type.enum';
+import { AuditEventType, AuditSubject } from '../../audit/audit-event-type.enum';
 import { FINALISE_ISSUE_QUEUE } from '../../constants/app.constants';
 import { IssueJobData } from '../../common/event-flows/issue-event-flow';
 
@@ -51,10 +51,10 @@ export class FinaliseIssueProcessor extends WorkerHost {
     );
 
     await this.auditService.log({
+      subject: AuditSubject.TRADE_DOCUMENT,
       eventType: AuditEventType.DOCUMENT_ISSUED,
-      accountId,
-      documentId,
-      details: { message: 'Trade Document Issued', ...issueDetails },
+      identifier: documentId,
+      details: {accountId, documentId, message: 'Trade Document Issued', ...issueDetails },
     });
 
   }

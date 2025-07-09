@@ -39,12 +39,17 @@ import { TradeDocumentFileVariant } from './trade-document-file.types';
 import { Response } from 'express';
 import { plainToInstance } from 'class-transformer';
 import { SearchQueryDto } from '../common/dtos/search.dto';
+import { ShareLinksService } from '../share-links/share-links.service';
+import { CreateShareLinkDto, ShareLinkResponseDto } from '../share-links/dtos/share-link.dto';
 
 @ApiTags('Trade Documents')
 @Controller('trade-documents')
 export class TradeDocumentsController {
   private readonly logger = new Logger(TradeDocumentsController.name);
-  constructor(private readonly tradeDocumentsService: TradeDocumentsService) {}
+  constructor(
+    private readonly tradeDocumentsService: TradeDocumentsService,
+    private readonly shareLinksService: ShareLinksService,
+  ) {}
 
   // *******************************************************************************************************************
   // Trade Document File endpoints
@@ -366,6 +371,76 @@ export class TradeDocumentsController {
     return await this.tradeDocumentsService.createTradeDocument(
       accountId,
       content,
+    );
+  }
+
+  // *******************************************************************************************************************
+  // Share Link endpoints
+  // *******************************************************************************************************************
+  @Post(':accountId/:documentId/share')
+  @ApiOperation({
+    summary: 'Creates a secure share link for a trade document',
+    description:
+      'Generates a secure, non-predictable link ID that can be shared to access a trade document. Optionally specify expiry date and allowed email addresses.',
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'Share link created successfully',
+    type: ShareLinkResponseDto,
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid request parameters',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Trade document not found',
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Not authorized to access this document',
+  })
+  async createShareLink(
+    @Param('accountId') accountId: string,
+    @Param('documentId') documentId: string,
+    @Body() createShareLinkDto: CreateShareLinkDto,
+  ): Promise<ShareLinkResponseDto> {
+    // TODO: Get the actual user ID from the authenticated context
+    const createdBy = 'system'; // This should come from auth context
+
+    return await this.shareLinksService.createShareLink(
+      accountId,
+      documentId,
+      createShareLinkDto,
+      createdBy,
+    );
+  }
+
+  @Get(':accountId/:documentId/share')
+  @ApiOperation({
+    summary: 'Get all share links for a document',
+    description: 'Retrieves all active share links for a specific trade document.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Share links retrieved successfully',
+    type: [ShareLinkResponseDto],
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Document not found',
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Not authorized to access this document',
+  })
+  async getShareLinksForDocument(
+    @Param('accountId') accountId: string,
+    @Param('documentId') documentId: string,
+  ): Promise<ShareLinkResponseDto[]> {
+    return await this.shareLinksService.getShareLinksForDocument(
+      accountId,
+      documentId,
     );
   }
 }

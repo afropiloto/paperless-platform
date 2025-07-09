@@ -6,15 +6,12 @@ import {
 } from '../constants/app.constants';
 import { Logger } from '@nestjs/common';
 import { Job } from 'bullmq';
-import {
-  DataExtractionJob,
-  GraipDataExtractionCallBackJob,
-} from './data-extraction.types';
+import { DataExtractionJob, GraipDataExtractionCallBackJob } from './data-extraction.types';
 import { ConfigService } from '@nestjs/config';
 import { DataExtractionService } from './data-extraction.service';
 import { TradeDocumentStatus } from '../types/trade-documents.types';
 import { AuditService } from '../audit/audit.service';
-import { AuditEventType } from '../audit/audit-event-type.enum';
+import { AuditEventType, AuditSubject } from '../audit/audit-event-type.enum';
 import { TradeDocumentsService } from '../trade-documents/trade-documents.service';
 import { TradeDocumentFileVariant } from '../trade-documents/trade-document-file.types';
 
@@ -64,9 +61,10 @@ export class DataExtractionProcessor extends WorkerHost {
       TradeDocumentStatus.IN_PROGRESS,
     );
     await this.auditService.log({
+      subject: AuditSubject.TRADE_DOCUMENT,
       eventType: AuditEventType.PROCESSING_ERROR,
+      identifier: documentId,
       accountId,
-      documentId,
       details: {
         message: 'Failed to extract data from trade document',
         error: error.message,
@@ -131,10 +129,11 @@ export class DataExtractionProcessor extends WorkerHost {
       documentId,
     });
     await this.auditService.log({
+      subject: AuditSubject.TRADE_DOCUMENT,
       eventType: AuditEventType.DOCUMENT_DATA_EXTRACTION,
+      identifier: documentId,
       accountId,
-      documentId,
-      details: { message: 'Document Data Extraction Initiated' },
+      details: { message: 'Document Data Extraction Initiated'},
     });
   }
 
@@ -175,9 +174,10 @@ export class DataExtractionProcessor extends WorkerHost {
         TradeDocumentStatus.IN_PROGRESS,
       );
       await this.auditService.log({
+        subject: AuditSubject.TRADE_DOCUMENT,
         eventType: AuditEventType.DOCUMENT_DATA_EXTRACTION,
+        identifier: documentId,
         accountId,
-        documentId,
         details: {
           message: 'Document Data Extraction Completed. Trade Document Updated',
         },

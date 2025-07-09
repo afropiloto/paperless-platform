@@ -7,11 +7,6 @@
 4. Upload Trade Document -> Issue -> Fund -> Accept -> Promissory Note -> Signed
 
 
-
-
-
-
-
 # Todo:
 1. Setup ai.paiperless.com with dns-txt record for identify verification
 2. Document signing
@@ -19,27 +14,22 @@
    * Update retrieval methods to get current data from chain. Do this for In Progress items only but where an updated status is returned, update the status in the database.
 3. Extend document types to include Bill of Lading and Warehouse receipts
 4. Migrate data extraction to extend.ai
-5. Audit - ensure we are auditing the right things - including login
-6. Email Module - add EmailerService that integrates with an email provider to send emails.
-7. Security
+5. Email Module - add EmailerService that integrates with an email provider to send emails.
+6. Security
    * Need to add setup API Key guards on endpoints
    * Need to add JWT guard to controllers
    * Need to add UserPermissionGuards to controller methods
    * We need a Paiperless Account with users creating 
-8. Check Verify issued document works as expected
-9. Virus Scan
+7. Virus Scan
     * Need to integrate Virus Scan into Registration documents upload
     * Need to integrate Virus Scan into Trade Documents File upload
-10. Add Data Extraction on initial file upload
-    * Test data extraction and failure modes
-11. Account Analytics
-12. Need to ensure that if we suspend and account that all users related to that account are suspended - also for making accounts Active
-13. Need to ensure that when account users are being updated for an accountId, they are being updated by an account linked to the same accountId OR the user is a Voy Admin user
-14. Update ReadMe with set up & deployment information
-15. Consider adding a Notifications feature that we can use to notify accounts of problems with documents or general issues
-16. Write Service and Controller Tests
+8. Account Analytics
+9. Need to ensure that if we suspend and account that all users related to that account are suspended - also for making accounts Active
+10. Need to ensure that when account users are being updated for an accountId, they are being updated by an account linked to the same accountId OR the user is a Voy Admin user
+11. Update ReadMe with set up & deployment information
+12. Write Service and Controller Tests
     * Can we get Cursor to create the tests?
-17. Consider adding a method to share issued documents with 3rd parties - this needs an email service
+13. Consider adding a method to share issued documents with 3rd parties - this needs an email service
     * Use time limited links?
 
 

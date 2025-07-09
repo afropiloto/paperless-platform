@@ -7,9 +7,11 @@ import { AccountsModule } from '../accounts/accounts.module';
 import { AccountUsersModule } from '../account-users/account-users.module';
 import { SiweModule } from '../siwe/siwe.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { AuditModule } from '../audit/audit.module';
 
 @Module({
   imports: [
+    AuditModule,
     AccountsModule,
     AccountUsersModule,
     SiweModule,

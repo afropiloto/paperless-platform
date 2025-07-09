@@ -9,12 +9,11 @@ import { fileBufferToDataUrl, jsonToFileData } from '../../utils/document-utils'
 import { getTradeTrustDocumentClass } from '../../trade-trust/trade-trust-utils';
 import { TradeTrustFileDetails } from '../../trade-trust/trade-trust.types';
 import { IssueDetailsDto } from '../../trade-documents/dtos/trade-document.dto';
-import { AuditEventType } from '../../audit/audit-event-type.enum';
+import { AuditEventType, AuditSubject } from '../../audit/audit-event-type.enum';
 import { TradeTrustService } from '../../trade-trust/trade-trust.service';
 import { AuditService } from '../../audit/audit.service';
 import { IssueJobData } from '../../common/event-flows/issue-event-flow';
 import { TT_FILE_QUEUE } from '../../constants/app.constants';
-
 
 
 @Processor(TT_FILE_QUEUE)
@@ -115,9 +114,10 @@ export class TtFileProcessor extends WorkerHost {
       TradeDocumentFileVariant.TRADE_TRUST,
     );
     await this.auditService.log({
+      subject: AuditSubject.TRADE_DOCUMENT,
       eventType: AuditEventType.DOCUMENT_WRAPPED,
+      identifier: documentId,
       accountId,
-      documentId,
       details: { message: 'Content wrapped and .TT file created' },
     });
 

@@ -8,6 +8,7 @@ import { DATA_EXTRACTION_QUEUE_NAME } from '../constants/app.constants';
 import { TradeDocumentsRepository } from './trade-documents.repository';
 import { AccountsModule } from '../accounts/accounts.module';
 import { FileStorageModule } from '../file-storage/file-storage.module';
+import { ShareLinksModule } from '../share-links/share-links.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { FileStorageModule } from '../file-storage/file-storage.module';
     BullModule.registerQueue({name: DATA_EXTRACTION_QUEUE_NAME}),
     AccountsModule,
     FileStorageModule,
+    ShareLinksModule,
   ],
   controllers: [TradeDocumentsController],
   providers: [TradeDocumentsService, TradeDocumentsRepository],

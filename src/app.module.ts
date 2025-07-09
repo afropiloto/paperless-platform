@@ -31,6 +31,7 @@ import { AccountsEventsModule } from './accounts-events/accounts-events.module';
 import { OnboardingEventsModule } from './onboarding-events/onboarding-events.module';
 import { DealDeskEventsModule } from './deal-desk-events/deal-desk-events.module';
 import { DocumentSigningEventsModule } from './document-signing-events/document-signing-events.module';
+import { ShareLinksModule } from './share-links/share-links.module';
 
 @Module({
   imports: [
@@ -87,6 +88,7 @@ import { DocumentSigningEventsModule } from './document-signing-events/document-
     OnboardingEventsModule,
     DealDeskEventsModule,
     DocumentSigningEventsModule,
+    ShareLinksModule,
   ],
   controllers: [AppController],
   providers: [],
