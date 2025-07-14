@@ -29,9 +29,6 @@
 11. Update ReadMe with set up & deployment information
 12. Write Service and Controller Tests
     * Can we get Cursor to create the tests?
-13. Consider adding a method to share issued documents with 3rd parties - this needs an email service
-    * Use time limited links?
-
 
 # Platform Deployment
 ToDO

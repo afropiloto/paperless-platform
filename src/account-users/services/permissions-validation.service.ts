@@ -1,6 +1,8 @@
 import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import { ApplicationModule, ApplicationRole } from '../schemas/application-permissions.schema';
 import { UserPermission } from '../types/application-permissions.types';
+import { plainToInstance } from 'class-transformer';
+import { ModuleRoleCombinationDto, ModulesDto, RolesDto } from '../dtos/permissions.dto';
 
 @Injectable()
 export class PermissionsValidationService {
@@ -61,24 +63,28 @@ export class PermissionsValidationService {
    * Gets all valid modules
    */
   getValidModules() {
-    return Object.values(ApplicationModule).map(module => ({
+    const modules =  Object.values(ApplicationModule).map(module => ({
       id: module,
       name: module,
       description: `${module} module`,
       active: true
     }));
+
+    return plainToInstance(ModulesDto, modules)
   }
 
   /**
    * Gets all valid roles
    */
   getValidRoles() {
-    return Object.values(ApplicationRole).map(role => ({
+    const roles = Object.values(ApplicationRole).map(role => ({
       id: role,
       name: role,
       description: `${role} role`,
       active: true
     }));
+
+    return plainToInstance(RolesDto, roles)
   }
 
   /**
@@ -106,7 +112,7 @@ export class PermissionsValidationService {
     combinations.push({ module: ApplicationModule.PORTAL_ADMIN, role: ApplicationRole.SUPERVISOR });
     combinations.push({ module: ApplicationModule.PORTAL_ADMIN, role: ApplicationRole.MANAGER });
     
-    return combinations;
+    return plainToInstance(ModuleRoleCombinationDto, combinations);
   }
 
   /**

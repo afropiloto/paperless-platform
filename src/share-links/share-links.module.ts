@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ShareLinksController } from './share-links.controller';
 import { ShareLinksService } from './share-links.service';
@@ -12,7 +12,7 @@ import { AuditModule } from '../audit/audit.module';
     MongooseModule.forFeature([
       { name: ShareLink.name, schema: ShareLinkSchema },
     ]),
-    TradeDocumentsModule,
+    forwardRef(() => TradeDocumentsModule),
     AuditModule,
   ],
   controllers: [ShareLinksController],

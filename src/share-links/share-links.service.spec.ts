@@ -98,6 +98,7 @@ describe('ShareLinksService', () => {
         allowedEmails: [],
         isExpired: false,
         accessCount: 0,
+        accessHistory: [],
       };
 
       const mockDocument = { id: 'doc123', accountId: 'acc123' };
@@ -110,8 +111,75 @@ describe('ShareLinksService', () => {
       const result = await service.accessShareLink('test-link-id');
 
       expect(result).toEqual(mockDocument);
-      expect(repository.updateAccessCount).toHaveBeenCalledWith('test-link-id');
+      expect(repository.updateAccessCount).toHaveBeenCalledWith('test-link-id', undefined);
       expect(auditService.log).toHaveBeenCalled();
+    });
+
+    it('should track email access when provided', async () => {
+      const mockShareLink = {
+        linkId: 'test-link-id',
+        accountId: 'acc123',
+        documentId: 'doc123',
+        encryptedData: 'encrypted',
+        iv: 'iv',
+        salt: 'salt',
+        expiresAt: new Date(Date.now() + 86400000),
+        allowedEmails: ['test@example.com'],
+        isExpired: false,
+        accessCount: 0,
+        accessHistory: [],
+      };
+
+      const mockDocument = { id: 'doc123', accountId: 'acc123' };
+
+      jest.spyOn(repository, 'findByLinkId').mockResolvedValue(mockShareLink as any);
+      jest.spyOn(repository, 'updateAccessCount').mockResolvedValue();
+      jest.spyOn(tradeDocumentsService, 'getDocumentById').mockResolvedValue(mockDocument as any);
+      jest.spyOn(auditService, 'log').mockResolvedValue();
+
+      const result = await service.accessShareLink('test-link-id', 'test@example.com');
+
+      expect(result).toEqual(mockDocument);
+      expect(repository.updateAccessCount).toHaveBeenCalledWith('test-link-id', 'test@example.com');
+      expect(auditService.log).toHaveBeenCalled();
+    });
+  });
+
+  describe('getShareLinkDetails', () => {
+    it('should return share link details with access history', async () => {
+      const mockShareLink = {
+        linkId: 'test-link-id',
+        accountId: 'acc123',
+        documentId: 'doc123',
+        encryptedData: 'encrypted',
+        iv: 'iv',
+        salt: 'salt',
+        expiresAt: new Date(),
+        allowedEmails: ['test@example.com'],
+        createdBy: 'user123',
+        isExpired: false,
+        accessCount: 2,
+        lastAccessedAt: new Date(),
+        accessHistory: [
+          { email: 'test@example.com', accessedAt: new Date() },
+          { email: 'another@example.com', accessedAt: new Date() },
+        ],
+      };
+
+      jest.spyOn(repository, 'findByLinkId').mockResolvedValue(mockShareLink as any);
+
+      const result = await service.getShareLinkDetails('test-link-id');
+
+      expect(result.linkId).toBe('test-link-id');
+      expect(result.accessCount).toBe(2);
+      expect(result.accessHistory).toHaveLength(2);
+      expect(result.accessHistory[0].email).toBe('test@example.com');
+    });
+
+    it('should throw NotFoundException for non-existent link', async () => {
+      jest.spyOn(repository, 'findByLinkId').mockResolvedValue(null);
+
+      await expect(service.getShareLinkDetails('non-existent')).rejects.toThrow('Share link not found');
     });
   });
 }); 

@@ -1,4 +1,4 @@
-import { BadRequestException, HttpException, HttpStatus, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { AccountCreationDto, AccountStatusUpdateDto, AccountUpdateDto } from './dtos/accounts.dto';
 import { AccountsRepository } from './accounts.repository';
 import { isValidObjectId } from 'mongoose';
@@ -16,6 +16,7 @@ export class AccountsService {
       throw new BadRequestException("Invalid account id");
     }
     const account =  await this.accountsRepository.findAccountById(accountId);
+    this.logger.debug({accountId, account})
     if (!account) {
       throw new NotFoundException('Account not found');
     }

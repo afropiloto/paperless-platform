@@ -6,7 +6,6 @@ import {
   Param,
   Post,
   Query,
-  UnauthorizedException,
 } from '@nestjs/common';
 import {
   ApiOperation,
@@ -138,7 +137,7 @@ export class ShareLinksController {
     });
   }
 
-  @Get(':accountId/:documentId')
+  @Get(':documentId')
   @ApiOperation({
     summary: 'Get all share links for a document',
     description: 'Retrieves all active share links for a specific trade document.',
@@ -157,12 +156,34 @@ export class ShareLinksController {
     description: 'Not authorized to access this document',
   })
   async getShareLinksForDocument(
-    @Param('accountId') accountId: string,
     @Param('documentId') documentId: string,
   ): Promise<ShareLinkResponseDto[]> {
     return await this.shareLinksService.getShareLinksForDocument(
-      accountId,
       documentId,
     );
+  }
+
+  @Get(':linkId/details')
+  @ApiOperation({
+    summary: 'Get detailed information about a share link',
+    description: 'Retrieves detailed information about a specific share link including access history.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Share link details retrieved successfully',
+    type: ShareLinkResponseDto,
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Share link not found',
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Not authorized to access this share link',
+  })
+  async getShareLinkDetails(
+    @Param('linkId') linkId: string,
+  ): Promise<ShareLinkResponseDto> {
+    return await this.shareLinksService.getShareLinkDetails(linkId);
   }
 } 

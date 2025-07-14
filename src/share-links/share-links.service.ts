@@ -1,5 +1,7 @@
 import {
   BadRequestException,
+  forwardRef,
+  Inject,
   Injectable,
   Logger,
   NotFoundException,
@@ -7,7 +9,7 @@ import {
 } from '@nestjs/common';
 import { randomBytes, createCipher, createDecipher, scryptSync } from 'crypto';
 import { ShareLinksRepository } from './share-links.repository';
-import { CreateShareLinkDto, ShareLinkResponseDto } from './dtos/share-link.dto';
+import { CreateShareLinkDto, ShareLinkResponseDto, ShareLinkDto } from './dtos/share-link.dto';
 import { TradeDocumentsService } from '../trade-documents/trade-documents.service';
 import { AuditService } from '../audit/audit.service';
 import { AuditEventType, AuditSubject } from '../audit/audit-event-type.enum';
@@ -21,6 +23,7 @@ export class ShareLinksService {
 
   constructor(
     private readonly shareLinksRepository: ShareLinksRepository,
+    @Inject(forwardRef(() => TradeDocumentsService))
     private readonly tradeDocumentsService: TradeDocumentsService,
     private readonly auditService: AuditService,
   ) {}
@@ -62,7 +65,7 @@ export class ShareLinksService {
       allowedEmails: createShareLinkDto.allowedEmails || [],
       createdBy,
       isExpired: false,
-    });
+    } as Partial<ShareLinkDto>);
 
     // Log the audit event
     await this.auditService.log({
@@ -81,7 +84,10 @@ export class ShareLinksService {
       linkId: shareLink.linkId,
       expiresAt: shareLink.expiresAt,
       allowedEmails: shareLink.allowedEmails,
-      createdAt: (shareLink as any).createdAt,
+      createdAt: shareLink.createdAt,
+      accessCount: shareLink.accessCount,
+      lastAccessedAt: shareLink.lastAccessedAt,
+      accessHistory: shareLink.accessHistory || [],
     });
   }
 
@@ -130,8 +136,8 @@ export class ShareLinksService {
 
     const { accountId, documentId } = JSON.parse(decryptedData);
 
-    // Update access count
-    await this.shareLinksRepository.updateAccessCount(linkId);
+    // Update access count and track email access
+    await this.shareLinksRepository.updateAccessCount(linkId, email);
 
     // Get the document
     const document = await this.tradeDocumentsService.getDocumentById(
@@ -160,10 +166,10 @@ export class ShareLinksService {
     if (!shareLink) {
       throw new NotFoundException('Share link not found');
     }
-
-    if (shareLink.accountId !== accountId) {
-      throw new UnauthorizedException('Not authorized to delete this share link');
-    }
+    // ToDo: Add this check back in once JWT are being decoded in middleware
+    // if (shareLink.accountId !== accountId) {
+    //   throw new UnauthorizedException('Not authorized to delete this share link');
+    // }
 
     await this.shareLinksRepository.deleteShareLink(linkId);
 
@@ -180,11 +186,9 @@ export class ShareLinksService {
   }
 
   async getShareLinksForDocument(
-    accountId: string,
     documentId: string,
   ): Promise<ShareLinkResponseDto[]> {
     const shareLinks = await this.shareLinksRepository.findByAccountAndDocument(
-      accountId,
       documentId,
     );
 
@@ -193,9 +197,30 @@ export class ShareLinksService {
         linkId: link.linkId,
         expiresAt: link.expiresAt,
         allowedEmails: link.allowedEmails,
-        createdAt: (link as any).createdAt,
+        createdAt: link.createdAt,
+        accessCount: link.accessCount,
+        lastAccessedAt: link.lastAccessedAt,
+        accessHistory: link.accessHistory || [],
       }),
     );
+  }
+
+  async getShareLinkDetails(linkId: string): Promise<ShareLinkResponseDto> {
+    const shareLink = await this.shareLinksRepository.findByLinkId(linkId);
+    if (!shareLink) {
+      throw new NotFoundException('Share link not found');
+    }
+    this.logger.debug(shareLink);
+
+    return plainToInstance(ShareLinkResponseDto, {
+      linkId: shareLink.linkId,
+      expiresAt: shareLink.expiresAt,
+      allowedEmails: shareLink.allowedEmails,
+      createdAt: shareLink.createdAt,
+      accessCount: shareLink.accessCount,
+      lastAccessedAt: shareLink.lastAccessedAt,
+      accessHistory: shareLink.accessHistory || [],
+    });
   }
 
   private generateSecureLinkId(): string {

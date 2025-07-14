@@ -4,10 +4,12 @@ import {
   IsArray,
   IsDate,
   IsEmail,
+  IsNumber,
   IsOptional,
   IsString,
   ValidateNested,
 } from 'class-validator';
+import { Type } from 'class-transformer';
 
 export class CreateShareLinkDto {
   @ApiProperty({
@@ -32,6 +34,84 @@ export class CreateShareLinkDto {
   allowedEmails?: string[];
 }
 
+export class AccessHistoryEntryDto {
+  @ApiProperty({ description: 'Email address that accessed the link' })
+  @Expose()
+  @IsString()
+  email: string;
+
+  @ApiProperty({ description: 'When the link was accessed' })
+  @Expose()
+  @IsDate()
+  accessedAt: Date;
+}
+
+// Internal DTO for repository layer - includes all schema fields
+export class ShareLinkDto {
+  @Expose()
+  @IsString()
+  linkId: string;
+
+  @Expose()
+  @IsString()
+  accountId: string;
+
+  @Expose()
+  @IsString()
+  documentId: string;
+
+  @Expose()
+  @IsString()
+  encryptedData: string;
+
+  @Expose()
+  @IsString()
+  iv: string;
+
+  @Expose()
+  @IsString()
+  salt: string;
+
+  @Expose()
+  isExpired: boolean;
+
+  @Expose()
+  @IsOptional()
+  @IsDate()
+  expiresAt?: Date;
+
+  @Expose()
+  @IsArray()
+  allowedEmails: string[];
+
+  @Expose()
+  @IsString()
+  createdBy: string;
+
+  @Expose()
+  @IsNumber()
+  accessCount: number;
+
+  @Expose()
+  @IsOptional()
+  @IsDate()
+  lastAccessedAt?: Date;
+
+  @Expose()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => AccessHistoryEntryDto)
+  accessHistory: AccessHistoryEntryDto[];
+
+  @Expose()
+  @IsDate()
+  createdAt: Date;
+
+  @Expose()
+  @IsDate()
+  updatedAt: Date;
+}
+
 export class ShareLinkResponseDto {
   @ApiProperty({ description: 'The secure share link ID' })
   @Expose()
@@ -54,6 +134,24 @@ export class ShareLinkResponseDto {
   @Expose()
   @IsDate()
   createdAt: Date;
+
+  @ApiProperty({ description: 'Total number of times the link has been accessed' })
+  @Expose()
+  @IsNumber()
+  accessCount: number;
+
+  @ApiProperty({ description: 'When the link was last accessed' })
+  @Expose()
+  @IsOptional()
+  @IsDate()
+  lastAccessedAt?: Date;
+
+  @ApiProperty({ description: 'History of email addresses that have accessed the link' })
+  @Expose()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => AccessHistoryEntryDto)
+  accessHistory: AccessHistoryEntryDto[];
 }
 
 export class AccessShareLinkDto {

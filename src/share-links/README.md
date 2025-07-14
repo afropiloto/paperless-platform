@@ -9,7 +9,7 @@ This module provides secure document sharing functionality similar to Google Dri
 - **Expiry Support**: Optional expiry dates for automatic link expiration
 - **Email Restrictions**: Optional list of allowed email addresses for access control
 - **Audit Logging**: Comprehensive audit trail for all share link activities
-- **Access Tracking**: Tracks access counts and last accessed timestamps
+- **Access Tracking**: Tracks access counts, last accessed timestamps, and detailed access history by email
 
 ## Security
 
@@ -42,7 +42,10 @@ Creates a secure share link for a trade document.
   "linkId": "abc123def456...",
   "expiresAt": "2024-12-31T23:59:59Z",
   "allowedEmails": ["user@example.com"],
-  "createdAt": "2024-01-01T00:00:00Z"
+  "createdAt": "2024-01-01T00:00:00Z",
+  "accessCount": 0,
+  "lastAccessedAt": null,
+  "accessHistory": []
 }
 ```
 
@@ -65,6 +68,13 @@ GET /share-links/:accountId/:documentId
 ```
 
 Retrieves all active share links for a specific document.
+
+### Get Share Link Details
+```
+GET /share-links/details/:linkId
+```
+
+Retrieves detailed information about a specific share link including access history.
 
 ### Delete Share Link
 ```
@@ -92,6 +102,7 @@ The `ShareLink` schema includes:
 - `isExpired`: Boolean flag for manual expiration
 - `accessCount`: Number of times the link has been accessed
 - `lastAccessedAt`: Timestamp of last access
+- `accessHistory`: Array of access records with email and timestamp
 
 ## Usage Examples
 
@@ -116,6 +127,13 @@ const document = await shareLinksService.accessShareLink(
 );
 ```
 
+### Getting share link details with access history
+```typescript
+const shareLinkDetails = await shareLinksService.getShareLinkDetails('abc123def456...');
+console.log(`Link accessed ${shareLinkDetails.accessCount} times`);
+console.log('Access history:', shareLinkDetails.accessHistory);
+```
+
 ## Integration with Trade Documents
 
 The share links functionality is integrated into the trade documents module, providing endpoints at:
@@ -131,4 +149,17 @@ The module logs the following audit events:
 - `SHARE_LINK_ACCESSED`: When a share link is accessed
 - `SHARE_LINK_DELETED`: When a share link is deleted
 
-Each audit event includes relevant metadata such as link ID, expiry information, and access details. 
+Each audit event includes relevant metadata such as link ID, expiry information, and access details.
+
+## Access Tracking
+
+The system now tracks detailed access information:
+
+- **Access Count**: Total number of times the link has been accessed
+- **Last Accessed**: Timestamp of the most recent access
+- **Access History**: Detailed list of each access with:
+  - Email address of the person who accessed the link
+  - Timestamp of when they accessed it
+  - Only tracked when an email is provided during access
+
+This information is available when retrieving share link details and can be used for analytics and security monitoring. 

@@ -33,7 +33,7 @@ export class AccountUsersController {
 
   constructor(private readonly accountUsersService: AccountUsersService) {}
 
-  @Post()
+  @Post('/account/:accountId')
   @ApiOperation({ 
     summary: 'Create account user',
     description: 'Creates a new account user with the specified permissions and details'

@@ -40,6 +40,9 @@ export class ShareLink {
 
   @Prop({ type: Date })
   lastAccessedAt?: Date;
+
+  @Prop({ type: [{ email: String, accessedAt: Date }], default: [] })
+  accessHistory: Array<{ email: string; accessedAt: Date }>;
 }
 
 export const ShareLinkSchema = SchemaFactory.createForClass(ShareLink); 
