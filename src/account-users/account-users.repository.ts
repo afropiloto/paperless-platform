@@ -2,11 +2,11 @@ import { Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, PipelineStage, Types } from 'mongoose';
 import { plainToInstance } from 'class-transformer';
-import { SearchQueryDto, SearchResultsMetadata } from '../common/dtos/search.dto';
-import { AccountUser, AccountUserDocument, AccountUserStatus } from './schemas/account-user.schema';
-import { CreateAccountUserDto, UpdateAccountUserDto, AccountUserResponseDto, UserPermissionDto, AccountUsersSearchDto } from './dtos/account-user.dto';
-import { AccountUsersSearchResultsDto } from './dtos/account-users-search-results.dto';
-import { ApplicationModule, ApplicationRole, ApplicationPermissions } from './schemas/application-permissions.schema';
+import { SearchResultsMetadata } from '../common/dtos/search.dto';
+import { AccountUser, AccountUserDocument, AccountUserStatus } from './schemas';
+import { CreateAccountUserDto, UpdateAccountUserDto, AccountUserResponseDto, UserPermissionDto, AccountUsersSearchDto } from './dtos';
+import { AccountUsersSearchResultsDto } from './dtos';
+import { ApplicationModule, ApplicationRole, ApplicationPermissions } from './schemas';
 
 @Injectable()
 export class AccountUsersRepository {
@@ -345,5 +345,57 @@ export class AccountUsersRepository {
       });
       throw new Error('Failed to retrieve account users. Please try again later.');
     }
+  }
+
+  async findAllByAccountId(accountId: string): Promise<AccountUserResponseDto[]> {
+    try {
+      const accountUsers = await this.accountUserModel.find({ accountId: new Types.ObjectId(accountId) });
+      return accountUsers.map(accountUser => plainToInstance(AccountUserResponseDto, {id: accountUser._id.toString(), accountId: accountUser.accountId.toString(), ...accountUser}, { excludeExtraneousValues: true }));
+    } catch (error) {
+      this.logger.error({
+        msg: 'Failed to find all account users by account id',
+        details: error.message,
+        accountId,});
+      throw new Error('Failed to retrieve account users. Please try again later.');
+    }
+  }
+
+  async updateAccountUserStatus(accountUserId: string, newStatus: AccountUserStatus) {
+    try {
+      const accountUser = await this.accountUserModel.findByIdAndUpdate(
+        accountUserId,
+        { $set: { status: newStatus } },
+        { new: true }
+      );
+      if (!accountUser) {
+        throw new Error('Account user not found');
+      }
+
+      const accountUserObject = accountUser.toObject();
+
+      // Transform permissions back to DTO format for response
+      const responsePermissions = this.transformPermissionsToDto(accountUserObject.permissions);
+
+      return plainToInstance(AccountUserResponseDto, {
+        id: accountUserObject._id.toString(),
+        accountId: accountUserObject.accountId.toString(),
+        name: accountUserObject.name,
+        emailAddress: accountUserObject.emailAddress,
+        walletAddress: accountUserObject.walletAddress,
+        status: accountUserObject.status,
+        permissions: responsePermissions,
+        createdAt: accountUserObject.createdAt,
+        updatedAt: accountUserObject.updatedAt,
+      }, { excludeExtraneousValues: true });
+    } catch (error) {
+      this.logger.error({
+        msg: 'Failed to update account user status',
+        details: error.message,
+        accountUserId,
+        newStatus,
+      });
+      throw new Error('Failed to update account user. Please try again later.');
+    }
+
   }
 }

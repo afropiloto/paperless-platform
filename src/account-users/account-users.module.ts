@@ -1,9 +1,9 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { AccountUsersService } from './account-users.service';
 import { AccountUsersController } from './account-users.controller';
 import { AccountUsersRepository } from './account-users.repository';
-import { AccountUser, AccountUserSchema } from './schemas/account-user.schema';
+import { AccountUser, AccountUserSchema } from './schemas';
 import { PermissionsValidationService } from './services/permissions-validation.service';
 import { ApiKeyAuthModule } from '../api-key-auth/api-key-auth.module';
 import { AccountsModule } from '../accounts/accounts.module';
@@ -14,7 +14,7 @@ import { AccountsModule } from '../accounts/accounts.module';
       { name: AccountUser.name, schema: AccountUserSchema }
     ]),
     ApiKeyAuthModule,
-    AccountsModule,
+    forwardRef(() => AccountsModule),
   ],
   providers: [AccountUsersService, AccountUsersRepository, PermissionsValidationService],
   controllers: [AccountUsersController],

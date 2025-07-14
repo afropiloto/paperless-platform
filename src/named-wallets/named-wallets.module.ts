@@ -7,11 +7,13 @@ import { AccountsService } from '../accounts/accounts.service';
 import { Account, AccountSchema } from '../accounts/schemas/account.schema';
 import { NamedWalletsRepository } from './named-wallet.repository';
 import { AccountsRepository } from '../accounts/accounts.repository';
+import { AccountUsersModule } from '../account-users/account-users.module';
 
 @Module({
   imports: [
     MongooseModule.forFeature([{name: NamedWallet.name, schema: NamedWalletSchema }]),
-    MongooseModule.forFeature([{name: Account.name, schema: AccountSchema }])
+    MongooseModule.forFeature([{name: Account.name, schema: AccountSchema }]),
+    AccountUsersModule
   ],
   controllers: [NamedWalletsController],
   providers: [NamedWalletsService, NamedWalletsRepository, AccountsService, AccountsRepository],

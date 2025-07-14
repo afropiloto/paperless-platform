@@ -7,20 +7,19 @@
 4. Document signing
    * Add service to interact with the Document Signing service to read data.
    * Update retrieval methods to get current data from chain. Do this for In Progress items only but where an updated status is returned, update the status in the database.
-5. Email Module - add EmailerService that integrates with an email provider to send emails.
-6. Security
+5. Security
    * Need to add setup API Key guards on endpoints
    * Need to add JWT guard to controllers
    * Need to add UserPermissionGuards to controller methods
    * We need a Paiperless Account with users creating 
-7. Virus Scan
+6. Virus Scan
     * Need to integrate Virus Scan into Registration documents upload
     * Need to integrate Virus Scan into Trade Documents File upload
-8. Account Analytics
-9. Need to ensure that if we suspend and account that all users related to that account are suspended - also for making accounts Active
-10. Need to ensure that when account users are being updated for an accountId, they are being updated by an account linked to the same accountId OR the user is a Voy Admin user
-11. Update ReadMe with set up & deployment information
-12. Write Service and Controller Tests
+7. Account Analytics
+8. Need to ensure that if we suspend and account that all users related to that account are suspended - also for making accounts Active
+9. Need to ensure that when account users are being updated for an accountId, they are being updated by an account linked to the same accountId OR the user is a Voy Admin user
+10. Update ReadMe with set up & deployment information
+11. Write Service and Controller Tests
     * Can we get Cursor to create the tests?
 
 # Platform Deployment

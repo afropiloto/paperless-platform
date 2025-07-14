@@ -112,6 +112,6 @@ export class AccountsController {
     @Param('id') accountId: string,
     @Body() accountDto: AccountStatusUpdateDto,
   ): Promise<AccountDetailsDto> {
-    return await this.accountsService.updateAccount(accountId, accountDto);
+    return await this.accountsService.updateAccountStatus(accountId, accountDto);
   }
 }

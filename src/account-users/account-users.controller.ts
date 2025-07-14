@@ -92,7 +92,7 @@ export class AccountUsersController {
     @Param('accountId') accountId: string,
     @Query() searchParams: AccountUsersSearchDto,
   ): Promise<AccountUsersSearchResultsDto> {
-    return await this.accountUsersService.getAccountUsersByAccountId(accountId, searchParams);
+    return await this.accountUsersService.findAccountUsersByAccountId(accountId, searchParams);
   }
 
   @Get(':id')

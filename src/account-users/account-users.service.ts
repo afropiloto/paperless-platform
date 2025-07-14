@@ -1,5 +1,7 @@
 import {
   BadRequestException,
+  forwardRef,
+  Inject,
   Injectable,
   Logger,
   NotFoundException,
@@ -15,6 +17,7 @@ import {
 import { AccountUsersSearchResultsDto } from './dtos';
 import { PermissionsValidationService } from './services/permissions-validation.service';
 import { AccountsService } from '../accounts/accounts.service';
+import { AccountUserStatus } from './schemas';
 
 @Injectable()
 export class AccountUsersService {
@@ -23,6 +26,7 @@ export class AccountUsersService {
   constructor(
     private readonly accountUsersRepository: AccountUsersRepository,
     private readonly permissionsValidationService: PermissionsValidationService,
+    @Inject(forwardRef(() => AccountsService))
     private readonly accountService: AccountsService
   ) {}
 
@@ -97,7 +101,7 @@ export class AccountUsersService {
     return accountUser;
   }
 
-  async getAccountUsersByAccountId(
+  async findAccountUsersByAccountId(
     accountId: string,
     searchParams: AccountUsersSearchDto,
   ): Promise<AccountUsersSearchResultsDto> {
@@ -143,5 +147,14 @@ export class AccountUsersService {
 
   getValidModulesForRole(roleId: string): string[] {
     return this.permissionsValidationService.getValidModulesForRole(roleId);
+  }
+
+  async findAllAccountUsersByAccountId(accountId: string) {
+    return this.accountUsersRepository.findAllByAccountId(accountId);
+  }
+
+  updateAccountUserStatus(accountUserId: string, newStatus: AccountUserStatus) {
+    return this.accountUsersRepository.updateAccountUserStatus(accountUserId, newStatus);
+
   }
 }

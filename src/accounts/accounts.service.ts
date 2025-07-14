@@ -1,22 +1,37 @@
-import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { AccountCreationDto, AccountStatusUpdateDto, AccountUpdateDto } from './dtos/accounts.dto';
+import {
+  BadRequestException, 
+  forwardRef,
+  Inject,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
+import {
+  AccountCreationDto,
+  AccountStatusUpdateDto,
+  AccountUpdateDto,
+} from './dtos/accounts.dto';
 import { AccountsRepository } from './accounts.repository';
 import { isValidObjectId } from 'mongoose';
 import { SearchQueryDto } from '../common/dtos/search.dto';
+import { AccountStatus } from './types/account.types';
+import { AccountUsersService } from '../account-users/account-users.service';
+import { AccountUserStatus } from '../account-users/schemas';
 
 @Injectable()
 export class AccountsService {
   private readonly logger = new Logger(AccountsService.name);
   constructor(
-   private readonly accountsRepository: AccountsRepository,
-  ) {}
+    @Inject(forwardRef(() => AccountUsersService))
+    private readonly accountUsersService: AccountUsersService,
+    private readonly accountsRepository: AccountsRepository) {}
 
   async findByAccountId(accountId: string) {
     if (!isValidObjectId(accountId)) {
-      throw new BadRequestException("Invalid account id");
+      throw new BadRequestException('Invalid account id');
     }
-    const account =  await this.accountsRepository.findAccountById(accountId);
-    this.logger.debug({accountId, account})
+    const account = await this.accountsRepository.findAccountById(accountId);
+    this.logger.debug({ accountId, account });
     if (!account) {
       throw new NotFoundException('Account not found');
     }
@@ -27,12 +42,33 @@ export class AccountsService {
     return this.accountsRepository.createAccount(accountDto);
   }
 
-  async accountExists(accountId: string) : Promise<boolean> {
+  async accountExists(accountId: string): Promise<boolean> {
     return this.accountsRepository.accountExists(accountId);
   }
 
-  async updateAccount(accountId: string, updates: AccountUpdateDto | AccountStatusUpdateDto) {
+  async updateAccountStatus(
+    accountId: string,
+    updates: AccountStatusUpdateDto,
+  ) {
+    const exists = await this.accountExists(accountId);
 
+    if (!exists) {
+      throw new NotFoundException('Account not found');
+    }
+
+    if (updates.status === AccountStatus.SUSPENDED || updates.status === AccountStatus.CLOSED) {
+      // Need to ensure all user accounts are suspended to prevent login
+      const userAccounts = await this.accountUsersService.findAllAccountUsersByAccountId(accountId);
+      await Promise.all(
+        userAccounts.map((account) =>
+          this.accountUsersService.updateAccountUserStatus(account.id, AccountUserStatus.SUSPENDED)
+        )
+      );
+    }
+      return await this.accountsRepository.updateAccount(accountId, updates);
+  }
+
+  async updateAccount(accountId: string, updates: AccountUpdateDto) {
     const exists = await this.accountExists(accountId);
     if (!exists) {
       throw new NotFoundException('Account not found');
@@ -42,7 +78,9 @@ export class AccountsService {
   }
 
   accountForWalletAddressExists(accountWalletAddress: string) {
-    return this.accountsRepository.accountWithWalletAddressExists(accountWalletAddress);
+    return this.accountsRepository.accountWithWalletAddressExists(
+      accountWalletAddress,
+    );
   }
 
   async findByWalletAddress(walletAddress: string) {
@@ -50,6 +88,6 @@ export class AccountsService {
   }
 
   searchAccounts(searchParams: SearchQueryDto, includes: string[]) {
-   return this.accountsRepository.findAccounts(searchParams, includes);
+    return this.accountsRepository.findAccounts(searchParams, includes);
   }
 }
