@@ -1,19 +1,12 @@
 # Trade Documents Platform
 
-# Testing
-1. Registration - register -> Onboard Reject
-2. Registration - register -> Accept Reject - check Account is created
-3. Upload Trade Document -> Issue -> Fund -> Reject
-4. Upload Trade Document -> Issue -> Fund -> Accept -> Promissory Note -> Signed
-
-
 # Todo:
 1. Setup ai.paiperless.com with dns-txt record for identify verification
-2. Document signing
+2. Extend document types to include Bill of Lading and Warehouse receipts
+3. Migrate data extraction to extend.ai
+4. Document signing
    * Add service to interact with the Document Signing service to read data.
    * Update retrieval methods to get current data from chain. Do this for In Progress items only but where an updated status is returned, update the status in the database.
-3. Extend document types to include Bill of Lading and Warehouse receipts
-4. Migrate data extraction to extend.ai
 5. Email Module - add EmailerService that integrates with an email provider to send emails.
 6. Security
    * Need to add setup API Key guards on endpoints

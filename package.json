@@ -23,6 +23,7 @@
     "script:generate-api-key": "ts-node ./scripts/generate-api-key.ts"
   },
   "dependencies": {
+    "@getbrevo/brevo": "^2.5.0",
     "@nestjs/bullmq": "^11.0",
     "@nestjs/cache-manager": "^3.0.1",
     "@nestjs/common": "^11.0",
