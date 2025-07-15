@@ -1,6 +1,6 @@
 import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { AuthResponseDto } from './dtos/auth-response.dto';
+import { AuthResponseDto, TokenRefreshResponseDto } from './dtos/auth-response.dto';
 import { plainToInstance } from 'class-transformer';
 import { LoginDto } from './dtos/login.dto';
 import { SiweService } from '../siwe/siwe.service';
@@ -10,6 +10,7 @@ import { AccountsService } from '../accounts/accounts.service';
 import { JwtPayload } from './types';
 import { AuditService } from '../audit/audit.service';
 import { AuditEventType, AuditSubject } from '../audit/audit-event-type.enum';
+import { RefreshTokenDto } from './dtos/refresh-token.dto';
 
 @Injectable()
 export class AuthService {
@@ -104,7 +105,7 @@ export class AuthService {
     }
   }
 
-  async refreshToken(token: string) {
+  async refreshToken(token: string): Promise<TokenRefreshResponseDto> {
     try {
       const decoded = this.jwtService.verify(token) as JwtPayload;
 
@@ -125,7 +126,9 @@ export class AuthService {
         expiresIn: this.configService.get<string>('jwt.expiresIn'),
       });
 
-      return { success: true, accessToken: newAccessToken };
+      const responsePayload: TokenRefreshResponseDto = { success: true, accessToken: newAccessToken };
+      this.logger.debug(responsePayload);
+      return  plainToInstance(TokenRefreshResponseDto, responsePayload);
     } catch (error) {
       this.logger.error({ message: 'Error verifying refresh token', error });
       throw new UnauthorizedException('Invalid refresh token.');

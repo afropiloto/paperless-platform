@@ -2,7 +2,7 @@ import { Body, Controller, Get, Logger, Param, Post } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { RefreshTokenDto } from './dtos/refresh-token.dto';
 import { LoginDto } from './dtos/login.dto';
-import { AuthResponseDto } from './dtos/auth-response.dto';
+import { AuthResponseDto, TokenRefreshResponseDto } from './dtos/auth-response.dto';
 import { SiweService } from '../siwe/siwe.service';
 
 @Controller('auth')
@@ -24,7 +24,7 @@ export class AuthController {
   }
 
   @Post('refresh')
-  async refreshToken(@Body() refreshTokenDto: RefreshTokenDto) {
+  async refreshToken(@Body() refreshTokenDto: RefreshTokenDto) :Promise<TokenRefreshResponseDto> {
     return this.authService.refreshToken(refreshTokenDto.refreshToken);
   }
 }

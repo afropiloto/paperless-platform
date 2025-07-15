@@ -17,6 +17,8 @@ export enum TradeDocumentStatus {
 export enum TradeDocumentType {
   INVOICE = 'invoice',
   BILL_OF_EXCHANGE = 'bill of exchange',
+  BILL_OF_LADING = 'bill of lading',
+  WAREHOUSE_RECEIPT = 'warehouse receipt',
   PROMISSORY_NOTE = 'promissory note',
   OTHER = 'other trade document',
   UNKNOWN = 'unknown'

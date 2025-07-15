@@ -1,6 +1,17 @@
 import { Expose, Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
-import { UserPermissionDto } from '../../account-users/dtos/account-user.dto';
+import { UserPermissionDto } from '../../account-users/dtos';
+
+export class TokenRefreshResponseDto {
+  @ApiProperty({ description: 'Authentication success status' })
+  @Expose()
+  success: boolean;
+
+  @ApiProperty({ description: 'JWT access token' })
+  @Expose()
+  accessToken: string;
+
+}
 
 export class AuthResponseDto {
   @ApiProperty({ description: 'Authentication success status' })

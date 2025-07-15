@@ -2,24 +2,21 @@
 
 # Todo:
 1. Setup ai.paiperless.com with dns-txt record for identify verification
-2. Extend document types to include Bill of Lading and Warehouse receipts
-3. Migrate data extraction to extend.ai
-4. Document signing
+2. Migrate data extraction to extend.ai
+3. Document signing
    * Add service to interact with the Document Signing service to read data.
    * Update retrieval methods to get current data from chain. Do this for In Progress items only but where an updated status is returned, update the status in the database.
-5. Security
+4. Security
    * Need to add setup API Key guards on endpoints
    * Need to add JWT guard to controllers
    * Need to add UserPermissionGuards to controller methods
    * We need a Paiperless Account with users creating 
-6. Virus Scan
+5. Virus Scan
     * Need to integrate Virus Scan into Registration documents upload
     * Need to integrate Virus Scan into Trade Documents File upload
-7. Account Analytics
-8. Need to ensure that if we suspend and account that all users related to that account are suspended - also for making accounts Active
-9. Need to ensure that when account users are being updated for an accountId, they are being updated by an account linked to the same accountId OR the user is a Voy Admin user
-10. Update ReadMe with set up & deployment information
-11. Write Service and Controller Tests
+6. Account Analytics
+7. Update ReadMe with set up & deployment information
+8. Write Service and Controller Tests
     * Can we get Cursor to create the tests?
 
 # Platform Deployment

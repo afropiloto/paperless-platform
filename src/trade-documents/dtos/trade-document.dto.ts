@@ -325,8 +325,371 @@ export class InvoiceContentDto {
   billableItems: BillableItemDto[];
 }
 
+// *****************************************************************************
+//Bill Of Lading Content DTO
+// *****************************************************************************
+export class BolContainerDetails {
+  @ApiProperty({description: 'Container number holding the cargo', example:"CONT1234"})
+  @Expose()
+  @IsString()
+  containerNumber: string;
+
+  @ApiProperty({description: 'The type of container', example:"40ft Standard"})
+  @Expose()
+  @IsString()
+  containerType: string;
+
+  @ApiProperty({description: 'Seal Number on the Container', example:"SEAL9876"})
+  @Expose()
+  @IsString()
+  sealNumber: string;
+
+  @ApiProperty({description: 'Container size', example:"40 ft"})
+  @Expose()
+  @IsString()
+  size: string;
+}
+
+export class BolShipmentDetails {
+  @ApiProperty({description: 'Port of Loading', example:"Port of Felixstowe, UK"})
+  @Expose()
+  @IsString()
+  portOfLoading: string;
+
+  @ApiProperty({description: 'Port of Discharge', example:"Port of New Orleans, USA"})
+  @Expose()
+  @IsString()
+  portOfDischarge: string;
+
+  @ApiProperty({description: 'Place of Receipt', example:"Warehouse A, New Orleans, USA"})
+  @Expose()
+  @IsString()
+  placeOfReceipt: string;
+
+  @ApiProperty({description: 'Place of Delivery', example:"Warehouse B, New Orleans, USA"})
+  @Expose()
+  @IsString()
+  placeOfDelivery: string;
+
+  @ApiProperty({description: 'Vessel Name', example:"Vessel 101"})
+  @Expose()
+  @IsString()
+  vesselName: string;
+
+  @ApiProperty({description: 'Voyage Number', example:"VOY-101"})
+  @Expose()
+  @IsString()
+  voyageNumber: string;
+
+  @ApiProperty({description: 'Estimated date and time of departure', example:"2025-08-01T00:00:00.000Z"})
+  @Expose()
+  @IsDate()
+  estimatedTimeOfDeparture: Date;
+
+  @ApiProperty({description: 'Estimated date and time of arrival', example:"2025-09-01T00:00:00.000Z"})
+  @Expose()
+  @IsDate()
+  estimatedTimeOfArrival: Date;
+
+  @ApiProperty({description: 'Terms for freight', example:"CIF"})
+  @Expose()
+  @IsString()
+  freightTerms: string;
+
+  @ApiProperty({description: 'Description of Cargo', example:"Electronics and Machinery"})
+  @Expose()
+  @IsString()
+  cargoDescription: string;
+
+  @ApiProperty({description: 'Weight of Cargo in Kgs', example:10000})
+  @Expose()
+  @IsNumber()
+  weightKgs: number;
+
+  @ApiProperty({description: 'Volume of Cargo in cubic metres', example:50})
+  @Expose()
+  @IsNumber()
+  volumeCubicMetres: number;
+}
+
+export class BolCharges {
+  @ApiProperty({description: 'Charge for Freight', example: 5000})
+  @Expose()
+  @IsNumber()
+  totalFreight: number;
+
+  @ApiProperty({description: 'Charge for Insurance', example: 200})
+  @Expose()
+  @IsNumber()
+  insurance: number;
+
+  @ApiProperty({description: 'Charge for Handling Fees', example: 150})
+  @Expose()
+  @IsNumber()
+  handlingFees: number;
+
+  @ApiProperty({description: 'Other Charges', example: 100})
+  @Expose()
+  @IsNumber()
+  otherCharges: number;
+
+  @ApiProperty({description: 'Currency for Charges', example: "USD"})
+  @Expose()
+  @IsString()
+  currency: string;
+}
+export class BolDocuments {
+  @ApiProperty({description: 'Invoice Number related to this Bill of Lading', example: "INV-001"})
+  @Expose()
+  @IsString()
+  invoiceNumber: string;
+
+  @ApiProperty({description: 'Packing List Number related to this Bill of Lading', example: "PACK-001"})
+  @Expose()
+  @IsString()
+  packingList: string;
+
+  @ApiProperty({description: 'Insurance Certificate Number related to this Bill of Lading', example: "INS-001"})
+  @Expose()
+  @IsString()
+  insuranceCertificate: string;
+
+  @ApiProperty({description: 'Customs Declaration Number related to this Bill of Lading', example: "CD001"})
+  @Expose()
+  @IsString()
+  customsDeclaration: string;
+}
+
+export class BillOfLadingContentDto {
+  @ApiProperty({description: 'Bill of Exchange Number', example: "EBL001"})
+  @Expose()
+  @IsString()
+  blNumber: string;
+
+  @ApiProperty({description: 'Date of Issue for this Bill of Lading', example: "2025-15-08T00:00:00.000Z"})
+  @Expose()
+  @IsDate()
+  issueDate: Date;             // Date the Bill of Lading was issued
+
+  @ApiProperty({description: 'Consignor Details'})
+  @Expose()
+  @Type(() => PartyDetailsDto)
+  consignor: PartyDetailsDto;
+
+  @ApiProperty({description: 'Consignee Details'})
+  @Expose()
+  @Type(() => PartyDetailsDto)
+  consignee: PartyDetailsDto;
+
+  @ApiProperty({description: 'Carrier Details'})
+  @Expose()
+  @Type(() => PartyDetailsDto)
+  carrier: PartyDetailsDto;
+
+  @ApiProperty({description: "Shippers reference number", example: "REF12345"})
+  @Expose()
+  @IsString()
+  shipperReference: string;
+
+  @ApiProperty({description: "List of containers used in shipment"})
+  @Expose()
+  @Type(() => BolContainerDetails)
+  containerInfo: BolContainerDetails[];  // List of containers used in shipment
+
+  @ApiProperty({description: "Details of the Shipment"})
+  @Expose()
+  @Type(() => BolShipmentDetails)
+  shipmentDetails: BolShipmentDetails;
+
+  @ApiProperty({description: "Details of the charges"})
+  @Expose()
+  @Type(() => BolCharges)
+  charges:BolCharges;
+
+  @ApiProperty({description: "Details of related documents "})
+  @Expose()
+  @Type(() => BolDocuments)
+  documents: BolDocuments;
+}
+
+// *****************************************************************************
+// Warehouse Receipt Content DTO
+// *****************************************************************************
+export class GoodsDetails {
+  @ApiProperty({description: "Description of the goods"})
+  @Expose()
+  @IsString()
+  description: string;
+
+  @ApiProperty({description: "Quantity of the goods received"})
+  @Expose()
+  @IsNumber()
+  quantity: number;
+
+  @ApiProperty({description: "Unit of the goods"})
+  @Expose()
+  @IsString()
+  unit: string;
+
+  @ApiProperty({description: "Weight per unit in kgs"})
+  @Expose()
+  @IsNumber()
+  weightPerUnitKgs: number;
+
+  @ApiProperty({description: "Total Weight for consignment in kgs"})
+  @Expose()
+  @IsNumber()
+  totalWeightKgs: number;
+
+  @ApiProperty({description: "Volume per unit in cubic metres"})
+  @Expose()
+  @IsNumber()
+  volumePerUnitCubicMetres: number;
+
+  @ApiProperty({description: "Total Volume in cubic metres"})
+  @Expose()
+  @IsNumber()
+  totalVolumeCubicMetres: number;
+}
+
+export class StorageTerms {
+  @ApiProperty({description: "Storage Fee Per Day"})
+  @Expose()
+  @IsNumber()
+  storageFeePerDay: number;
+
+  @ApiProperty({description: "Currency for Storage Fees"})
+  @Expose()
+  @IsString()
+  currency: string;
+
+  @ApiProperty({description: "Start date for storage"})
+  @Expose()
+  @IsDate()
+  storageStartDate: Date;
+
+  @ApiProperty({description: "End date for storage"})
+  @Expose()
+  @IsDate()
+  storageEndDate: Date;
+
+  @ApiProperty({description: "Storage Conditions"})
+  @Expose()
+  @IsString()
+  specialConditions: string
+}
+
+export class DeliveryTerms {
+  @ApiProperty({description: "Delivery Date"})
+  @Expose()
+  @IsDate()
+  deliveryDate: Date;
+
+  @ApiProperty({description: "Delivery Address"})
+  @Expose()
+  @IsString()
+  deliveryAddress: string;
+
+  @ApiProperty({description: "Delivery Contact"})
+  @Expose()
+  @IsString()
+  deliveryContact: string;
+
+  @ApiProperty({description: "Delivery Instructions"})
+  @Expose()
+  @IsString()
+  deliveryInstructions: string;
+}
+export class ReceiptTerms {
+  @ApiProperty({description: "Return Policy"})
+  @Expose()
+  @IsString()
+  returnPolicy: string;
+
+  @ApiProperty({description: "Warehouse Liability"})
+  @Expose()
+  @IsString()
+  liability: string;
+}
+
+export class WarehouseReceiptDocuments {
+  @ApiProperty({description: "Invoice Number related to this warehouse receipt"})
+  @Expose()
+  @IsString()
+  invoiceNumber: string;
+
+  @ApiProperty({description: "Packing List Number related to this warehouse receipt"})
+  @Expose()
+  @IsString()
+  packingListNumber: string;
+
+  @ApiProperty({description: "Insurance Certificate Number related to this warehouse receipt"})
+  @Expose()
+  @IsString()
+  insuranceCertificateNumber: string;
+
+  @ApiProperty({description: "Customs Declaration number related to this warehouse receipt"})
+  @Expose()
+  @IsString()
+  customsDeclarationNumber: string
+}
+
+export class WarehouseReceiptContentDto {
+  @ApiProperty({description: "Warehouse Receipt Number"})
+  @Expose()
+  @IsString()
+  receiptNumber: string;
+
+  @ApiProperty({description: "Date of Issue for this warehouse receipt"})
+  @Expose()
+  @IsDate()
+  issueDate: Date;
+
+  @ApiProperty({description: "Details of the Warehouse receiving the goods"})
+  @Expose()
+  @Type(() => PartyDetailsDto)
+  warehouseDetails: PartyDetailsDto;
+
+  @ApiProperty({description: "Consignor Details for the goods"})
+  @Expose()
+  @Type(() => PartyDetailsDto)
+  consignorDetails: PartyDetailsDto;
+
+  @ApiProperty({description: "Consignee Details for the goods"})
+  @Expose()
+  @Type(() => PartyDetailsDto)
+  consigneeDetails: PartyDetailsDto;
+
+  @ApiProperty({description: "Details of the goods received"})
+  @Expose()
+  @Type(() => GoodsDetails)
+  goodsDetails: GoodsDetails;
+
+  @ApiProperty({description: "Storage Terms for the goods received"})
+  @Expose()
+  @Type(() => StorageTerms)
+  storageTerms: StorageTerms;
+
+  @ApiProperty({description: "Delivery Terms for the goods received"})
+  @Expose()
+  @Type(() => DeliveryTerms)
+  deliveryTerms: DeliveryTerms;
+
+  @ApiProperty({description: "Receipt terms for the goods received"})
+  @Expose()
+  @Type(() => ReceiptTerms)
+  receiptTerms: ReceiptTerms;
+
+  @ApiProperty({description: "Documents related to the goods recieved"})
+  @Expose()
+  @Type(() => WarehouseReceiptDocuments)
+  documents: WarehouseReceiptDocuments;
+}
 
 
+// *****************************************************************************
+// Bill Of Exchange Content DTO
+// *****************************************************************************
 export class BillOfExchangeContentDto {
   @ApiProperty({ description: 'Bill of Exchange Reference' })
   @Expose()
@@ -497,6 +860,7 @@ export class TradeDocumentDto {
     return obj.documentType === TradeDocumentType.INVOICE ? InvoiceContentDto :
       obj.documentType === TradeDocumentType.PROMISSORY_NOTE ? PromissoryNoteContentDto :
         obj.documentType === TradeDocumentType.BILL_OF_EXCHANGE ? BillOfExchangeContentDto :
+          obj.documentType === TradeDocumentType.WAREHOUSE_RECEIPT ? WarehouseReceiptContentDto :
           obj.documentType === TradeDocumentType.OTHER ? OtherDocumentContentDto : OtherDocumentContentDto
       ;
   })
@@ -609,6 +973,7 @@ export class UpsertTradeDocumentDto {
     return obj.documentType === TradeDocumentType.INVOICE ? InvoiceContentDto :
       obj.documentType === TradeDocumentType.PROMISSORY_NOTE ? PromissoryNoteContentDto :
         obj.documentType === TradeDocumentType.BILL_OF_EXCHANGE ? BillOfExchangeContentDto :
+          obj.documentType === TradeDocumentType.BILL_OF_LADING ? BillOfLadingContentDto :
           obj.documentType === TradeDocumentType.OTHER ? OtherDocumentContentDto : OtherDocumentContentDto
       ;
   })
