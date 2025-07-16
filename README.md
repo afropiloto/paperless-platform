@@ -3,16 +3,7 @@
 # Todo:
 1. Setup ai.paiperless.com with dns-txt record for identify verification
 2. Migrate data extraction to extend.ai
-   - Create a queue to handle data extraction
-   - Process Data Extraction request by sending request to Extend.ai with a downloadable link to the file
-     - Set the status of the trade document to Processing
-   - Process Updates until the status is "PROCESSED"
-     - Need to handle error cases (status is FAILED or CANCELLED)
-     - This may take a few iterations until the processing is complete
-   - Update the trade document content with the extracted data
-     - Need to map between the extraction response to the trade document content
-     - Add Audit Entry for this update 
-   - Set the status of the trade document to In Progress
+   - Need to setup and test the processors on extend.ai
 3. Document signing
    * Add service to interact with the Document Signing service to read data.
    * Update retrieval methods to get current data from chain. Do this for In Progress items only but where an updated status is returned, update the status in the database.

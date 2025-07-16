@@ -34,6 +34,7 @@ import { DocumentSigningEventsModule } from './document-signing-events/document-
 import { ShareLinksModule } from './share-links/share-links.module';
 import { EmailClientModule } from './email-client/email-client.module';
 import { DataExtractionEventsModule } from './data-extraction-events/data-extraction-events.module';
+import { DataExtractionEventsModule } from './data-extraction-events/data-extraction-events.module';
 
 @Module({
   imports: [

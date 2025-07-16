@@ -4,7 +4,7 @@ import { FileData, TradeDocumentStatus, TradeDocumentType } from '../types/trade
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import { DATA_EXTRACTION_EVENT, DATA_EXTRACTION_QUEUE_NAME } from '../constants/app.constants';
-import { DataExtractionJob } from '../data-extraction/data-extraction.types';
+import { DataExtractionJob } from '../data-extraction-events/data-extraction.types';
 import { TradeDocumentsRepository } from './trade-documents.repository';
 import { GeneralResponseDto } from '../common/common-dto';
 import { AuditService } from '../audit/audit.service';

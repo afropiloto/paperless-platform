@@ -860,11 +860,12 @@ export class TradeDocumentDto {
     return obj.documentType === TradeDocumentType.INVOICE ? InvoiceContentDto :
       obj.documentType === TradeDocumentType.PROMISSORY_NOTE ? PromissoryNoteContentDto :
         obj.documentType === TradeDocumentType.BILL_OF_EXCHANGE ? BillOfExchangeContentDto :
+          obj.documentType === TradeDocumentType.BILL_OF_LADING ? BillOfLadingContentDto :
           obj.documentType === TradeDocumentType.WAREHOUSE_RECEIPT ? WarehouseReceiptContentDto :
           obj.documentType === TradeDocumentType.OTHER ? OtherDocumentContentDto : OtherDocumentContentDto
       ;
   })
-  documentContent?: InvoiceContentDto | BillOfExchangeContentDto | PromissoryNoteContentDto | OtherDocumentContentDto;
+  documentContent?: InvoiceContentDto | BillOfExchangeContentDto | PromissoryNoteContentDto | BillOfLadingContentDto | WarehouseReceiptContentDto | OtherDocumentContentDto;
 
   @ApiProperty({ description: 'Trade Document Claimants' })
   @Expose()
@@ -977,7 +978,7 @@ export class UpsertTradeDocumentDto {
           obj.documentType === TradeDocumentType.OTHER ? OtherDocumentContentDto : OtherDocumentContentDto
       ;
   })
- documentContent?: InvoiceContentDto | BillOfExchangeContentDto | PromissoryNoteContentDto | OtherDocumentContentDto;
+ documentContent?: InvoiceContentDto | BillOfExchangeContentDto | BillOfLadingContentDto | PromissoryNoteContentDto | WarehouseReceiptContentDto | OtherDocumentContentDto;
 
   @ApiProperty({ description: 'Trade Document Claimants' })
   @Expose()

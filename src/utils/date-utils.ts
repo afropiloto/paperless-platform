@@ -7,6 +7,14 @@ export function addDays(fromDate: Date, numDays: number): Date {
   return newDate;
 }
 
+export function addMinutes(fromDate: Date, numMinutes: number): Date {
+  const newDate = new Date();
+  newDate.setDate(fromDate.getMinutes() + numMinutes);
+
+  return newDate;
+}
+
+
 export function subtractDates(firstDate: Date, secondDate: Date): number {
   const millisecondsDiff = secondDate.getTime() - firstDate.getTime()
 

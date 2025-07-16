@@ -11,10 +11,8 @@ export interface DataExtractionJob {
   documentType: string;
 }
 
-export interface GraipDataExtractionCallBackJob extends DataExtractionJob {
-  requestId: string;
-  flowId: string;
-
+export interface ExtendAIDataExtractionCallBackJob extends DataExtractionJob {
+  runId: string;
 }
 
 export interface DataExtractionResponse {
