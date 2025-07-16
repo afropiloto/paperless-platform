@@ -8,6 +8,7 @@ export enum DealProcessingStatus {
   FUNDS_RELEASED = 'FUNDS_RELEASED',
   LOAN_REPAID = 'LOAN_REPAID',
   WITHDRAWN = 'WITHDRAWN',
+  EXPIRED = 'EXPIRED',
 }
 
 export enum ChecklistItemStatus {

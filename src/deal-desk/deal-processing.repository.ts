@@ -397,4 +397,43 @@ export class DealProcessingRepository {
 
   }
 
+  async findByStatus(status: DealProcessingStatus): Promise<DealProcessingResponseDto[]> {
+    try {
+      const results = await this.dealProcessingModel
+        .find({ status })
+        .exec();
+      
+      return results.map(result => 
+        plainToInstance(DealProcessingResponseDto, result)
+      );
+    } catch (error) {
+      this.logger.error(
+        `Failed to find deal processing records by status ${status}: ${error.message}`,
+      );
+      throw error;
+    }
+  }
+
+  async updateStatus(id: string, status: DealProcessingStatus): Promise<DealProcessingResponseDto> {
+    try {
+      const updatedDocument = await this.dealProcessingModel
+        .findByIdAndUpdate(
+          id,
+          { status },
+          { new: true },
+        )
+        .exec();
+
+      if (!updatedDocument) {
+        throw new NotFoundException(`Deal processing with id ${id} not found`);
+      }
+
+      return plainToInstance(DealProcessingResponseDto, updatedDocument);
+    } catch (error) {
+      this.logger.error(
+        `Failed to update status for deal processing ${id}: ${error.message}`,
+      );
+      throw error;
+    }
+  }
 }

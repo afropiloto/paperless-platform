@@ -1,5 +1,6 @@
 import { Module, forwardRef } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
+import { ScheduleModule } from '@nestjs/schedule';
 import { DealProcessing, DealProcessingSchema } from './schemas/deal-processing.schema';
 import { DealProcessingRepository } from './deal-processing.repository';
 import { DealProcessingService } from './deal-processing.service';
@@ -17,9 +18,12 @@ import { TradeFinanceModule } from '../trade-finance/tradeFinanceModule';
 import { AccountsModule } from '../accounts/accounts.module';
 import { IssueTradeDocumentModule } from '../issue-trade-document/issue-trade-document.module';
 import { DocumentSigningModule } from '../document-signing/document-signing.module';
+import { DocumentSigningBatchCheckService } from './document-signing-batch-check.service';
+import { AuditModule } from '../audit/audit.module';
 
 @Module({
   imports: [
+    ScheduleModule.forRoot(),
     MongooseModule.forFeature([
       { name: DealProcessing.name, schema: DealProcessingSchema },
       { name: Account.name, schema: AccountSchema },
@@ -35,6 +39,7 @@ import { DocumentSigningModule } from '../document-signing/document-signing.modu
     IssueTradeDocumentModule,
     DocumentSigningModule,
     FileStorageModule,
+    AuditModule,
   ],
   controllers: [
     DealProcessingController,
@@ -44,6 +49,7 @@ import { DocumentSigningModule } from '../document-signing/document-signing.modu
     DealProcessingService,
     PromissoryNotePdfService,
     DueDiligenceChecklistsService,
+    DocumentSigningBatchCheckService,
   ],
   exports: [DealProcessingService]
 

@@ -13,9 +13,10 @@ import {
 import { ethers, Wallet } from 'ethers-v5';
 import { ConfigService } from '@nestjs/config';
 import {
-  BillOfExchangeContentDto, InvoiceContentDto,
+  BillOfExchangeContentDto, BillOfLadingContentDto, InvoiceContentDto,
   OtherDocumentContentDto,
   PromissoryNoteContentDto,
+  WarehouseReceiptContentDto,
 } from '../trade-documents/dtos/trade-document.dto';
 
 const documentBase: { $template: { name: string; type: string; url: string } } = {
@@ -85,7 +86,9 @@ export class TradeTrustService {
                      documentContent:
                        | InvoiceContentDto
                        | BillOfExchangeContentDto
-                       | PromissoryNoteContentDto
+                       | PromissoryNoteContentDto 
+                       | BillOfLadingContentDto
+                       | WarehouseReceiptContentDto
                        | OtherDocumentContentDto): Promise<WrappedDocumentDetails> {
 
     // Handle Attachments

@@ -665,4 +665,12 @@ export class DealProcessingService {
   getDealProcessingByDealId(accountId: string, dealId: string) {
     return this.dealProcessingRepository.findByIDealId(accountId, dealId);
   }
+
+  async findByStatus(status: DealProcessingStatus) {
+    return this.dealProcessingRepository.findByStatus(status);
+  }
+
+  async updateStatus(id: string, status: DealProcessingStatus) {
+    return this.dealProcessingRepository.updateStatus(id, status);
+  }
 }

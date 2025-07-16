@@ -8,7 +8,6 @@ import { TenantModule } from './tenant/tenant.module';
 import { NamedWalletsModule } from './named-wallets/named-wallets.module';
 import { TradeDocumentsModule } from './trade-documents/trade-documents.module';
 import { BullModule } from '@nestjs/bullmq';
-import { DataExtractionModule } from './data-extraction/data-extraction.module';
 import { VerifyTradeDocumentModule } from './verify-trade-document/verify-trade-document.module';
 import { IssueTradeDocumentModule } from './issue-trade-document/issue-trade-document.module';
 import { TradeTrustModule } from './trade-trust/trade-trust.module';
@@ -33,7 +32,6 @@ import { DealDeskEventsModule } from './deal-desk-events/deal-desk-events.module
 import { DocumentSigningEventsModule } from './document-signing-events/document-signing-events.module';
 import { ShareLinksModule } from './share-links/share-links.module';
 import { EmailClientModule } from './email-client/email-client.module';
-import { DataExtractionEventsModule } from './data-extraction-events/data-extraction-events.module';
 import { DataExtractionEventsModule } from './data-extraction-events/data-extraction-events.module';
 
 @Module({
@@ -69,7 +67,6 @@ import { DataExtractionEventsModule } from './data-extraction-events/data-extrac
     TenantModule,
     NamedWalletsModule,
     TradeDocumentsModule,
-    DataExtractionModule,
     VerifyTradeDocumentModule,
     IssueTradeDocumentModule,
     TradeTrustModule,

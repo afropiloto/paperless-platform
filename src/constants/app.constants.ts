@@ -34,6 +34,9 @@ export enum DealDeskQueues  {
   CUSTOMER_FUNDING_REQUESTS="customer-funding-requests"
 }
 
+export const DOCUMENT_SIGNING_BATCH_CHECK_QUEUE = 'document-signing-batch-check-queue';
+export const DOCUMENT_SIGNING_BATCH_CHECK_EVENT = 'document-signing-batch-check-event';
+
 export enum DealDeskEvents {
   NEW_FUNDING_REQUEST="NEW_FUNDING_REQUEST",
   WITHDRAW_FUNDING_REQUEST="WITHDRAW_FUNDING_REQUEST",
