@@ -3,6 +3,7 @@ import { ShareLinksService } from './share-links.service';
 import { ShareLinksRepository } from './share-links.repository';
 import { TradeDocumentsService } from '../trade-documents/trade-documents.service';
 import { AuditService } from '../audit/audit.service';
+import { TradeDocumentFileVariant } from '../trade-documents/trade-document-file.types';
 
 describe('ShareLinksService', () => {
   let service: ShareLinksService;
@@ -29,6 +30,7 @@ describe('ShareLinksService', () => {
           provide: TradeDocumentsService,
           useValue: {
             getDocumentById: jest.fn(),
+            getTradeDocumentFileStream: jest.fn(),
           },
         },
         {
@@ -44,6 +46,11 @@ describe('ShareLinksService', () => {
     repository = module.get<ShareLinksRepository>(ShareLinksRepository);
     tradeDocumentsService = module.get<TradeDocumentsService>(TradeDocumentsService);
     auditService = module.get<AuditService>(AuditService);
+
+    // Mock the decryptData method to avoid encryption/decryption issues in tests
+    jest.spyOn(service as any, 'decryptData').mockReturnValue(
+      JSON.stringify({ accountId: 'acc123', documentId: 'doc123' })
+    );
   });
 
   it('should be defined', () => {
@@ -91,9 +98,9 @@ describe('ShareLinksService', () => {
         linkId: 'test-link-id',
         accountId: 'acc123',
         documentId: 'doc123',
-        encryptedData: 'encrypted',
-        iv: 'iv',
-        salt: 'salt',
+        encryptedData: 'a1b2c3d4e5f6', // Mock hex data
+        iv: '1234567890abcdef',
+        salt: 'abcdef1234567890',
         expiresAt: new Date(Date.now() + 86400000), // 24 hours from now
         allowedEmails: [],
         isExpired: false,
@@ -120,9 +127,9 @@ describe('ShareLinksService', () => {
         linkId: 'test-link-id',
         accountId: 'acc123',
         documentId: 'doc123',
-        encryptedData: 'encrypted',
-        iv: 'iv',
-        salt: 'salt',
+        encryptedData: 'a1b2c3d4e5f6', // Mock hex data
+        iv: '1234567890abcdef',
+        salt: 'abcdef1234567890',
         expiresAt: new Date(Date.now() + 86400000),
         allowedEmails: ['test@example.com'],
         isExpired: false,
@@ -142,6 +149,102 @@ describe('ShareLinksService', () => {
       expect(result).toEqual(mockDocument);
       expect(repository.updateAccessCount).toHaveBeenCalledWith('test-link-id', 'test@example.com');
       expect(auditService.log).toHaveBeenCalled();
+    });
+  });
+
+  describe('accessShareLinkFile', () => {
+    it('should access a file via share link successfully', async () => {
+      const mockShareLink = {
+        linkId: 'test-link-id',
+        accountId: 'acc123',
+        documentId: 'doc123',
+        encryptedData: 'a1b2c3d4e5f6', // Mock hex data
+        iv: '1234567890abcdef',
+        salt: 'abcdef1234567890',
+        expiresAt: new Date(Date.now() + 86400000), // 24 hours from now
+        allowedEmails: [],
+        isExpired: false,
+        accessCount: 0,
+        accessHistory: [],
+      };
+
+      const mockFileStream = {
+        stream: { pipe: jest.fn() },
+        headers: {
+          'Content-Disposition': 'attachment; filename="test.pdf"',
+          'Content-Type': 'application/pdf',
+        },
+      };
+
+      jest.spyOn(repository, 'findByLinkId').mockResolvedValue(mockShareLink as any);
+      jest.spyOn(repository, 'updateAccessCount').mockResolvedValue();
+      jest.spyOn(tradeDocumentsService, 'getTradeDocumentFileStream').mockResolvedValue(mockFileStream as any);
+      jest.spyOn(auditService, 'log').mockResolvedValue();
+
+      const result = await service.accessShareLinkFile('test-link-id', TradeDocumentFileVariant.ISSUED);
+
+      expect(result).toEqual(mockFileStream);
+      expect(repository.updateAccessCount).toHaveBeenCalledWith('test-link-id', undefined);
+      expect(tradeDocumentsService.getTradeDocumentFileStream).toHaveBeenCalledWith('acc123', 'doc123', TradeDocumentFileVariant.ISSUED);
+      expect(auditService.log).toHaveBeenCalledWith({
+        subject: 'TRADE_DOCUMENT',
+        eventType: 'SHARE_LINK_ACCESSED',
+        identifier: 'doc123',
+        accountId: 'acc123',
+        details: {
+          linkId: 'test-link-id',
+          accessedByEmail: undefined,
+          fileVariant: TradeDocumentFileVariant.ISSUED,
+          accessCount: 1,
+        },
+      });
+    });
+
+    it('should track email access when provided for file download', async () => {
+      const mockShareLink = {
+        linkId: 'test-link-id',
+        accountId: 'acc123',
+        documentId: 'doc123',
+        encryptedData: 'a1b2c3d4e5f6', // Mock hex data
+        iv: '1234567890abcdef',
+        salt: 'abcdef1234567890',
+        expiresAt: new Date(Date.now() + 86400000),
+        allowedEmails: ['test@example.com'],
+        isExpired: false,
+        accessCount: 0,
+        accessHistory: [],
+      };
+
+      const mockFileStream = {
+        stream: { pipe: jest.fn() },
+        headers: {
+          'Content-Disposition': 'attachment; filename="test.pdf"',
+          'Content-Type': 'application/pdf',
+        },
+      };
+
+      jest.spyOn(repository, 'findByLinkId').mockResolvedValue(mockShareLink as any);
+      jest.spyOn(repository, 'updateAccessCount').mockResolvedValue();
+      jest.spyOn(tradeDocumentsService, 'getTradeDocumentFileStream').mockResolvedValue(mockFileStream as any);
+      jest.spyOn(auditService, 'log').mockResolvedValue();
+
+      const result = await service.accessShareLinkFile('test-link-id', TradeDocumentFileVariant.ORIGINAL, 'test@example.com');
+
+      expect(result).toEqual(mockFileStream);
+      expect(repository.updateAccessCount).toHaveBeenCalledWith('test-link-id', 'test@example.com');
+      expect(tradeDocumentsService.getTradeDocumentFileStream).toHaveBeenCalledWith('acc123', 'doc123', TradeDocumentFileVariant.ORIGINAL);
+      expect(auditService.log).toHaveBeenCalledWith({
+        subject: 'TRADE_DOCUMENT',
+        eventType: 'SHARE_LINK_ACCESSED',
+        identifier: 'doc123',
+        accountId: 'acc123',
+        details: {
+          linkId: 'test-link-id',
+          accessedByEmail: 'test@example.com',
+          fileVariant: TradeDocumentFileVariant.ORIGINAL,
+          accessCount: 1,
+        },
+      });
     });
   });
 

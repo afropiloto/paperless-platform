@@ -49,6 +49,7 @@
     "dotenv": "^16.5.0",
     "ethers-v5": "npm:ethers@^5.8.0",
     "ethers-v6": "npm:ethers@^6.13.5",
+    "extend-ai": "^0.0.3",
     "jsonld": "^6.0.0",
     "mime-types": "^3.0.1",
     "mongodb": "^6.15.0",

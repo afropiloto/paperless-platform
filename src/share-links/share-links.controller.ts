@@ -6,6 +6,7 @@ import {
   Param,
   Post,
   Query,
+  Res,
 } from '@nestjs/common';
 import {
   ApiOperation,
@@ -22,6 +23,8 @@ import {
 import { TradeDocumentDto } from '../trade-documents/dtos/trade-document.dto';
 import { GeneralResponseDto } from '../common/common-dto';
 import { plainToInstance } from 'class-transformer';
+import { Response } from 'express';
+import { TradeDocumentFileVariant } from '../trade-documents/trade-document-file.types';
 
 @ApiTags('Share Links')
 @Controller('share-links')
@@ -103,6 +106,49 @@ export class ShareLinksController {
       linkId,
       accessDto.email,
     );
+  }
+
+  @Get('access/:linkId/files/:variant')
+  @ApiOperation({
+    summary: 'Download a trade document file via a share link',
+    description:
+      'Downloads a specific file variant (ORIGINAL, ISSUED, TRADE_TRUST) of a trade document using a share link ID. Validates expiry and email restrictions if set.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'File streamed successfully',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Email required for restricted access',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Share link expired or unauthorized email',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Share link or file not found',
+  })
+  @ApiQuery({
+    name: 'email',
+    required: false,
+    description: 'Email address (required if link has email restrictions)',
+  })
+  async accessShareLinkFile(
+    @Param('linkId') linkId: string,
+    @Param('variant') variant: TradeDocumentFileVariant,
+    @Query() accessDto: AccessShareLinkDto,
+    @Res() res: Response,
+  ): Promise<void> {
+    const { stream, headers } = await this.shareLinksService.accessShareLinkFile(
+      linkId,
+      variant,
+      accessDto.email,
+    );
+    
+    res.set(headers);
+    return stream.pipe(res);
   }
 
   @Delete(':linkId')

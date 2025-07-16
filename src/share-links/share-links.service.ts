@@ -14,6 +14,7 @@ import { TradeDocumentsService } from '../trade-documents/trade-documents.servic
 import { AuditService } from '../audit/audit.service';
 import { AuditEventType, AuditSubject } from '../audit/audit-event-type.enum';
 import { plainToInstance } from 'class-transformer';
+import { TradeDocumentFileVariant } from '../trade-documents/trade-document-file.types';
 
 @Injectable()
 export class ShareLinksService {
@@ -159,6 +160,79 @@ export class ShareLinksService {
     });
 
     return document;
+  }
+
+  async accessShareLinkFile(
+    linkId: string,
+    variant: TradeDocumentFileVariant,
+    email?: string,
+  ): Promise<{ stream: any; headers: any }> {
+    // Find the share link
+    const shareLink = await this.shareLinksRepository.findByLinkId(linkId);
+    if (!shareLink) {
+      throw new NotFoundException('Share link not found');
+    }
+
+    // Check if link is expired
+    if (shareLink.isExpired) {
+      throw new UnauthorizedException('Share link has expired');
+    }
+
+    // Check if link has expired based on expiresAt
+    if (shareLink.expiresAt && new Date() > shareLink.expiresAt) {
+      await this.shareLinksRepository.markAsExpired(linkId);
+      throw new UnauthorizedException('Share link has expired');
+    }
+
+    // Check email restrictions
+    if (shareLink.allowedEmails && shareLink.allowedEmails.length > 0) {
+      if (!email) {
+        throw new BadRequestException(
+          'Email address is required to access this link',
+        );
+      }
+
+      if (!shareLink.allowedEmails.includes(email.toLowerCase())) {
+        throw new UnauthorizedException(
+          'Your email address is not authorized to access this link',
+        );
+      }
+    }
+
+    // Decrypt the data
+    const decryptedData = this.decryptData(
+      shareLink.encryptedData,
+      shareLink.iv,
+      shareLink.salt,
+    );
+
+    const { accountId, documentId } = JSON.parse(decryptedData);
+
+    // Update access count and track email access
+    await this.shareLinksRepository.updateAccessCount(linkId, email);
+
+    // Get the file stream using the trade documents service
+    const fileStream = await this.tradeDocumentsService.getTradeDocumentFileStream(
+      accountId,
+      documentId,
+      variant,
+    );
+
+    // Log the audit event
+    await this.auditService.log({
+      subject: AuditSubject.TRADE_DOCUMENT,
+      eventType: AuditEventType.SHARE_LINK_ACCESSED,
+      identifier: documentId,
+      accountId,
+      details: {
+        linkId,
+        accessedByEmail: email,
+        fileVariant: variant,
+        accessCount: shareLink.accessCount + 1,
+      },
+    });
+
+    return fileStream;
   }
 
   async deleteShareLink(linkId: string, accountId: string): Promise<void> {

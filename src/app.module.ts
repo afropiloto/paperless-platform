@@ -33,6 +33,7 @@ import { DealDeskEventsModule } from './deal-desk-events/deal-desk-events.module
 import { DocumentSigningEventsModule } from './document-signing-events/document-signing-events.module';
 import { ShareLinksModule } from './share-links/share-links.module';
 import { EmailClientModule } from './email-client/email-client.module';
+import { DataExtractionEventsModule } from './data-extraction-events/data-extraction-events.module';
 
 @Module({
   imports: [
@@ -91,6 +92,7 @@ import { EmailClientModule } from './email-client/email-client.module';
     DocumentSigningEventsModule,
     ShareLinksModule,
     EmailClientModule,
+    DataExtractionEventsModule,
   ],
   controllers: [AppController],
   providers: [],
