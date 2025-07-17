@@ -21,7 +21,7 @@ export class DocumentSigningBatchCheckService {
     private readonly auditService: AuditService,
   ) {}
 
-  @Cron(process.env.DOCUMENT_SIGNING_BATCH_CHECK_CRON || CronExpression.EVERY_5_MINUTES)
+  @Cron(process.env.DOCUMENT_SIGNING_BATCH_CHECK_CRON || CronExpression.EVERY_HOUR)
   async checkDocumentSigningStatus() {
     this.logger.log('Starting document signing batch check job');
     

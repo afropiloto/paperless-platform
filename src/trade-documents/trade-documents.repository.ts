@@ -328,6 +328,7 @@ export class TradeDocumentsRepository {
         return result;
       }
       result['metadata'] = { ...result['metadata'][0] };
+      this.logger.debug({result})
       return result;
     } catch (error) {
       this.logger.error({

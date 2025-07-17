@@ -1,6 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
-import { TradeDocumentType } from '../../types/trade-documents.types';
+import { TradeDocumentType, TradeDocumentStatus } from '../../types/trade-documents.types';
 import { TradeTrustDocumentClass } from '../../trade-trust/trade-trust.types';
 import { TradeDocumentFileStatus } from '../trade-document-file.types';
 
@@ -81,8 +81,8 @@ export class TradeDocument {
   @Prop({ required: true, enum: TradeDocumentType })
   documentType: TradeDocumentType;
 
-  @Prop()
-  status: string;
+  @Prop({required: true, enum: TradeDocumentStatus, default: TradeDocumentStatus.IN_PROGRESS})
+  status: TradeDocumentStatus;
 
   @Prop({required: false})
   dateIssued: Date;

@@ -5,8 +5,7 @@
 2. Migrate data extraction to extend.ai
    - Need to setup and test the processors on extend.ai
 3. Document signing
-   * Add service to interact with the Document Signing service to read data.
-   * Update retrieval methods to get current data from chain. Do this for In Progress items only but where an updated status is returned, update the status in the database.
+   - Need to test the document signing cron job is working as we expect
 4. Security
    * Need to add setup API Key guards on endpoints
    * Need to add JWT guard to controllers
@@ -16,6 +15,8 @@
     * Need to integrate Virus Scan into Registration documents upload
     * Need to integrate Virus Scan into Trade Documents File upload
 6. Account Analytics
+   - analytics (last period stats) and latest n-docs for Trade Documents
+   - analytics (last period stats) and latest n-docs for Finance Deals
 7. Update ReadMe with set up & deployment information
 8. Write Service and Controller Tests
     * Can we get Cursor to create the tests?

@@ -1,1 +1,0 @@
-export const MAX_LATEST_DOCUMENTS: number = 10;
