@@ -6,7 +6,8 @@
    - Need to setup and test the processors on extend.ai
 3. Document signing
    - Need to test the document signing cron job is working as we expect
-4. Security
+4. Ensure status codes are aligned and summary information aligns with that 
+5. Security
    * Need to add setup API Key guards on endpoints
    * Need to add JWT guard to controllers
    * Need to add UserPermissionGuards to controller methods
@@ -14,11 +15,8 @@
 5. Virus Scan
     * Need to integrate Virus Scan into Registration documents upload
     * Need to integrate Virus Scan into Trade Documents File upload
-6. Account Analytics
-   - analytics (last period stats) and latest n-docs for Trade Documents
-   - analytics (last period stats) and latest n-docs for Finance Deals
-7. Update ReadMe with set up & deployment information
-8. Write Service and Controller Tests
+6. Update ReadMe with set up & deployment information
+7. Write Service and Controller Tests
     * Can we get Cursor to create the tests?
 
 # Platform Deployment
@@ -208,3 +206,32 @@ export class FinanceController {
   }
 }
 ```
+
+
+# Document Lifecycles
+## Trade document lifecycle
+A Trade document can be in one of a number of states
+
+| State              | Meaning                                                                                                                                                                                                                                                                                                                                                                 |
+|--------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Processing         | The trade document is being processed by the platform. This is usually either when data extraction is running or the document is being issued on chain. When the document has this status, it cannot be updated or deleted. Once processing has completed the status would become Issued or In Progress. If the processing fails, the status is reverted to In Progress |
+| In Progress        | The trade document has been created but not issued and so can be edited and deleted                                                                                                                                                                                                                                                                                     |
+| Issued             | The trade document has been issued on chain. The details cannot be changed.                                                                                                                                                                                                                                                                                             |
+| Awaiting Signature | The trade document has been issued and awaiting parties to digitally sign the document. While in this state, no changes can be made to the document. It can move back to Issued state if the document signing expires or is revoked                                                                                                                                     |
+| Signed             | The trade document has been issued and has been digitally signed by parties. The details cannot be changed                                                                                                                                                                                                                                                              |
+
+## Trade Deal lifecycle
+A Trade Deal can be in one of the following states.
+
+| State                  | Meaning                                                                                                                                                                                                                                                            |
+|------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| New                    | The deal has been created by the user                                                                                                                                                                                                                              |
+| In Progress            | The user account is currently working on the Trade Deal. The user can make changes to the Deal and can delete the deal or submit funding request                                                                                                                   |
+| Funding Requested      | The deal has been submitted to Paiperless for funding and is being processed but no funding decision has been made. The user account cannot change the deal and cannot delete the deal. They can withdraw the deal which returns the deal to an In Progress status |
+| Rejected               | The request for funding has not be successful. The deal cannot be progressed further.                                                                                                                                                                              |
+| Awaiting Agreement     | The request for funding has been successful and is awaiting the completion of a signed agreement before funds can be released. If the agreement is not reached before the end of the signing period then the document will move to a state of Expired.             |
+| Awaiting Funds Release | The deal has been approved and agreed, awaiting the release of funds to the user account.                                                                                                                                                                          |
+| Funds Released         | The deal has been approved and agreed. The funds have been released to the user account.                                                                                                                                                                           |
+| Loan Repaid            | The loan has been repaid by the user account                                                                                                                                                                                                                       |
+| Complete               | The load has been repaid and all necessary checks completed to close the deal                                                                                                                                                                                      |
+| Expired                | The loan was approved but paperwork was not agreed in time and therefore the deal has expired.                                                                                                                                                                     |

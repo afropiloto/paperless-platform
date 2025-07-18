@@ -173,10 +173,10 @@ export class AnalyticsService {
         case TradeFinanceDealStatus.FUNDING_REQUESTED:
           result.fundingRequested++;
           break;
-        case TradeFinanceDealStatus.FUNDING_APPROVED:
+        case TradeFinanceDealStatus.AWAITING_AGREEMENT:
           result.fundingApproved++;
           break;
-        case TradeFinanceDealStatus.FUNDING_REJECTED:
+        case TradeFinanceDealStatus.REJECTED:
           result.fundingRejected++;
           break;
         default:
