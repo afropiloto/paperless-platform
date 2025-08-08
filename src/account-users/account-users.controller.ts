@@ -58,7 +58,7 @@ export class AccountUsersController {
   async createAccountUser(
     @Body() createAccountUserDto: CreateAccountUserDto
   ): Promise<AccountUserResponseDto> {
-    return await this.accountUsersService.createAccountUser(createAccountUserDto);
+    return  await this.accountUsersService.createAccountUser(createAccountUserDto);
   }
 
   //@ApiKeyProtectedSwagger()

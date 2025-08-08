@@ -18,6 +18,20 @@ export class AuthResponseDto {
   @Expose()
   success: boolean;
 
+  @ApiProperty({ 
+    description: 'Whether MFA verification is required to complete login',
+    required: false,
+  })
+  @Expose()
+  mfaRequired?: boolean;
+
+  @ApiProperty({ 
+    description: 'Whether MFA setup is required before login',
+    required: false,
+  })
+  @Expose()
+  mfaSetupRequired?: boolean;
+
   @ApiProperty({ description: 'JWT access token' })
   @Expose()
   accessToken: string;

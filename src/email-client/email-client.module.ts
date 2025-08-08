@@ -1,18 +1,21 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ConfigModule } from '@nestjs/config';
 import { EmailClientService } from './email-client.service';
-import { EMAIL_CLIENT_SERVICE } from './email-client.constants';
+import { EmailProviderFactory } from './providers/email-provider.factory';
+import { EMAIL_CLIENT_SERVICE, EMAIL_PROVIDER_FACTORY } from './email-client.constants';
 
 @Module({
   imports: [ConfigModule],
   providers: [
+    EmailProviderFactory,
     EmailClientService,
     {
       provide: EMAIL_CLIENT_SERVICE,
-      inject: [ConfigService, EmailClientService],
-      useFactory: (configService: ConfigService, emailService: EmailClientService) => {
-        return emailService;
-      }
+      useExisting: EmailClientService,
+    },
+    {
+      provide: EMAIL_PROVIDER_FACTORY,
+      useExisting: EmailProviderFactory,
     },
   ],
   exports: [EMAIL_CLIENT_SERVICE],

@@ -1,5 +1,10 @@
 
 export default () => ({
+  app: {
+    name: process.env.APP_NAME || 'Paiperless Trade Documents Platform',
+    url: process.env.APP_DOMAIN || 'https://ai.paiperless.com',
+    supportEmail: process.env.APP_SUPPORT_EMAIL || 'support@paiperless.com',
+  },
   server: {
     port: process.env.MONGODB_URI || 3002,
   },
@@ -13,6 +18,28 @@ export default () => ({
   refreshToken: {
     secret: process.env.REFRESH_TOKEN_SECRET,
     expiresIn: process.env.REFRESH_TOKEN_EXPIRATION || '7d',
+  },
+  auth: {
+    mfa: {
+      enabled: process.env.MFA_ENABLED === 'true',
+      issuer: process.env.MFA_ISSUER || 'Trade Documents Platform',
+      window: parseInt(process.env.MFA_WINDOW) || 1,
+      backupCodesCount: parseInt(process.env.MFA_BACKUP_CODES_COUNT) || 10,
+    },
+    password: {
+      minLength: parseInt(process.env.PASSWORD_MIN_LENGTH) || 8,
+      requireUppercase: process.env.PASSWORD_REQUIRE_UPPERCASE !== 'false',
+      requireLowercase: process.env.PASSWORD_REQUIRE_LOWERCASE !== 'false',
+      requireNumbers: process.env.PASSWORD_REQUIRE_NUMBERS !== 'false',
+      requireSpecialChars: process.env.PASSWORD_REQUIRE_SPECIAL !== 'false',
+    },
+    accountLockout: {
+      maxFailedAttempts: parseInt(process.env.MAX_FAILED_LOGIN_ATTEMPTS) || 5,
+      lockoutDuration: parseInt(process.env.ACCOUNT_LOCKOUT_DURATION) || 15, // minutes
+    },
+    passwordReset: {
+      expiryMinutes: parseInt(process.env.PASSWORD_RESET_EXPIRY_MINUTES) || 30,
+    },
   },
   tenant: {
     financeModule: false,

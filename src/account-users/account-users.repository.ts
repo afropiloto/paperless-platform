@@ -4,7 +4,7 @@ import { Model, PipelineStage, Types } from 'mongoose';
 import { plainToInstance } from 'class-transformer';
 import { SearchResultsMetadata } from '../common/dtos/search.dto';
 import { AccountUser, AccountUserDocument, AccountUserStatus } from './schemas';
-import { CreateAccountUserDto, UpdateAccountUserDto, AccountUserResponseDto, UserPermissionDto, AccountUsersSearchDto } from './dtos';
+import { CreateAccountUserDto, UpdateAccountUserDto, AccountUserResponseDto, UserPermissionDto, AccountUsersSearchDto, AccountUserSecurityDetailsDto } from './dtos';
 import { AccountUsersSearchResultsDto } from './dtos';
 import { ApplicationModule, ApplicationRole, ApplicationPermissions } from './schemas';
 
@@ -67,14 +67,29 @@ export class AccountUsersRepository {
       // Transform permissions from DTO format to schema format
       const transformedPermissions = this.transformPermissionsToSchema(createAccountUserDto.permissions);
 
-      const accountUser = new this.accountUserModel({
+      const accountUserData: any = {
         accountId: new Types.ObjectId(createAccountUserDto.accountId),
         name: createAccountUserDto.name,
         emailAddress: createAccountUserDto.emailAddress,
         walletAddress: createAccountUserDto.walletAddress,
         status: createAccountUserDto.status || 'Active',
+        authMethod: createAccountUserDto.authMethod,
+        mfaEnabled: createAccountUserDto.enableMfa,
         permissions: transformedPermissions,
-      });
+      };
+
+      // Add password-related fields if provided (for email/password auth)
+      if (createAccountUserDto.passwordHash) {
+        accountUserData.passwordHash = createAccountUserDto.passwordHash;
+      }
+      if (createAccountUserDto.passwordChanged !== undefined) {
+        accountUserData.passwordChanged = createAccountUserDto.passwordChanged;
+      }
+      if (createAccountUserDto.failedLoginAttempts !== undefined) {
+        accountUserData.failedLoginAttempts = createAccountUserDto.failedLoginAttempts;
+      }
+
+      const accountUser = new this.accountUserModel(accountUserData);
       
       const savedAccountUser = await accountUser.save();
       const accountUserObject = savedAccountUser.toObject();
@@ -89,6 +104,13 @@ export class AccountUsersRepository {
         emailAddress: accountUserObject.emailAddress,
         walletAddress: accountUserObject.walletAddress,
         status: accountUserObject.status,
+        authMethod: accountUserObject.authMethod,
+        mfaEnabled: accountUserObject.mfaEnabled,
+        mfaSetupRequired: accountUserObject.mfaSetupRequired,
+        mfaSetupCompleted: accountUserObject.mfaSetupCompleted,
+        firstLoginAt: accountUserObject.firstLoginAt,
+        passwordChanged: accountUserObject.passwordChanged,
+        accountLockedUntil: accountUserObject.accountLockedUntil,
         permissions: responsePermissions,
         createdAt: accountUserObject.createdAt,
         updatedAt: accountUserObject.updatedAt,
@@ -149,6 +171,8 @@ export class AccountUsersRepository {
         emailAddress: accountUserObject.emailAddress,
         walletAddress: accountUserObject.walletAddress,
         status: accountUserObject.status,
+        authMethod: accountUserObject.authMethod,
+        mfaEnabled: accountUserObject.mfaEnabled,
         permissions: responsePermissions,
         createdAt: accountUserObject.createdAt,
         updatedAt: accountUserObject.updatedAt,
@@ -161,6 +185,90 @@ export class AccountUsersRepository {
         updateAccountUserDto,
       });
       throw new Error('Failed to update account user. Please try again later.');
+    }
+  }
+
+  async updateSecurity(
+    id: string, 
+    securityUpdates: {
+      passwordHash?: string;
+      passwordChanged?: boolean;
+      failedLoginAttempts?: number;
+      accountLockedUntil?: Date;
+      mfaSecret?: string;
+      mfaBackupCodes?: string[];
+      mfaEnabled?: boolean;
+      mfaSetupCompleted?: Date;
+    }
+  ): Promise<AccountUserResponseDto> {
+    try {
+      // Build update object with only provided security fields
+      const updateData: any = {};
+      
+      if (securityUpdates.passwordHash !== undefined) {
+        updateData.passwordHash = securityUpdates.passwordHash;
+        // Set passwordChanged to true when password is updated
+        updateData.passwordChanged = true;
+        updateData.lastPasswordChange = new Date();
+      }
+      if (securityUpdates.passwordChanged !== undefined) {
+        updateData.passwordChanged = securityUpdates.passwordChanged;
+      }
+      if (securityUpdates.failedLoginAttempts !== undefined) {
+        updateData.failedLoginAttempts = securityUpdates.failedLoginAttempts;
+      }
+      if (securityUpdates.accountLockedUntil !== undefined) {
+        updateData.accountLockedUntil = securityUpdates.accountLockedUntil;
+      }
+      if (securityUpdates.mfaSecret !== undefined) {
+        updateData.mfaSecret = securityUpdates.mfaSecret;
+      }
+      if (securityUpdates.mfaBackupCodes !== undefined) {
+        updateData.mfaBackupCodes = securityUpdates.mfaBackupCodes;
+      }
+      if (securityUpdates.mfaEnabled !== undefined) {
+        updateData.mfaEnabled = securityUpdates.mfaEnabled;
+      }
+      if (securityUpdates.mfaSetupCompleted !== undefined) {
+        updateData.mfaSetupCompleted = securityUpdates.mfaSetupCompleted;
+      }
+
+      const accountUser = await this.accountUserModel.findByIdAndUpdate(
+        id,
+        { $set: updateData },
+        { new: true, runValidators: true }
+      );
+
+      if (!accountUser) {
+        throw new Error('Account user not found');
+      }
+
+      const accountUserObject = accountUser.toObject();
+
+      // Transform permissions back to DTO format for response
+      const responsePermissions = this.transformPermissionsToDto(accountUserObject.permissions);
+
+      return plainToInstance(AccountUserResponseDto, {
+        id: accountUserObject._id.toString(),
+        accountId: accountUserObject.accountId.toString(),
+        name: accountUserObject.name,
+        emailAddress: accountUserObject.emailAddress,
+        walletAddress: accountUserObject.walletAddress,
+        status: accountUserObject.status,
+        authMethod: accountUserObject.authMethod,
+        mfaEnabled: accountUserObject.mfaEnabled,
+        permissions: responsePermissions,
+        createdAt: accountUserObject.createdAt,
+        updatedAt: accountUserObject.updatedAt,
+      }, { excludeExtraneousValues: true });
+    } catch (error) {
+      this.logger.error({
+        msg: 'Failed to update account user security',
+        details: error.message,
+        id,
+        securityUpdates,
+      });
+      throw new Error('Failed to update account user security. Please try again later.');
     }
   }
 
@@ -184,6 +292,8 @@ export class AccountUsersRepository {
         emailAddress: accountUserObject.emailAddress,
         walletAddress: accountUserObject.walletAddress,
         status: accountUserObject.status,
+        authMethod: accountUserObject.authMethod,
+        mfaEnabled: accountUserObject.mfaEnabled,
         permissions: responsePermissions,
         createdAt: accountUserObject.createdAt,
         updatedAt: accountUserObject.updatedAt,
@@ -221,6 +331,8 @@ export class AccountUsersRepository {
         emailAddress: accountUserObject.emailAddress,
         walletAddress: accountUserObject.walletAddress,
         status: accountUserObject.status,
+        authMethod: accountUserObject.authMethod,
+        mfaEnabled: accountUserObject.mfaEnabled,
         permissions: responsePermissions,
         createdAt: accountUserObject.createdAt,
         updatedAt: accountUserObject.updatedAt,
@@ -232,6 +344,100 @@ export class AccountUsersRepository {
         walletAddress,
       });
       throw new Error('Failed to retrieve account user. Please try again later.');
+    }
+  }
+
+  async findByEmail(email: string): Promise<AccountUserResponseDto | null> {
+    try {
+      const accountUser = await this.accountUserModel.findOne({ 
+        emailAddress: { $regex: new RegExp(`^${email}$`, 'i') },
+        status: { $ne: 'Deleted' } // Exclude deleted users
+      }).select('+passwordHash +mfaSecret +mfaBackupCodes'); // Include sensitive fields
+      
+      if (!accountUser) {
+        return null;
+      }
+
+      const accountUserObject = accountUser.toObject();
+
+      // Transform permissions back to DTO format for response
+      const responsePermissions = this.transformPermissionsToDto(accountUserObject.permissions);
+
+      return plainToInstance(AccountUserResponseDto, {
+        id: accountUserObject._id.toString(),
+        accountId: accountUserObject.accountId.toString(),
+        name: accountUserObject.name,
+        emailAddress: accountUserObject.emailAddress,
+        walletAddress: accountUserObject.walletAddress,
+        status: accountUserObject.status,
+        authMethod: accountUserObject.authMethod,
+        mfaEnabled: accountUserObject.mfaEnabled,
+        mfaSetupRequired: accountUserObject.mfaSetupRequired,
+        mfaSetupCompleted: accountUserObject.mfaSetupCompleted,
+        firstLoginAt: accountUserObject.firstLoginAt,
+        passwordChanged: accountUserObject.passwordChanged,
+        accountLockedUntil: accountUserObject.accountLockedUntil,
+        permissions: responsePermissions,
+        createdAt: accountUserObject.createdAt,
+        updatedAt: accountUserObject.updatedAt,
+      }, { excludeExtraneousValues: true });
+    } catch (error) {
+      this.logger.error({
+        msg: 'Failed to find account user by email',
+        details: error.message,
+        email,
+      });
+      throw new Error('Failed to retrieve account user. Please try again later.');
+    }
+  }
+
+  async findByEmailForAuth(email: string): Promise<any | null> {
+    try {
+      const accountUser = await this.accountUserModel.findOne({ 
+        emailAddress: { $regex: new RegExp(`^${email}$`, 'i') },
+        status: { $ne: 'Deleted' } // Exclude deleted users
+      }).select('+passwordHash +mfaSecret +mfaBackupCodes'); // Include sensitive fields
+      
+      if (!accountUser) {
+        return null;
+      }
+
+      const accountUserObject = accountUser.toObject();
+
+      // Transform permissions back to DTO format for response
+      const responsePermissions = this.transformPermissionsToDto(accountUserObject.permissions);
+
+      // Return raw object with sensitive fields for authentication purposes
+      return {
+        id: accountUserObject._id.toString(),
+        accountId: accountUserObject.accountId.toString(),
+        name: accountUserObject.name,
+        emailAddress: accountUserObject.emailAddress,
+        walletAddress: accountUserObject.walletAddress,
+        status: accountUserObject.status,
+        authMethod: accountUserObject.authMethod,
+        mfaEnabled: accountUserObject.mfaEnabled,
+        mfaSetupRequired: accountUserObject.mfaSetupRequired,
+        mfaSetupCompleted: accountUserObject.mfaSetupCompleted,
+        firstLoginAt: accountUserObject.firstLoginAt,
+        passwordChanged: accountUserObject.passwordChanged,
+        accountLockedUntil: accountUserObject.accountLockedUntil,
+        failedLoginAttempts: accountUserObject.failedLoginAttempts,
+        // Include sensitive fields for authentication
+        passwordHash: accountUserObject.passwordHash,
+        mfaSecret: accountUserObject.mfaSecret,
+        mfaBackupCodes: accountUserObject.mfaBackupCodes,
+        permissions: responsePermissions,
+        createdAt: accountUserObject.createdAt,
+        updatedAt: accountUserObject.updatedAt,
+      };
+    } catch (error) {
+      this.logger.error({
+        msg: 'Failed to find account user by email for auth',
+        details: error.message,
+        email,
+      });
+      throw new Error('Failed to retrieve account user for authentication. Please try again later.');
     }
   }
 
@@ -383,6 +589,8 @@ export class AccountUsersRepository {
         emailAddress: accountUserObject.emailAddress,
         walletAddress: accountUserObject.walletAddress,
         status: accountUserObject.status,
+        authMethod: accountUserObject.authMethod,
+        mfaEnabled: accountUserObject.mfaEnabled,
         permissions: responsePermissions,
         createdAt: accountUserObject.createdAt,
         updatedAt: accountUserObject.updatedAt,
@@ -397,5 +605,54 @@ export class AccountUsersRepository {
       throw new Error('Failed to update account user. Please try again later.');
     }
 
+  }
+
+  async findSecurityDetailsById(id: string): Promise<AccountUserSecurityDetailsDto | null> {
+    try {
+      // Use select to explicitly include security fields that are normally excluded
+      const accountUser = await this.accountUserModel.findById(id)
+        .select('+passwordHash +mfaSecret +mfaBackupCodes')
+        .exec();
+
+      if (!accountUser) {
+        return null;
+      }
+
+      const accountUserObject = accountUser.toObject();
+
+      // Transform permissions from schema format to DTO format
+      const responsePermissions = this.transformPermissionsToDto(accountUserObject.permissions);
+
+      return plainToInstance(AccountUserSecurityDetailsDto, {
+        id: accountUserObject._id.toString(),
+        accountId: accountUserObject.accountId.toString(),
+        name: accountUserObject.name,
+        emailAddress: accountUserObject.emailAddress,
+        walletAddress: accountUserObject.walletAddress,
+        status: accountUserObject.status,
+        authMethod: accountUserObject.authMethod,
+        passwordHash: accountUserObject.passwordHash,
+        passwordChanged: accountUserObject.passwordChanged,
+        lastPasswordChange: accountUserObject.lastPasswordChange,
+        failedLoginAttempts: accountUserObject.failedLoginAttempts,
+        accountLockedUntil: accountUserObject.accountLockedUntil,
+        mfaSecret: accountUserObject.mfaSecret,
+        mfaEnabled: accountUserObject.mfaEnabled,
+        mfaBackupCodes: accountUserObject.mfaBackupCodes,
+        mfaSetupRequired: accountUserObject.mfaSetupRequired,
+        mfaSetupCompleted: accountUserObject.mfaSetupCompleted,
+        firstLoginAt: accountUserObject.firstLoginAt,
+        permissions: responsePermissions,
+        createdAt: accountUserObject.createdAt,
+        updatedAt: accountUserObject.updatedAt,
+      }, { excludeExtraneousValues: true });
+    } catch (error) {
+      this.logger.error({
+        msg: 'Failed to find account user security details by id',
+        details: error.message,
+        id,
+      });
+      throw new Error('Failed to retrieve account user security details. Please try again later.');
+    }
   }
 }

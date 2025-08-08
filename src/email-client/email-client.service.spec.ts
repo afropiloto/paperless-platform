@@ -1,14 +1,27 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
 import { EmailClientService } from './email-client.service';
-import { SendEmailOptions } from './types/email-client.types';
+import { EmailProviderFactory } from './providers/email-provider.factory';
+import { EMAIL_PROVIDER_FACTORY } from './email-client.constants';
+import { SendEmailOptions, EmailResult, EmailProviderType } from './types';
 
 describe('EmailClientService', () => {
   let service: EmailClientService;
   let configService: ConfigService;
+  let providerFactory: EmailProviderFactory;
+
+  const mockProvider = {
+    sendEmail: jest.fn(),
+    getProviderName: jest.fn(),
+    isHealthy: jest.fn(),
+  };
 
   const mockConfigService = {
     get: jest.fn(),
+  };
+
+  const mockProviderFactory = {
+    createProviderFromConfig: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -18,6 +31,8 @@ describe('EmailClientService', () => {
     // Set up default mock values
     mockConfigService.get.mockReturnValue('test-api-key'); // API key
     mockConfigService.get.mockReturnValue('test@example.com'); // sender email
+    mockConfigService.get.mockReturnValue(EmailProviderType.BREVO); // provider type
+    mockProviderFactory.createProviderFromConfig.mockReturnValue(mockProvider);
     
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -26,11 +41,16 @@ describe('EmailClientService', () => {
           provide: ConfigService,
           useValue: mockConfigService,
         },
+        {
+          provide: EMAIL_PROVIDER_FACTORY,
+          useValue: mockProviderFactory,
+        },
       ],
     }).compile();
 
     service = module.get<EmailClientService>(EmailClientService);
     configService = module.get<ConfigService>(ConfigService);
+    providerFactory = module.get<EmailProviderFactory>(EMAIL_PROVIDER_FACTORY);
   });
 
   afterEach(() => {
@@ -42,130 +62,96 @@ describe('EmailClientService', () => {
   });
 
   describe('constructor', () => {
-    it('should throw error if EMAIL_SERVICE_API_KEY is missing', () => {
-      const tempMockConfig = { get: jest.fn() };
-      tempMockConfig.get.mockReturnValueOnce(undefined); // API key
-      tempMockConfig.get.mockReturnValueOnce('test@example.com'); // sender email
-
-      expect(() => new EmailClientService(tempMockConfig as any)).toThrow(
-        'EMAIL_SERVICE_API_KEY environment variable is required',
-      );
+    it('should initialize with provider from factory', () => {
+      expect(providerFactory.createProviderFromConfig).toHaveBeenCalled();
     });
 
-    it('should throw error if EMAIL_SERVICE_SENDER_EMAIL is missing', () => {
-      const tempMockConfig = { get: jest.fn() };
-      tempMockConfig.get.mockReturnValueOnce('test-api-key'); // API key
-      tempMockConfig.get.mockReturnValueOnce(undefined); // sender email
-
-      expect(() => new EmailClientService(tempMockConfig as any)).toThrow(
-        'EMAIL_SERVICE_SENDER_EMAIL environment variable is required',
-      );
-    });
-
-    it('should initialize successfully with valid environment variables', () => {
-      const tempMockConfig = { get: jest.fn() };
-      tempMockConfig.get.mockReturnValueOnce('test-api-key'); // API key
-      tempMockConfig.get.mockReturnValueOnce('test@example.com'); // sender email
-
-      expect(() => new EmailClientService(tempMockConfig as any)).not.toThrow();
+    it('should log the provider name on initialization', () => {
+      mockProvider.getProviderName.mockReturnValue(EmailProviderType.BREVO);
+      
+      // Create a new service instance to test the constructor logging
+      const newService = new EmailClientService(mockConfigService as any, mockProviderFactory as any);
+      
+      // The logging happens in the constructor, so we just verify the service was created successfully
+      expect(newService).toBeDefined();
+      expect(providerFactory.createProviderFromConfig).toHaveBeenCalled();
     });
   });
 
   describe('sendEmail', () => {
-
-    it('should handle single email recipient', async () => {
+    it('should delegate to provider and return EmailResult', async () => {
       const emailOptions: SendEmailOptions = {
         to: 'recipient@example.com',
         subject: 'Test Subject',
         htmlContent: '<h1>Test Content</h1>',
       };
 
-      // Mock the Brevo API call
-      const mockSendTransacEmail = jest.fn().mockResolvedValue({ response: {}, body: {} });
-      jest.spyOn(service as any, 'apiInstance', 'get').mockReturnValue({
-        sendTransacEmail: mockSendTransacEmail,
-      });
-
-      await service.sendEmail(emailOptions);
-
-      expect(mockSendTransacEmail).toHaveBeenCalledWith(
-        expect.objectContaining({
-          to: [{ email: 'recipient@example.com' }],
-          subject: 'Test Subject',
-          htmlContent: '<h1>Test Content</h1>',
-          sender: { email: 'test@example.com' },
-        }),
-      );
-    });
-
-    it('should handle multiple email recipients', async () => {
-      const emailOptions: SendEmailOptions = {
-        to: ['recipient1@example.com', 'recipient2@example.com'],
-        subject: 'Test Subject',
-        htmlContent: '<h1>Test Content</h1>',
+      const expectedResult: EmailResult = {
+        messageId: 'test-message-id',
+        provider: EmailProviderType.BREVO,
+        sentAt: new Date(),
+        status: 'sent',
       };
 
-      const mockSendTransacEmail = jest.fn().mockResolvedValue({ response: {}, body: {} });
-      jest.spyOn(service as any, 'apiInstance', 'get').mockReturnValue({
-        sendTransacEmail: mockSendTransacEmail,
-      });
+      mockProvider.sendEmail.mockResolvedValue(expectedResult);
 
-      await service.sendEmail(emailOptions);
+      const result = await service.sendEmail(emailOptions);
 
-      expect(mockSendTransacEmail).toHaveBeenCalledWith(
-        expect.objectContaining({
-          to: [
-            { email: 'recipient1@example.com' },
-            { email: 'recipient2@example.com' },
-          ],
-        }),
-      );
+      expect(mockProvider.sendEmail).toHaveBeenCalledWith(emailOptions);
+      expect(result).toEqual(expectedResult);
     });
 
-    it('should handle optional fields', async () => {
-      const emailOptions: SendEmailOptions = {
-        to: 'recipient@example.com',
-        subject: 'Test Subject',
-        htmlContent: '<h1>Test Content</h1>',
-        textContent: 'Test Content',
-        replyTo: 'reply@example.com',
-        cc: ['cc1@example.com', 'cc2@example.com'],
-        bcc: ['bcc@example.com'],
-      };
-
-      const mockSendTransacEmail = jest.fn().mockResolvedValue({ response: {}, body: {} });
-      jest.spyOn(service as any, 'apiInstance', 'get').mockReturnValue({
-        sendTransacEmail: mockSendTransacEmail,
-      });
-
-      await service.sendEmail(emailOptions);
-
-      expect(mockSendTransacEmail).toHaveBeenCalledWith(
-        expect.objectContaining({
-          textContent: 'Test Content',
-          replyTo: { email: 'reply@example.com' },
-          cc: [
-            { email: 'cc1@example.com' },
-            { email: 'cc2@example.com' },
-          ],
-          bcc: [{ email: 'bcc@example.com' }],
-        }),
-      );
-    });
-
-    it('should throw error when API call fails', async () => {
+    it('should handle provider errors', async () => {
       const emailOptions: SendEmailOptions = {
         to: 'recipient@example.com',
         subject: 'Test Subject',
         htmlContent: '<h1>Test Content</h1>',
       };
 
-      const mockSendTransacEmail = jest.fn().mockRejectedValue(new Error('API Error'));
-      jest.spyOn(service as any, 'apiInstance', 'get').mockReturnValue({
-        sendTransacEmail: mockSendTransacEmail,
-      });
+      const errorResult: EmailResult = {
+        provider: EmailProviderType.BREVO,
+        sentAt: new Date(),
+        status: 'failed',
+        error: 'API Error',
+      };
 
-      await expect(service.sendEmail(emailOptions)).rejects.toThrow('Failed to send email: API Error');
+      mockProvider.sendEmail.mockResolvedValue(errorResult);
+
+      const result = await service.sendEmail(emailOptions);
+
+      expect(result.status).toBe('failed');
+      expect(result.error).toBe('API Error');
+    });
+  });
+
+  describe('getProviderName', () => {
+    it('should return provider name from underlying provider', () => {
+      mockProvider.getProviderName.mockReturnValue(EmailProviderType.BREVO);
+
+      const providerName = service.getProviderName();
+
+      expect(mockProvider.getProviderName).toHaveBeenCalled();
+      expect(providerName).toBe(EmailProviderType.BREVO);
+    });
+  });
+
+  describe('isHealthy', () => {
+    it('should delegate health check to provider', async () => {
+      mockProvider.isHealthy.mockResolvedValue(true);
+
+      const isHealthy = await service.isHealthy();
+
+      expect(mockProvider.isHealthy).toHaveBeenCalled();
+      expect(isHealthy).toBe(true);
+    });
+
+    it('should return false when provider is unhealthy', async () => {
+      mockProvider.isHealthy.mockResolvedValue(false);
+
+      const isHealthy = await service.isHealthy();
+
+      expect(mockProvider.isHealthy).toHaveBeenCalled();
+      expect(isHealthy).toBe(false);
     });
   });
 }); 

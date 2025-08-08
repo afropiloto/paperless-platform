@@ -22,6 +22,17 @@ export const SIGN_DOCUMENT_EVENT = 'sign-document-event';
 
 export const DEEP_VIRUS_SCAN_QUEUE_NAME='deep-virus-scan'
 
+// Email Queues
+export const EMAIL_QUEUE = 'email-queue';
+
+export enum EmailJobType {
+  PASSWORD_RESET = 'password-reset',
+  WELCOME_EMAIL = 'welcome-email',
+  USER_INVITATION = 'user-invitation',
+  MFA_SETUP = 'mfa-setup',
+  MFA_BACKUP_CODES = 'mfa-backup-codes',
+}
+
 export enum AccountsQueue {
   NEW_ACCOUNT_QUEUE = 'new-account-queue',
 }

@@ -6,7 +6,11 @@
    - Need to setup and test the processors on extend.ai
 3. Document signing
    - Need to test the document signing cron job is working as we expect
-4. Ensure status codes are aligned and summary information aligns with that 
+4. Application Permissions
+   - Need to introduce the idea of modules being platform-only to ensure that modules such as Deal Desk are not assigned to customers. Customers should access Paiperless/Trade Documents and/or Finance
+   - This needs the API to be updated so that if it's not the Paiperless account we don't return the platform-only modules and permissions
+   - Convert Paiperless module into Trade-Documents module and add Finance module
+   - Ensure we define the allowable combinations
 5. Security
    * Need to add setup API Key guards on endpoints
    * Need to add JWT guard to controllers

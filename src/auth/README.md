@@ -448,3 +448,24 @@ async getDocuments(user: JwtPayload) {
 ```
 
 This comprehensive README provides everything needed to understand and implement secure authentication and authorization in your Trade Documents Platform.
+
+## Password Reset Token Management
+
+This module provides persistent storage for password reset tokens, replacing the previous in-memory implementation.
+
+### Components
+
+- **Schema**: `PasswordResetToken` - Mongoose schema with TTL index for automatic cleanup
+- **Repository**: `PasswordResetTokenRepository` - Handles all database operations
+- **DTOs**: `CreatePasswordResetTokenDto`, `PasswordResetTokenDto`, `UpdatePasswordResetTokenDto`
+- **Services**: `PasswordResetCleanupService` - Scheduled cleanup of expired and used tokens
+
+### Features
+
+- **Automatic Cleanup**: MongoDB TTL index removes expired tokens, scheduled cleanup runs hourly
+- **Token Management**: 30-minute expiration, tokens marked as used when consumed
+- **Security**: Cryptographically secure tokens, validation for expiration and usage status
+
+### Migration
+
+The AuthService has been updated to use the new repository instead of the in-memory Map. The API remains the same, but tokens are now persisted and automatically cleaned up.

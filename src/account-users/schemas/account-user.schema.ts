@@ -8,6 +8,12 @@ export enum AccountUserStatus {
   DELETED = 'Deleted',
 }
 
+export enum AuthMethod {
+  SIWE = 'siwe',
+  EMAIL_PASSWORD = 'email-password',
+  BOTH = 'both',
+}
+
 export type AccountUserDocument = AccountUser & Document;
 
 @Schema({ timestamps: true })
@@ -33,10 +39,10 @@ export class AccountUser {
   emailAddress: string;
 
   @Prop({ 
-    required: true, 
+    required: false,
     type: String 
   })
-  walletAddress: string;
+  walletAddress?: string;
 
   @Prop({ 
     required: true, 
@@ -52,6 +58,78 @@ export class AccountUser {
     default: [] 
   })
   permissions: ApplicationPermissions[];
+
+  // Authentication fields
+  @Prop({ 
+    type: String,
+    select: false // Don't include password hash in queries by default
+  })
+  passwordHash?: string;
+
+  @Prop({ 
+    type: String,
+    enum: AuthMethod,
+    default: AuthMethod.SIWE
+  })
+  authMethod: AuthMethod;
+
+  // MFA fields
+  @Prop({ 
+    type: String,
+    select: false // Don't include MFA secret in queries by default
+  })
+  mfaSecret?: string;
+
+  @Prop({ 
+    type: Boolean,
+    default: false
+  })
+  mfaEnabled: boolean;
+
+  @Prop({ 
+    type: [String],
+    select: false // Don't include backup codes in queries by default
+  })
+  mfaBackupCodes?: string[];
+
+  @Prop({ 
+    type: Boolean,
+    default: false
+  })
+  mfaSetupRequired: boolean;
+
+  @Prop({ 
+    type: Date
+  })
+  mfaSetupCompleted?: Date;
+
+  // Security fields
+  @Prop({ 
+    type: Date
+  })
+  lastPasswordChange?: Date;
+
+  @Prop({ 
+    type: Boolean,
+    default: false
+  })
+  passwordChanged: boolean;
+
+  @Prop({ 
+    type: Date
+  })
+  firstLoginAt?: Date;
+
+  @Prop({ 
+    type: Number,
+    default: 0
+  })
+  failedLoginAttempts: number;
+
+  @Prop({ 
+    type: Date
+  })
+  accountLockedUntil?: Date;
 
   createdAt: Date;
   updatedAt: Date;

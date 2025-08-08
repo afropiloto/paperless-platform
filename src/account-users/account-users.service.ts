@@ -13,11 +13,13 @@ import {
   AccountUsersSearchDto,
   CreateAccountUserDto,
   UpdateAccountUserDto,
+  AccountUserSecurityDetailsDto,
 } from './dtos';
 import { AccountUsersSearchResultsDto } from './dtos';
 import { PermissionsValidationService } from './services/permissions-validation.service';
 import { AccountsService } from '../accounts/accounts.service';
-import { AccountUserStatus } from './schemas';
+import { AccountUserStatus, AuthMethod } from './schemas';
+import { PasswordService } from '../auth/services/password.service';
 
 @Injectable()
 export class AccountUsersService {
@@ -27,7 +29,8 @@ export class AccountUsersService {
     private readonly accountUsersRepository: AccountUsersRepository,
     private readonly permissionsValidationService: PermissionsValidationService,
     @Inject(forwardRef(() => AccountsService))
-    private readonly accountService: AccountsService
+    private readonly accountService: AccountsService,
+    private readonly passwordService: PasswordService
   ) {}
 
   async createAccountUser(
@@ -54,6 +57,40 @@ export class AccountUsersService {
       throw new NotFoundException('Linked AccountID not found');
     }
 
+    // Handle email/password authentication setup
+    if (createAccountUserDto.authMethod === AuthMethod.EMAIL_PASSWORD || 
+        createAccountUserDto.authMethod === AuthMethod.BOTH) {
+      
+      let temporaryPassword = createAccountUserDto.temporaryPassword;
+      
+      // Generate temporary password if not provided
+      if (!temporaryPassword) {
+        temporaryPassword = this.passwordService.generateSecurePassword();
+        this.logger.log(`Generated temporary password for user ${createAccountUserDto.emailAddress}`);
+      }
+      
+      // Validate temporary password if provided
+      if (temporaryPassword) {
+        const validation = this.passwordService.validatePassword(temporaryPassword);
+        if (!validation.isValid) {
+          throw new BadRequestException(`Temporary password does not meet policy: ${validation.errors.join(', ')}`);
+        }
+      }
+      
+      // Hash the temporary password
+      const passwordHash = await this.passwordService.hashPassword(temporaryPassword);
+      
+      // Add password hash and related fields to the DTO
+      const enrichedDto = {
+        ...createAccountUserDto,
+        passwordHash,
+        passwordChanged: false, // User must change password on first login
+        failedLoginAttempts: 0,
+      };
+      
+      return await this.accountUsersRepository.create(enrichedDto);
+    }
+
     return await this.accountUsersRepository.create(createAccountUserDto);
   }
 
@@ -68,6 +105,7 @@ export class AccountUsersService {
     }
 
     // Check if account user exists
+    this.logger.debug({id, updateAccountUserDto});
     const existingUser = await this.accountUsersRepository.findById(id);
     if (!existingUser) {
       throw new NotFoundException('Account user not found');
@@ -84,6 +122,34 @@ export class AccountUsersService {
     }
 
     return await this.accountUsersRepository.update(id, updateAccountUserDto);
+  }
+
+  async updateAccountUserSecurity(
+    id: string,
+    securityUpdates: {
+      passwordHash?: string;
+      passwordChanged?: boolean;
+      failedLoginAttempts?: number;
+      accountLockedUntil?: Date;
+      mfaSecret?: string;
+      mfaBackupCodes?: string[];
+      mfaEnabled?: boolean;
+      mfaSetupCompleted?: Date;
+    },
+  ): Promise<AccountUserResponseDto> {
+    // Validate id format
+    if (!isValidObjectId(id)) {
+      throw new BadRequestException('Invalid account user ID format');
+    }
+
+    // Check if account user exists
+    this.logger.debug({id, securityUpdates});
+    const existingUser = await this.accountUsersRepository.findById(id);
+    if (!existingUser) {
+      throw new NotFoundException('Account user not found');
+    }
+
+    return await this.accountUsersRepository.updateSecurity(id, securityUpdates);
   }
 
   async getAccountUserById(id: string): Promise<AccountUserResponseDto> {
@@ -128,6 +194,26 @@ export class AccountUsersService {
     return await this.accountUsersRepository.findByWalletAddress(walletAddress);
   }
 
+  async findAccountUserByEmail(
+    email: string,
+  ): Promise<AccountUserResponseDto | null> {
+    if (!email) {
+      throw new BadRequestException('Email address is required');
+    }
+
+    return await this.accountUsersRepository.findByEmail(email);
+  }
+
+  async findAccountUserByEmailForAuth(
+    email: string,
+  ): Promise<any | null> {
+    if (!email) {
+      throw new BadRequestException('Email address is required');
+    }
+
+    return await this.accountUsersRepository.findByEmailForAuth(email);
+  }
+
   // Helper methods for getting permission configuration
   getValidModules() {
     return this.permissionsValidationService.getValidModules();
@@ -156,5 +242,19 @@ export class AccountUsersService {
   updateAccountUserStatus(accountUserId: string, newStatus: AccountUserStatus) {
     return this.accountUsersRepository.updateAccountUserStatus(accountUserId, newStatus);
 
+  }
+
+  async getAccountUserSecurityDetailsById(id: string): Promise<AccountUserSecurityDetailsDto> {
+    // Validate id format
+    if (!isValidObjectId(id)) {
+      throw new BadRequestException('Invalid account user ID format');
+    }
+
+    const accountUser = await this.accountUsersRepository.findSecurityDetailsById(id);
+    if (!accountUser) {
+      throw new NotFoundException('Account user not found');
+    }
+
+    return accountUser;
   }
 }
