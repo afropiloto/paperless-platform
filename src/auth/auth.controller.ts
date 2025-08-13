@@ -16,7 +16,7 @@ import { EmailPasswordLoginDto } from './dtos';
 import { ChangePasswordDto } from './dtos';
 import { ForgotPasswordDto } from './dtos';
 import { ResetPasswordDto } from './dtos';
-import { MfaSetupRequestDto, MfaSetupResponseDto, MfaVerifySetupDto, MfaVerifySetupResponseDto } from './dtos/mfa-setup.dto';
+import { MfaSetupResponseDto, MfaVerifySetupDto, MfaVerifySetupResponseDto } from './dtos/mfa-setup.dto';
 import { MfaVerificationDto, MfaVerificationResponseDto, MfaStatusDto } from './dtos/mfa-verification.dto';
 import { MfaDisableDto, MfaDisableResponseDto, RegenerateBackupCodesDto, RegenerateBackupCodesResponseDto } from './dtos/mfa-management.dto';
 import { GeneralResponseDto } from '../common/common-dto';

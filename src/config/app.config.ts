@@ -25,6 +25,11 @@ export default () => ({
       issuer: process.env.MFA_ISSUER || 'Trade Documents Platform',
       window: parseInt(process.env.MFA_WINDOW) || 1,
       backupCodesCount: parseInt(process.env.MFA_BACKUP_CODES_COUNT) || 10,
+      // New speakeasy-specific configuration options
+      algorithm: process.env.MFA_ALGORITHM || 'sha1', // sha1, sha256, sha512
+      digits: parseInt(process.env.MFA_DIGITS) || 6, // 6 or 8 digits
+      period: parseInt(process.env.MFA_PERIOD) || 30, // Time step in seconds
+      secretLength: parseInt(process.env.MFA_SECRET_LENGTH) || 20, // Secret length in bytes
     },
     password: {
       minLength: parseInt(process.env.PASSWORD_MIN_LENGTH) || 8,

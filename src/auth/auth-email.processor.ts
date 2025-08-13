@@ -62,8 +62,6 @@ export class AuthEmailProcessor extends WorkerHost {
         case EmailJobType.MFA_BACKUP_CODES:
           emailResult = await this.processMfaBackupCodesEmail(data);
           break;
-        default:
-          throw new Error(`Unsupported auth email job type: ${data.jobType}`);
       }
 
       this.logger.log(`Auth email job ${jobId} completed successfully: ${emailResult.messageId}`);

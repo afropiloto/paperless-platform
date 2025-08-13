@@ -284,14 +284,16 @@ export class UserManagementService {
 
       // Generate MFA setup
       const mfaSetup = await this.mfaService.setupMfa(user.emailAddress);
+      this.logger.debug({mfaSetup});
 
-      // Update user with MFA secret and backup codes
-      await this.accountUsersService.updateAccountUser(userId, {
-        mfaSecret: mfaSetup.secret,
-        mfaBackupCodes: mfaSetup.backupCodes,
-        mfaEnabled: false, // Will be enabled after verification
-        mfaSetupRequired: true,
-      });
+                // Update user with MFA secret and backup codes using security update method
+          // Note: mfaSetupRequired is NOT set to true here - user needs to complete setup via API
+          await this.accountUsersService.updateAccountUserSecurity(userId, {
+            mfaSecret: mfaSetup.secret,
+            mfaBackupCodes: mfaSetup.backupCodes,
+            mfaEnabled: true,
+            mfaSetupRequired: true
+          });
 
       // Send MFA setup email with QR code
       try {

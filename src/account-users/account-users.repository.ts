@@ -107,7 +107,6 @@ export class AccountUsersRepository {
         authMethod: accountUserObject.authMethod,
         mfaEnabled: accountUserObject.mfaEnabled,
         mfaSetupRequired: accountUserObject.mfaSetupRequired,
-        mfaSetupCompleted: accountUserObject.mfaSetupCompleted,
         firstLoginAt: accountUserObject.firstLoginAt,
         passwordChanged: accountUserObject.passwordChanged,
         accountLockedUntil: accountUserObject.accountLockedUntil,
@@ -198,9 +197,11 @@ export class AccountUsersRepository {
       mfaSecret?: string;
       mfaBackupCodes?: string[];
       mfaEnabled?: boolean;
+      mfaSetupRequired?: boolean;
       mfaSetupCompleted?: Date;
     }
   ): Promise<AccountUserResponseDto> {
+    this.logger.debug({securityUpdates});
     try {
       // Build update object with only provided security fields
       const updateData: any = {};
@@ -228,6 +229,9 @@ export class AccountUsersRepository {
       }
       if (securityUpdates.mfaEnabled !== undefined) {
         updateData.mfaEnabled = securityUpdates.mfaEnabled;
+      }
+      if (securityUpdates.mfaSetupRequired !== undefined) {
+        updateData.mfaSetupRequired = securityUpdates.mfaSetupRequired;
       }
       if (securityUpdates.mfaSetupCompleted !== undefined) {
         updateData.mfaSetupCompleted = securityUpdates.mfaSetupCompleted;
@@ -373,7 +377,6 @@ export class AccountUsersRepository {
         authMethod: accountUserObject.authMethod,
         mfaEnabled: accountUserObject.mfaEnabled,
         mfaSetupRequired: accountUserObject.mfaSetupRequired,
-        mfaSetupCompleted: accountUserObject.mfaSetupCompleted,
         firstLoginAt: accountUserObject.firstLoginAt,
         passwordChanged: accountUserObject.passwordChanged,
         accountLockedUntil: accountUserObject.accountLockedUntil,
@@ -418,7 +421,6 @@ export class AccountUsersRepository {
         authMethod: accountUserObject.authMethod,
         mfaEnabled: accountUserObject.mfaEnabled,
         mfaSetupRequired: accountUserObject.mfaSetupRequired,
-        mfaSetupCompleted: accountUserObject.mfaSetupCompleted,
         firstLoginAt: accountUserObject.firstLoginAt,
         passwordChanged: accountUserObject.passwordChanged,
         accountLockedUntil: accountUserObject.accountLockedUntil,
@@ -640,7 +642,6 @@ export class AccountUsersRepository {
         mfaEnabled: accountUserObject.mfaEnabled,
         mfaBackupCodes: accountUserObject.mfaBackupCodes,
         mfaSetupRequired: accountUserObject.mfaSetupRequired,
-        mfaSetupCompleted: accountUserObject.mfaSetupCompleted,
         firstLoginAt: accountUserObject.firstLoginAt,
         permissions: responsePermissions,
         createdAt: accountUserObject.createdAt,

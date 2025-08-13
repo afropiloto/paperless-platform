@@ -139,7 +139,7 @@ export class AuthService {
       this.logger.warn('Account locked for email', { email, lockedUntil: user.accountLockedUntil });
       throw new UnauthorizedException('Account is locked. Please try again later.');
     }
-
+    this.logger.debug({user})
     // Validate password
     const passwordHash = user.passwordHash;
     if (!passwordHash || !(await this.passwordService.comparePassword(password, passwordHash))) {
@@ -201,32 +201,11 @@ export class AuthService {
       expiresIn: this.configService.get<string>('refreshToken.expiresIn'),
     });
 
-    // Check if MFA setup is required
-    if (user.mfaSetupRequired && !user.mfaEnabled) {
-      return plainToInstance(
-        AuthResponseDto,
-        {
-          success: false,
-          mfaRequired: true,
-          mfaSetupRequired: true,
-          message: 'MFA setup required before login',
-          userId: user.id,
-          userEmail: user.emailAddress,
-          accountId: user.accountId,
-          accountName: accountDetails.accountName,
-          accountEmail: accountDetails.contact.emailAddress,
-          userName: user.name,
-          walletAddress: user.walletAddress,
-          permissions: user.permissions,
-        },
-        { excludeExtraneousValues: true },
-      );
-    }
-
     // Check if MFA is required for login
     const mfaRequired = await this.mfaService.isMfaRequired(user.mfaEnabled);
     
     if (mfaRequired) {
+      this.logger.debug("MFA Required")
       // Return response indicating MFA is required
       await this.auditService.log({
         subject: AuditSubject.AUTHENTICATION,
@@ -240,6 +219,7 @@ export class AuthService {
         {
           success: true,
           mfaRequired: true,
+          mfaSetupRequired: user.mfaSetupRequired,
           userId: user.id,
           userEmail: user.emailAddress,
           accountId: user.accountId,
@@ -267,6 +247,7 @@ export class AuthService {
         success: true,
         accessToken,
         refreshToken,
+        mfaRequired: false,
         accountId: user.accountId,
         accountName: accountDetails.accountName,
         accountEmail: accountDetails.contact.emailAddress,
@@ -412,11 +393,9 @@ export class AuthService {
     });
     
     // Mark token as used
-    this.logger.debug("Setting token as used")
     await this.passwordResetTokenRepository.markAsUsed(dto.token);
     
     // Audit log
-    this.logger.debug("Writting audit log")
     const user = await this.accountUsersService.getAccountUserById(tokenEntry.userId);
     await this.auditService.log({
       subject: AuditSubject.AUTHENTICATION,
@@ -447,6 +426,7 @@ export class AuthService {
     }
 
     const mfaSetup = await this.mfaService.setupMfa(user.emailAddress);
+    this.logger.debug({mfaSetup})
     
     // Store the temporary MFA secret (will be confirmed after verification)
     await this.accountUsersService.updateAccountUserSecurity(userId, {

@@ -869,6 +869,18 @@ const handleForgotPasswordError = (error) => {
 
 ## MFA Integration
 
+### Important Notes on MFA Flow
+
+**User Creation with MFA Enabled:**
+When a user is created with MFA enabled (`enableMfa: true`), the system:
+1. Generates MFA secret and backup codes
+2. Sends an email containing both QR code URL and backup codes
+3. **Does NOT block login** - users can log in normally to complete MFA setup
+4. MFA is not active until the user completes the setup process
+
+**MFA Setup Process:**
+Users must complete MFA setup through the API endpoints after logging in. The setup is not automatic and requires user interaction.
+
 ### 1. MFA Setup
 
 ```javascript
@@ -888,14 +900,17 @@ const setupMfa = async (userId) => {
 
 // Complete MFA setup flow
 const completeMfaSetup = async (userId, totpCode) => {
-  // 1. Setup MFA
+  // 1. Setup MFA (returns QR code URL and backup codes)
   const setupResponse = await setupMfa(userId);
   const { qrCodeUrl, secret, backupCodes } = setupResponse;
   
-  // 2. Display QR code to user
+  // 2. Display QR code to user for authenticator app setup
   displayQrCode(qrCodeUrl);
   
-  // 3. Verify with TOTP code
+  // 3. User scans QR code with authenticator app (offline process)
+  // 4. User enters TOTP code from authenticator app
+  
+  // 5. Verify setup with TOTP code
   const verifyResponse = await fetch('/auth/mfa/verify-setup', {
     method: 'POST',
     headers: {
@@ -911,7 +926,73 @@ const completeMfaSetup = async (userId, totpCode) => {
 };
 ```
 
-### 2. MFA Verification
+### 2. Complete User Journey Example
+
+```javascript
+// Example: Complete flow from user creation to MFA activation
+const completeUserMfaSetup = async (userId) => {
+  try {
+    // Step 1: User logs in successfully (MFA setup doesn't block login)
+    const loginResponse = await loginUser(email, password);
+    
+    // Step 2: User calls MFA setup endpoint
+    const mfaSetupResponse = await setupMfa(userId);
+    console.log('MFA Setup Response:', mfaSetupResponse);
+    // Response includes: qrCodeUrl, backupCodes, requiresVerification: true
+    
+    // Step 3: Display QR code to user
+    const qrCodeElement = document.getElementById('qr-code');
+    qrCodeElement.src = mfaSetupResponse.qrCodeUrl;
+    
+    // Step 4: User scans QR code with authenticator app (offline)
+    // Step 5: User enters TOTP code from authenticator app
+    
+    // Step 6: Verify MFA setup
+    const verificationResponse = await fetch('/auth/mfa/verify-setup', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        userId: userId,
+        totpCode: userEnteredTOTPCode
+      })
+    });
+    
+    const result = await verificationResponse.json();
+    if (result.success) {
+      console.log('MFA setup completed successfully!');
+      // MFA is now active for this user
+    }
+    
+  } catch (error) {
+    console.error('MFA setup failed:', error);
+  }
+};
+```
+
+### 3. Email Template Information
+
+When MFA is enabled during user creation, the system sends an email containing:
+- **QR Code URL**: For setting up authenticator apps (Google Authenticator, Authy, etc.)
+- **Backup Codes**: Emergency access codes if authenticator app is unavailable
+
+**Note:** The email template automatically includes both the QR code and backup codes, providing users with everything they need to complete MFA setup.
+
+### Key Implementation Details
+
+**Important Changes from Previous Version:**
+- **No Login Blocking**: Users can log in normally even when MFA setup is pending
+- **Active Setup Required**: MFA setup must be completed through API calls, not automatically
+- **Email Contains Everything**: Users receive both QR code and backup codes in one email
+- **Setup Completion**: MFA is only active after user verifies setup with TOTP code
+
+**Database Fields:**
+- `mfaSecret`: Generated during setup, stored but not active until verification
+- `mfaBackupCodes`: Emergency access codes sent via email
+- `mfaEnabled`: Set to `true` only after successful verification
+- `mfaSetupRequired`: Not used to block login - users must complete setup actively
+- `mfaSetupCompleted`: Timestamp when setup is completed
+
+### 4. MFA Verification
 
 ```javascript
 const verifyMfa = async (userId, code, isBackupCode = false) => {
@@ -931,7 +1012,7 @@ const verifyMfa = async (userId, code, isBackupCode = false) => {
 };
 ```
 
-### 3. MFA Management
+### 5. MFA Management
 
 ```javascript
 // Disable MFA

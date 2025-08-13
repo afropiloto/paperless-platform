@@ -134,6 +134,7 @@ export class AccountUsersService {
       mfaSecret?: string;
       mfaBackupCodes?: string[];
       mfaEnabled?: boolean;
+      mfaSetupRequired?: boolean;
       mfaSetupCompleted?: Date;
     },
   ): Promise<AccountUserResponseDto> {

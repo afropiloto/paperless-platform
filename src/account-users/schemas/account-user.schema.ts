@@ -98,11 +98,6 @@ export class AccountUser {
   })
   mfaSetupRequired: boolean;
 
-  @Prop({ 
-    type: Date
-  })
-  mfaSetupCompleted?: Date;
-
   // Security fields
   @Prop({ 
     type: Date

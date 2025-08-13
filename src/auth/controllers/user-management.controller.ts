@@ -111,8 +111,6 @@ export class UserManagementController {
       createUserDto.inviterId,
       createUserDto.inviterName,
     );
-
-    this.logger.debug({response})
     return response as UserResponseDto;
   }
 
