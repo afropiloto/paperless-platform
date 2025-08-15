@@ -192,6 +192,9 @@ importers:
       '@types/pdfkit':
         specifier: ^0.14.0
         version: 0.14.0
+      '@types/qrcode':
+        specifier: ^1.5.5
+        version: 1.5.5
       '@types/supertest':
         specifier: ^6.0.2
         version: 6.0.2
@@ -1392,6 +1395,9 @@ packages:
 
   '@types/prettier@2.7.3':
     resolution: {integrity: sha512-+68kP9yzs4LMp7VNh8gdzMSPZFL44MLGqiHWvttYJe+6qnuVr4Ek9wSBQoveqY/r+LwjCcU29kNVkidwim+kYA==}
+
+  '@types/qrcode@1.5.5':
+    resolution: {integrity: sha512-CdfBi/e3Qk+3Z/fXYShipBT13OJ2fDO2Q2w5CIP5anLTLIndQG9z6P1cnm+8zCWSpm5dnxMFd/uREtb0EXuQzg==}
 
   '@types/qs@6.9.18':
     resolution: {integrity: sha512-kK7dgTYDyGqS+e2Q4aK9X3D7q234CIZ1Bv0q/7Z5IwRDoADNU81xXJK/YVyLbLTZCoIwUoDoffFeF+p/eIklAA==}
@@ -6809,6 +6815,10 @@ snapshots:
       '@types/node': 20.17.25
 
   '@types/prettier@2.7.3': {}
+
+  '@types/qrcode@1.5.5':
+    dependencies:
+      '@types/node': 20.17.25
 
   '@types/qs@6.9.18': {}
 

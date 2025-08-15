@@ -17,7 +17,7 @@ import { ChangePasswordDto } from './dtos';
 import { ForgotPasswordDto } from './dtos';
 import { ResetPasswordDto } from './dtos';
 import { MfaSetupResponseDto, MfaVerifySetupDto, MfaVerifySetupResponseDto } from './dtos/mfa-setup.dto';
-import { MfaVerificationDto, MfaVerificationResponseDto, MfaStatusDto } from './dtos/mfa-verification.dto';
+import { MfaVerificationDto, MfaStatusDto } from './dtos/mfa-verification.dto';
 import { MfaDisableDto, MfaDisableResponseDto, RegenerateBackupCodesDto, RegenerateBackupCodesResponseDto } from './dtos/mfa-management.dto';
 import { GeneralResponseDto } from '../common/common-dto';
 import { JwtGuard } from './guards/jwt-guard';
@@ -240,6 +240,7 @@ export class AuthController {
     @Body() dto: MfaVerifySetupDto
   ): Promise<MfaVerifySetupResponseDto> {
     return this.authService.verifyMfaSetup(userId, dto.totpCode);
+
   }
 
   @Post('mfa/verify')
@@ -254,14 +255,16 @@ export class AuthController {
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'MFA verification successful',
-    type: MfaVerificationResponseDto
+    type: AuthResponseDto
   })
   @ApiResponse({
     status: HttpStatus.UNAUTHORIZED,
     description: 'Invalid MFA code'
   })
-  async verifyMfa(@Body() dto: MfaVerificationDto): Promise<MfaVerificationResponseDto> {
-    return this.authService.verifyMfa(dto.userId, dto.code, dto.isBackupCode);
+  async verifyMfa(@Body() dto: MfaVerificationDto): Promise<AuthResponseDto> {
+    const response = await this.authService.verifyMfa(dto.userId, dto.code, dto.isBackupCode);
+    this.logger.debug({response})
+    return response
   }
 
   @Post('mfa/disable')

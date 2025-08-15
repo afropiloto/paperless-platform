@@ -1,8 +1,7 @@
 import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import * as speakeasy from 'speakeasy';
+//import * as speakeasy from 'speakeasy';
 import * as QRCode from 'qrcode';
-import { OtpauthURLOptions, TotpVerifyOptions } from 'speakeasy';
 import { authenticator } from 'otplib';
 
 export interface MfaSetupResponse {
@@ -20,7 +19,21 @@ export interface MfaVerificationResult {
 export class MfaService {
   private readonly logger = new Logger(MfaService.name);
   
-  constructor(private readonly configService: ConfigService) {}
+  constructor(private readonly configService: ConfigService) {
+    const window = this.configService.get<number>('auth.mfa.window');
+    const algorithm = this.configService.get<string>('auth.mfa.algorithm');
+    const digits = this.configService.get<number>('auth.mfa.digits');
+    const period = this.configService.get<number>('auth.mfa.period');
+
+    authenticator.options = {
+      digits,
+      step: period,
+      algorithm: algorithm.toLowerCase() as never,
+      window
+    }
+
+
+  }
 
   /**
    * Check if MFA is globally enabled
@@ -68,15 +81,7 @@ export class MfaService {
     issuer: string = 'Trade Documents Platform'
   ): Promise<string> {
     
-    const algorithm = this.configService.get<string>('auth.mfa.algorithm');
-    const digits = this.configService.get<number>('auth.mfa.digits')
-    const period = this.configService.get<number>('auth.mfa.period');
 
-    authenticator.options = {
-      digits,
-      step:period,
-      algorithm: algorithm.toLowerCase() as never,
-    }
     
     const uri = authenticator.keyuri(email, issuer, secret )
     //const otpauthUrl = speakeasy.otpauthURL(otpAuthUrlOptions);
@@ -132,18 +137,8 @@ export class MfaService {
         return false;
       }
 
-      const window = this.configService.get<number>('auth.mfa.window');
-      const algorithm = this.configService.get<speakeasy.Algorithm>('auth.mfa.algorithm');
-      const digits = this.configService.get<number>('auth.mfa.digits');
-      const period = this.configService.get<number>('auth.mfa.period');
-
-      authenticator.options = {
-        digits,
-        step: period,
-        algorithm: algorithm.toLowerCase() as never,
-        window
-      }
       return authenticator.verify({token, secret});
+
       // const totpVerificationDetails: TotpVerifyOptions = {
       //   secret: secret,
       //   encoding: 'base32',
@@ -199,7 +194,9 @@ export class MfaService {
 
     // First try TOTP verification
     if (this.verifyTotp(secret, code)) {
-      return { isValid: true, isBackupCode: false };
+      const response ={ isValid: true, isBackupCode: false };
+      this.logger.debug(response);
+      return response
     }
 
     // Then try backup code verification
@@ -217,7 +214,10 @@ export class MfaService {
     // MFA is required if:
     // 1. MFA is globally enabled OR
     // 2. User has MFA enabled
+
     const globalEnabled = this.isMfaGloballyEnabled();
+
+    this.logger.debug({userMfaEnabled, globalEnabled, mfaRequired: globalEnabled || userMfaEnabled})
     return globalEnabled || userMfaEnabled;
   }
 
@@ -252,13 +252,15 @@ export class MfaService {
         throw new Error('Invalid secret format');
       }
 
-      return speakeasy.totp({
-        secret: secret,
-        encoding: 'base32',
-        algorithm: (this.configService.get<string>('auth.mfa.algorithm') || 'sha1') as 'sha1' | 'sha256' | 'sha512',
-        digits: this.configService.get<number>('auth.mfa.digits') || 6,
-        step: this.configService.get<number>('auth.mfa.period') || 30,
-      });
+      return authenticator.generate(secret);
+
+      // return speakeasy.totp({
+      //   secret: secret,
+      //   encoding: 'base32',
+      //   algorithm: (this.configService.get<string>('auth.mfa.algorithm') || 'sha1') as 'sha1' | 'sha256' | 'sha512',
+      //   digits: this.configService.get<number>('auth.mfa.digits') || 6,
+      //   step: this.configService.get<number>('auth.mfa.period') || 30,
+      // });
     } catch (error) {
       this.logger.error('Failed to generate TOTP token:', error);
       throw new BadRequestException('Failed to generate TOTP token');

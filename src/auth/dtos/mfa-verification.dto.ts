@@ -1,5 +1,6 @@
 import { IsNotEmpty, IsString, IsOptional } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+import { Expose } from 'class-transformer';
 
 export class MfaVerificationDto {
   @ApiProperty({
@@ -32,12 +33,14 @@ export class MfaVerificationResponseDto {
     description: 'Whether MFA verification was successful',
     example: true,
   })
+  @Expose()
   success: boolean;
 
   @ApiProperty({
     description: 'MFA verification message',
     example: 'MFA verification successful',
   })
+  @Expose()
   message: string;
 
   @ApiProperty({
@@ -45,6 +48,7 @@ export class MfaVerificationResponseDto {
     example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
     required: false,
   })
+  @Expose()
   accessToken?: string;
 
   @ApiProperty({
@@ -52,6 +56,7 @@ export class MfaVerificationResponseDto {
     example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
     required: false,
   })
+  @Expose()
   refreshToken?: string;
 }
 

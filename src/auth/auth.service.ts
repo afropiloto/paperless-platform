@@ -22,7 +22,7 @@ import { PasswordResetTokenRepository } from './repositories/password-reset-toke
 import { CreatePasswordResetTokenDto } from './dtos';
 import * as crypto from 'crypto';
 import { GeneralResponseDto } from '../common/common-dto';
-import { MfaStatusDto, MfaVerificationResponseDto } from './dtos/mfa-verification.dto';
+import { MfaStatusDto } from './dtos/mfa-verification.dto';
 import { MfaDisableResponseDto, RegenerateBackupCodesResponseDto } from './dtos/mfa-management.dto';
 import { MfaVerifySetupResponseDto } from './dtos/mfa-setup.dto';
 
@@ -480,13 +480,15 @@ export class AuthService {
     if (!verificationResult.isValid) {
       throw new UnauthorizedException('Invalid TOTP code');
     }
-
+    this.logger.debug({verificationResult})
     // Enable MFA for the user
+    this.logger.debug("Updating Security details")
     await this.accountUsersService.updateAccountUserSecurity(userId, {
       mfaEnabled: true,
       mfaSetupCompleted: new Date(),
     });
 
+    this.logger.debug("Writting audit trail")
     await this.auditService.log({
       subject: AuditSubject.AUTHENTICATION,
       eventType: AuditEventType.MFA_SETUP_COMPLETED,
@@ -500,7 +502,7 @@ export class AuthService {
     });
   }
 
-  async verifyMfa(userId: string, code: string, isBackupCode: boolean = false): Promise<MfaVerificationResponseDto> {
+  async verifyMfa(userId: string, code: string, isBackupCode: boolean = false): Promise<AuthResponseDto> {
     const user = await this.accountUsersService.getAccountUserSecurityDetailsById(userId);
     if (!user) {
       throw new UnauthorizedException('User not found');
@@ -544,6 +546,12 @@ export class AuthService {
       expiresIn: this.configService.get<string>('refreshToken.expiresIn'),
     });
 
+    // Get account details
+    const accountDetails = await this.accountsService.findByAccountId(user.accountId);
+    if (!accountDetails) {
+      throw new UnauthorizedException('Account not found');
+    }
+
     await this.auditService.log({
       subject: AuditSubject.AUTHENTICATION,
       eventType: AuditEventType.MFA_VERIFICATION_SUCCESSFUL,
@@ -551,12 +559,24 @@ export class AuthService {
       details: { userEmail: user.emailAddress },
     });
 
-    return plainToInstance(MfaVerificationResponseDto, {
-      success: true,
-      message: 'MFA verification successful',
-      accessToken,
-      refreshToken,
-    });
+    return plainToInstance(
+      AuthResponseDto,
+      {
+        success: true,
+        accessToken,
+        refreshToken,
+        mfaRequired: false,
+        accountId: user.accountId,
+        accountName: accountDetails.accountName,
+        accountEmail: accountDetails.contact.emailAddress,
+        userId: user.id,
+        userName: user.name,
+        userEmail: user.emailAddress,
+        walletAddress: user.walletAddress,
+        permissions: user.permissions,
+      },
+      { excludeExtraneousValues: true },
+    );
   }
 
   async disableMfa(userId: string, currentPassword: string, verificationCode: string): Promise<MfaDisableResponseDto> {
