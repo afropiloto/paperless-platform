@@ -73,7 +73,11 @@ export class NewAccountsProcessor extends WorkerHost {
           phone: registrationDetails.contact.phone,
           position: registrationDetails.contact.position,
         },
-        applicationModules: [ApplicationModule.PAIPERLESS],
+        applicationModules: [
+          ApplicationModule.PAIPERLESS_TRADE_DOCUMENTS,
+          ApplicationModule.PAIPERLESS_ADMIN,
+          ApplicationModule.PAIPERLESS_TRADE_FINANCE,
+        ],
       };
       const newAccountDetails =
         await this.accountService.createAccount(accountCreation);
@@ -86,8 +90,16 @@ export class NewAccountsProcessor extends WorkerHost {
         walletAddress: registrationDetails.company.accountWalletAddress,
         permissions: [
           {
-            module: ApplicationModule.PAIPERLESS,
+            module: ApplicationModule.PAIPERLESS_ADMIN,
             role: ApplicationRole.MANAGER,
+          },
+          {
+            module: ApplicationModule.PAIPERLESS_ADMIN,
+            role: ApplicationRole.AGENT,
+          },
+          {
+            module: ApplicationModule.PAIPERLESS_ADMIN,
+            role: ApplicationRole.SUPERVISOR,
           },
         ],
       };
@@ -98,7 +110,7 @@ export class NewAccountsProcessor extends WorkerHost {
         eventType: AuditEventType.CREATED,
         identifier: registrationId,
         accountId: newAccountDetails.id,
-        details: { registrationId},
+        details: { registrationId },
       });
     } catch (error) {
       // ToDo: Need to handle failures and roll back transactions

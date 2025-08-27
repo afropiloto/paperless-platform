@@ -47,7 +47,7 @@ export class AccountUsersService {
       createAccountUserDto.permissions &&
       createAccountUserDto.permissions.length > 0
     ) {
-      this.permissionsValidationService.validatePermissions(
+      await this.permissionsValidationService.validatePermissions(
         createAccountUserDto.permissions,
       );
     }
@@ -116,7 +116,8 @@ export class AccountUsersService {
       updateAccountUserDto.permissions &&
       updateAccountUserDto.permissions.length > 0
     ) {
-      this.permissionsValidationService.validatePermissions(
+      this.logger.debug({permissions: updateAccountUserDto.permissions})
+      await this.permissionsValidationService.validatePermissions(
         updateAccountUserDto.permissions,
       );
     }
@@ -129,6 +130,7 @@ export class AccountUsersService {
     securityUpdates: {
       passwordHash?: string;
       passwordChanged?: boolean;
+      passwordResetRequired?: boolean;
       failedLoginAttempts?: number;
       accountLockedUntil?: Date;
       mfaSecret?: string;
@@ -216,23 +218,23 @@ export class AccountUsersService {
   }
 
   // Helper methods for getting permission configuration
-  getValidModules() {
+  getValidModules(): Promise<any> {
     return this.permissionsValidationService.getValidModules();
   }
 
-  getValidRoles() {
+  getValidRoles(): Promise<any> {
     return this.permissionsValidationService.getValidRoles();
   }
 
-  getValidCombinations() {
+  getValidCombinations(): Promise<any> {
     return this.permissionsValidationService.getValidCombinations();
   }
 
-  getValidRolesForModule(moduleId: string): string[] {
+  getValidRolesForModule(moduleId: string): Promise<string[]> {
     return this.permissionsValidationService.getValidRolesForModule(moduleId);
   }
 
-  getValidModulesForRole(roleId: string): string[] {
+  getValidModulesForRole(roleId: string): Promise<string[]> {
     return this.permissionsValidationService.getValidModulesForRole(roleId);
   }
 

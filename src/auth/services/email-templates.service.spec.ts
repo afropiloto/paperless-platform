@@ -148,6 +148,56 @@ describe('EmailTemplatesService', () => {
     });
   });
 
+  describe('generateForcePasswordResetEmail', () => {
+    it('should generate force password reset email with reason', () => {
+      const emailData = {
+        userName: 'John Doe',
+        reason: 'Security policy compliance',
+      };
+
+      const result = service.generateForcePasswordResetEmail(emailData);
+
+      expect(result.subject).toBe('Password Reset Required - Test App');
+      expect(result.htmlContent).toContain('John Doe');
+      expect(result.htmlContent).toContain('Security policy compliance');
+      expect(result.htmlContent).toContain('Your password has been reset by an administrator');
+      expect(result.htmlContent).toContain('You will not be able to access your account until you set a new password');
+      expect(result.textContent).toContain('John Doe');
+      expect(result.textContent).toContain('Security policy compliance');
+      expect(result.textContent).toContain('Your password has been reset by an administrator');
+      expect(result.textContent).toContain('You will not be able to access your account until you set a new password');
+    });
+
+    it('should generate force password reset email without reason', () => {
+      const emailData = {
+        userName: 'John Doe',
+      };
+
+      const result = service.generateForcePasswordResetEmail(emailData);
+
+      expect(result.subject).toBe('Password Reset Required - Test App');
+      expect(result.htmlContent).toContain('John Doe');
+      expect(result.htmlContent).toContain('No reason provided');
+      expect(result.htmlContent).toContain('Your password has been reset by an administrator');
+      expect(result.textContent).toContain('John Doe');
+      expect(result.textContent).toContain('No reason provided');
+      expect(result.textContent).toContain('Your password has been reset by an administrator');
+    });
+
+    it('should include custom support email when provided', () => {
+      const emailData = {
+        userName: 'John Doe',
+        reason: 'Security policy compliance',
+        supportEmail: 'custom@example.com',
+      };
+
+      const result = service.generateForcePasswordResetEmail(emailData);
+
+      expect(result.htmlContent).toContain('custom@example.com');
+      expect(result.textContent).toContain('custom@example.com');
+    });
+  });
+
   describe('default configuration', () => {
     it('should use default values when config is not provided', async () => {
       const module: TestingModule = await Test.createTestingModule({

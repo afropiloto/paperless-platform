@@ -165,6 +165,45 @@ describe('EmailQueueService', () => {
     });
   });
 
+  describe('addForcePasswordResetEmailJob', () => {
+    it('should add force password reset email job to queue', async () => {
+      const to = 'test@example.com';
+      const userName = 'John Doe';
+      const reason = 'Security policy compliance';
+
+      await service.addForcePasswordResetEmailJob(to, userName, reason);
+
+      expect(mockQueue.add).toHaveBeenCalledWith(
+        expect.stringContaining('force-password-reset'),
+        {
+          jobType: EmailJobType.FORCE_PASSWORD_RESET,
+          to,
+          userName,
+          reason,
+        },
+        expect.any(Object)
+      );
+    });
+
+    it('should add force password reset email job without reason', async () => {
+      const to = 'test@example.com';
+      const userName = 'John Doe';
+
+      await service.addForcePasswordResetEmailJob(to, userName);
+
+      expect(mockQueue.add).toHaveBeenCalledWith(
+        expect.stringContaining('force-password-reset'),
+        {
+          jobType: EmailJobType.FORCE_PASSWORD_RESET,
+          to,
+          userName,
+          reason: undefined,
+        },
+        expect.any(Object)
+      );
+    });
+  });
+
   describe('getQueueStats', () => {
     it('should return queue statistics', async () => {
       const stats = await service.getQueueStats();

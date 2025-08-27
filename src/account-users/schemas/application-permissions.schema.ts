@@ -1,11 +1,14 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 
 export enum ApplicationModule {
-  DEAL_DESK = 'DealDesk',
-  PAIPERLESS = 'Paiperless',
-  ONBOARDING_DESK = 'OnboardingDesk',
-  PORTAL_ADMIN = 'PortalAdmin',
+  PORTAL_DEAL_DESK = 'Portal-DealDesk',
+  PORTAL_ONBOARDING_DESK = 'Portal-OnboardingDesk',
+  PORTAL_ADMIN = 'Portal-Admin',
+  PAIPERLESS_TRADE_DOCUMENTS = 'Paiperless-Trade-Documents',
+  PAIPERLESS_TRADE_FINANCE = 'Paiperless-Trade-Finance',
+  PAIPERLESS_ADMIN = 'Paiperless-Admin',
 }
+
 
 export enum ApplicationRole {
   AGENT = 'Agent',

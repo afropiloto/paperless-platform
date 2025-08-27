@@ -21,11 +21,16 @@ export class AccountUsersRepository {
    */
   private transformPermissionsToSchema(permissions: UserPermissionDto[]): ApplicationPermissions[] {
     const moduleMap: Record<string, ApplicationModule> = {
-      'DealDesk': ApplicationModule.DEAL_DESK,
-      'Paiperless': ApplicationModule.PAIPERLESS,
-      'OnboardingDesk': ApplicationModule.ONBOARDING_DESK,
-      'PortalAdmin': ApplicationModule.PORTAL_ADMIN,
+      'Portal-DealDesk': ApplicationModule.PORTAL_DEAL_DESK,
+      'Portal-OnboardingDesk': ApplicationModule.PORTAL_ONBOARDING_DESK,
+      'Portal-Admin': ApplicationModule.PORTAL_ADMIN,
+      'Paiperless-Trade-Documents': ApplicationModule.PAIPERLESS_TRADE_DOCUMENTS,
+      'Paiperless-Trade-Finance': ApplicationModule.PAIPERLESS_TRADE_FINANCE,
+      'Paiperless-Admin': ApplicationModule.PAIPERLESS_ADMIN
     };
+
+
+   
 
     const roleMap: Record<string, ApplicationRole> = {
       'Agent': ApplicationRole.AGENT,
@@ -44,10 +49,12 @@ export class AccountUsersRepository {
    */
   private transformPermissionsToDto(permissions: ApplicationPermissions[]): UserPermissionDto[] {
     const moduleMap: Record<ApplicationModule, string> = {
-      [ApplicationModule.DEAL_DESK]: 'DealDesk',
-      [ApplicationModule.PAIPERLESS]: 'Paiperless',
-      [ApplicationModule.ONBOARDING_DESK]: 'OnboardingDesk',
-      [ApplicationModule.PORTAL_ADMIN]: 'PortalAdmin',
+      [ApplicationModule.PORTAL_DEAL_DESK]: 'Portal-DealDesk',
+      [ApplicationModule.PORTAL_ONBOARDING_DESK]: 'Portal-OnboardingDesk',
+      [ApplicationModule.PORTAL_ADMIN]: 'Portal-Admin',
+      [ApplicationModule.PAIPERLESS_TRADE_DOCUMENTS]: 'Paiperless-Trade-Documents',
+      [ApplicationModule.PAIPERLESS_TRADE_FINANCE]: 'Paiperless-Trade-Finance',
+      [ApplicationModule.PAIPERLESS_ADMIN]: 'Paiperless-Admin'
     };
 
     const roleMap: Record<ApplicationRole, string> = {
@@ -109,6 +116,7 @@ export class AccountUsersRepository {
         mfaSetupRequired: accountUserObject.mfaSetupRequired,
         firstLoginAt: accountUserObject.firstLoginAt,
         passwordChanged: accountUserObject.passwordChanged,
+        passwordResetRequired: accountUserObject.passwordResetRequired,
         accountLockedUntil: accountUserObject.accountLockedUntil,
         permissions: responsePermissions,
         createdAt: accountUserObject.createdAt,
@@ -192,6 +200,7 @@ export class AccountUsersRepository {
     securityUpdates: {
       passwordHash?: string;
       passwordChanged?: boolean;
+      passwordResetRequired?: boolean;
       failedLoginAttempts?: number;
       accountLockedUntil?: Date;
       mfaSecret?: string;
@@ -214,6 +223,9 @@ export class AccountUsersRepository {
       }
       if (securityUpdates.passwordChanged !== undefined) {
         updateData.passwordChanged = securityUpdates.passwordChanged;
+      }
+      if (securityUpdates.passwordResetRequired !== undefined) {
+        updateData.passwordResetRequired = securityUpdates.passwordResetRequired;
       }
       if (securityUpdates.failedLoginAttempts !== undefined) {
         updateData.failedLoginAttempts = securityUpdates.failedLoginAttempts;
@@ -423,6 +435,7 @@ export class AccountUsersRepository {
         mfaSetupRequired: accountUserObject.mfaSetupRequired,
         firstLoginAt: accountUserObject.firstLoginAt,
         passwordChanged: accountUserObject.passwordChanged,
+        passwordResetRequired: accountUserObject.passwordResetRequired,
         accountLockedUntil: accountUserObject.accountLockedUntil,
         failedLoginAttempts: accountUserObject.failedLoginAttempts,
         // Include sensitive fields for authentication

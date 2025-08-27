@@ -62,6 +62,9 @@ export class AuthEmailProcessor extends WorkerHost {
         case EmailJobType.MFA_BACKUP_CODES:
           emailResult = await this.processMfaBackupCodesEmail(data);
           break;
+        case EmailJobType.FORCE_PASSWORD_RESET:
+          emailResult = await this.processForcePasswordResetEmail(data);
+          break;
       }
 
       this.logger.log(`Auth email job ${jobId} completed successfully: ${emailResult.messageId}`);
@@ -93,6 +96,7 @@ export class AuthEmailProcessor extends WorkerHost {
       EmailJobType.USER_INVITATION,
       EmailJobType.MFA_SETUP,
       EmailJobType.MFA_BACKUP_CODES,
+      EmailJobType.FORCE_PASSWORD_RESET,
     ].includes(jobType);
   }
 
@@ -230,6 +234,35 @@ export class AuthEmailProcessor extends WorkerHost {
     };
 
     const { subject, htmlContent, textContent } = this.emailTemplates.generateMfaBackupCodesEmail(emailData);
+
+    const result = await this.emailClient.sendEmail({
+      to: data.to,
+      subject,
+      htmlContent,
+      textContent,
+      replyTo: data.replyTo,
+      cc: data.cc,
+      bcc: data.bcc,
+      attachments: data.attachments,
+      metadata: data.metadata,
+    });
+
+    return {
+      messageId: result.messageId,
+      provider: result.provider,
+      sentAt: result.sentAt,
+      status: result.status,
+      error: result.error,
+    };
+  }
+
+  private async processForcePasswordResetEmail(data: any): Promise<EmailJobResult> {
+    const emailData = {
+      userName: data.userName,
+      reason: data.reason,
+    };
+
+    const { subject, htmlContent, textContent } = this.emailTemplates.generateForcePasswordResetEmail(emailData);
 
     const result = await this.emailClient.sendEmail({
       to: data.to,

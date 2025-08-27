@@ -36,6 +36,12 @@ export interface WelcomeEmailData {
   supportEmail?: string;
 }
 
+export interface ForcePasswordResetEmailData {
+  userName: string;
+  reason?: string;
+  supportEmail?: string;
+}
+
 @Injectable()
 export class EmailTemplatesService {
   private readonly logger = new Logger(EmailTemplatesService.name);
@@ -442,6 +448,97 @@ You can now access all the features and services available to you based on your 
 Access your account at: ${data.loginUrl}
 
 If you have any questions or need assistance, please contact us at ${data.supportEmail || this.supportEmail}
+
+© ${new Date().getFullYear()} ${this.appName}. All rights reserved.
+    `;
+
+    return { subject, htmlContent, textContent };
+  }
+
+  generateForcePasswordResetEmail(data: ForcePasswordResetEmailData): { subject: string; htmlContent: string; textContent: string } {
+    const subject = `Password Reset Required - ${this.appName}`;
+    
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Password Reset Required</title>
+        <style>
+          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+          .header { background: #f8f9fa; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
+          .content { background: #fff; padding: 30px; border: 1px solid #e9ecef; }
+          .button { display: inline-block; padding: 12px 24px; background: #dc3545; color: #fff; text-decoration: none; border-radius: 4px; margin: 20px 0; }
+          .footer { background: #f8f9fa; padding: 20px; text-align: center; border-radius: 0 0 8px 8px; font-size: 14px; color: #6c757d; }
+          .warning { background: #f8d7da; border: 1px solid #f5c6cb; padding: 15px; border-radius: 4px; margin: 20px 0; color: #721c24; }
+          .reason { background: #e2e3e5; border: 1px solid #d6d8db; padding: 15px; border-radius: 4px; margin: 20px 0; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>${this.appName}</h1>
+          </div>
+          <div class="content">
+            <h2>Password Reset Required</h2>
+            <p>Hello ${data.userName},</p>
+            <p>Your password has been reset by an administrator. You will need to set a new password the next time you log in to your ${this.appName} account.</p>
+            
+            <div class="warning">
+              <strong>Important:</strong> You will not be able to access your account until you set a new password.
+            </div>
+            
+            ${data.reason ? `
+            <div class="reason">
+              <strong>Reason for reset:</strong> ${data.reason}
+            </div>
+            ` : `
+            <div class="reason">
+              <strong>Reason for reset:</strong> No reason provided
+            </div>
+            `}
+            
+            <p>When you next attempt to log in, you will be prompted to create a new password. Please ensure your new password meets our security requirements:</p>
+            <ul>
+              <li>At least 8 characters long</li>
+              <li>Contains at least one uppercase letter</li>
+              <li>Contains at least one lowercase letter</li>
+              <li>Contains at least one number</li>
+              <li>Contains at least one special character</li>
+            </ul>
+            
+            <p>If you have any questions about this password reset or need assistance, please contact us at <a href="mailto:${data.supportEmail || this.supportEmail}">${data.supportEmail || this.supportEmail}</a>.</p>
+          </div>
+          <div class="footer">
+            <p>&copy; ${new Date().getFullYear()} ${this.appName}. All rights reserved.</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    const textContent = `
+Password Reset Required - ${this.appName}
+
+Hello ${data.userName},
+
+Your password has been reset by an administrator. You will need to set a new password the next time you log in to your ${this.appName} account.
+
+IMPORTANT: You will not be able to access your account until you set a new password.
+
+Reason for reset: ${data.reason || 'No reason provided'}
+
+When you next attempt to log in, you will be prompted to create a new password. Please ensure your new password meets our security requirements:
+
+- At least 8 characters long
+- Contains at least one uppercase letter
+- Contains at least one lowercase letter
+- Contains at least one number
+- Contains at least one special character
+
+If you have any questions about this password reset or need assistance, please contact us at ${data.supportEmail || this.supportEmail}
 
 © ${new Date().getFullYear()} ${this.appName}. All rights reserved.
     `;

@@ -9,6 +9,52 @@ The auth module consists of two main security components:
 1. **JwtGuard** - Handles JWT token validation and authentication
 2. **UserPermissionGuard** - Manages role-based authorization using user permissions
 
+## Understanding the Permissions module
+Within the platform we have the concept of Application Modules and Roles for user accounts.
+Application Modules define the module within the platform that a user account has access to.
+The Roles define what actions the user can perform within an Application Module.
+
+The current Application Modules are as follows:
+
+| Application Module        | Description                                                                                                                  |
+|---------------------------|------------------------------------------------------------------------------------------------------------------------------|
+| Portal-DealDesk           | This is the Deal Desk Module within the Paiperless Portal                                                                    |
+| Portal-OnboardingDesk     | This is the Onboarding Module within the the Paiperless Portal                                                               |
+| Portal-Admin              | This is the Administration Module within the  Paiperless Portal                                                              |
+| Paiperless-TradeDocuments | This is the Trade Documents module with the Paiperless application                                                           |
+| Paiperless-TradeFinance   | This is the Trade Finance module with the  the Paiperless application                                                        |
+| Paiperless-Admin          | This is the Admin module with the  the Paiperless application. Allows access to User Account and Account Management Features |
+ 
+Note that for Customer Account Users, only the modules that start with `Paiperless-` can be added.
+
+
+For each application module, we have roles that control what a user with access to the module can do.
+In general, we have 3 roles:
+
+| Role       | Description                                                                                                                                                                                                   |
+|------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Agent      | This is the lowest level of access and usually allows access a range of features but may not be able to complete some actions. For, example they may be able to create new Trade Documents but not issue them |
+| Supervisor | This role allows the user to authorise certain key actions. For example Issuing Documents                                                                                                                     |
+| Manager    | This role provides a user access to certain administrative functions within the module. For example, the ability to update Named Wallets for an account.                                                      |
+
+
+The meaning of a role is contextual within the module and not all roles are applicable to every module.
+
+| Application Module        | Role       | Description                                                                                                                   |
+|---------------------------|------------|-------------------------------------------------------------------------------------------------------------------------------|
+| Portal-DealDesk           | Agent      | Can process and complete due diligence tasks for a Deal. Cannot apply overall decisions for deals or sign Promissory Notes    |
+| Portal-DealDesk           | Supervisor | Can make deal decisions but cannot sign Promissory Notes                                                                      | 
+| Portal-DealDesk           | Manager    | Can sign Promissory Notes                                                                                                     |
+| Portal-OnboardingDesk     | Agent      | Can process Due Diligence tasks for an Onboarding request but cannot make onboarding decisions                                |
+| Portal-OnboardingDesk     | Manager    | Can make onboarding decisions                                                                                                 |
+| Portal-Admin              | Manager    | Can access administrative features of the Paiperless Portal. Enables user to manage Portal Users and manage Customer Accounts |
+| Paiperless-TradeDocuments | Agent      | Can view, create and edit Trade Documents                                                                                     |
+| Paiperless-TradeDocuments | Supervisor | Can delete Trade Documents, Can Issue Trade Documents                                                                         |
+| Paiperless-TradeFinance   | Supervisor | Can create and submit trade finance requests.                                                                                 |
+| Paiperless-TradeFinance   | Manager    | Can sign promissory notes for Trade Finance. Can withdraw Trade Finance Requests.                                             |
+| Paiperless-Admin          | Manager    | Can manage Account Users, Can manage Named Wallets for the Account                                                            |
+
+
 ## JWT Authentication
 
 ### JwtGuard

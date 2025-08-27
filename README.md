@@ -11,17 +11,44 @@
    - This needs the API to be updated so that if it's not the Paiperless account we don't return the platform-only modules and permissions
    - Convert Paiperless module into Trade-Documents module and add Finance module
    - Ensure we define the allowable combinations
+
+## Seeding Module Permissions
+You can seed the module-permissions collection with the predefined combinations.
+
+- **Prerequisites**
+  - Ensure your `.env` contains a valid `MONGODB_URI` (the script connects using the Nest app context).
+  - Optionally adjust the seed data in `src/account-users/config/module-permissions.seed.ts`.
+
+- **Seed command**
+```bash
+npm run script:seed-module-permissions
+```
+
+- **What it does**
+  - Upserts one document per module with its `allowableRoles` and descriptions (idempotent; safe to re-run).
+  - Runs as a lightweight CLI script that connects directly to Mongo (no Nest app context required).
+
+- **Customize**
+  - Edit `src/account-users/config/module-permissions.seed.ts` to add/remove modules or roles, tweak descriptions, or toggle `active`.
+
+- **Alternative: migrate from legacy combinations**
+  - If you want to populate using the combinations from the legacy validation logic, run:
+```bash
+npm run script:migrate-valid-combinations
+```
+  - This will read the current combinations and upsert matching module-permission documents.
 5. Security
    * Need to add setup API Key guards on endpoints
    * Need to add JWT guard to controllers
    * Need to add UserPermissionGuards to controller methods
    * We need a Paiperless Account with users creating 
-5. Virus Scan
+6. Virus Scan
     * Need to integrate Virus Scan into Registration documents upload
     * Need to integrate Virus Scan into Trade Documents File upload
-6. Update ReadMe with set up & deployment information
-7. Write Service and Controller Tests
+7. Update ReadMe with set up & deployment information
+8. Write Service and Controller Tests
     * Can we get Cursor to create the tests?
+
 
 # Platform Deployment
 ToDO

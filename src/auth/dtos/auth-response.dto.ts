@@ -32,6 +32,13 @@ export class AuthResponseDto {
   @Expose()
   mfaSetupRequired?: boolean;
 
+  @ApiProperty({ 
+    description: 'Whether password reset is required before login',
+    required: false,
+  })
+  @Expose()
+  passwordResetRequired?: boolean;
+
   @ApiProperty({ description: 'JWT access token' })
   @Expose()
   accessToken: string;

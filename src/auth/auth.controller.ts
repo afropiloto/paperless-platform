@@ -21,7 +21,11 @@ import { MfaVerificationDto, MfaStatusDto } from './dtos/mfa-verification.dto';
 import { MfaDisableDto, MfaDisableResponseDto, RegenerateBackupCodesDto, RegenerateBackupCodesResponseDto } from './dtos/mfa-management.dto';
 import { GeneralResponseDto } from '../common/common-dto';
 import { JwtGuard } from './guards/jwt-guard';
+import { UserPermissionGuard } from './guards/user-permission.guard';
+import { UserAccess } from './decorators/user-access.decorator';
 import { User } from './decorators/user.decorator';
+import { ForcePasswordResetDto, ForcePasswordResetResponseDto } from './dtos/force-password-reset.dto';
+import { ForcedPasswordResetDto, ForcedPasswordResetResponseDto } from './dtos/forced-password-reset.dto';
 
 @ApiTags('Authentication')
 @Controller('auth')
@@ -133,7 +137,9 @@ export class AuthController {
     description: 'Too many failed login attempts'
   })
   async loginWithEmailPassword(@Body() loginDto: EmailPasswordLoginDto): Promise<AuthResponseDto> {
-    return await this.authService.loginWithEmailPassword(loginDto);
+    const response = await this.authService.loginWithEmailPassword(loginDto);
+    this.logger.debug({response})
+    return response;
   }
 
   @Post('refresh')
@@ -184,6 +190,67 @@ export class AuthController {
   @Post('password/reset')
   async resetPassword(@Body() dto: ResetPasswordDto): Promise<GeneralResponseDto> {
     return this.authService.resetPassword(dto);
+  }
+
+  @Post('password/forced-reset')
+  @ApiOperation({ 
+    summary: 'Reset password when forced by administrator',
+    description: 'Reset password for users who have been forced to change their password by an administrator. This endpoint is public and does not require authentication.'
+  })
+  @ApiBody({ 
+    type: ForcedPasswordResetDto,
+    description: 'Forced password reset data'
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Password reset successfully',
+    type: ForcedPasswordResetResponseDto
+  })
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: 'Invalid credentials or password reset not required'
+  })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Invalid email format or new password does not meet policy'
+  })
+  async forcedPasswordReset(@Body() dto: ForcedPasswordResetDto): Promise<ForcedPasswordResetResponseDto> {
+    return this.authService.forcedPasswordReset(dto);
+  }
+
+  @Post('force-password-reset')
+  @UseGuards(JwtGuard, UserPermissionGuard)
+  @ApiBearerAuth()
+  @UserAccess(
+    { module: 'Paiperless-Admin', minRole: 'Manager' },
+    { module: 'Portal-Admin', minRole: 'Manager' }
+  )
+  @ApiOperation({ 
+    summary: 'Force password reset for a user',
+    description: 'Force a user to reset their password on next login. Requires Manager role in Paiperless-Admin or Portal-Admin.'
+  })
+  @ApiBody({ 
+    type: ForcePasswordResetDto,
+    description: 'User email to force password reset for'
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Password reset requirement set successfully',
+    type: ForcePasswordResetResponseDto
+  })
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: 'Not authenticated or insufficient permissions'
+  })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Invalid email format or user not found'
+  })
+  async forcePasswordReset(
+    @User('userId') userId: string,
+    @Body() dto: ForcePasswordResetDto
+  ): Promise<ForcePasswordResetResponseDto> {
+    return this.authService.forcePasswordReset(userId, dto.email, dto.reason, dto.sendEmail);
   }
 
   // MFA Setup and Management Endpoints

@@ -31,6 +31,7 @@ export enum EmailJobType {
   USER_INVITATION = 'user-invitation',
   MFA_SETUP = 'mfa-setup',
   MFA_BACKUP_CODES = 'mfa-backup-codes',
+  FORCE_PASSWORD_RESET = 'force-password-reset',
 }
 
 export enum AccountsQueue {

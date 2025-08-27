@@ -105,8 +105,8 @@ export class OnboardingRepository {
       const matchStage: any = {};
       if (queryTerm) {
         matchStage.$or = [
-          { accountName: { $regex: queryTerm, $options: 'i' } },
-          { dealReference: { $regex: queryTerm, $options: 'i' } },
+          { companyName: { $regex: queryTerm, $options: 'i' } },
+          // { dealReference: { $regex: queryTerm, $options: 'i' } },
           { status: { $regex: queryTerm, $options: 'i' } }
         ];
       }

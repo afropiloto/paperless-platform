@@ -293,6 +293,13 @@ export class UpdateAccountUserDto {
   @IsOptional()
   @Expose()
   passwordChanged?: boolean;
+
+  @ApiPropertyOptional({
+    description: 'Whether user is required to reset their password on next login',
+    default: false
+  })
+  @Expose()
+  passwordResetRequired?: boolean;
 }
 
 @Exclude()
@@ -366,6 +373,13 @@ export class AccountUserResponseDto {
   })
   @Expose()
   passwordChanged?: boolean;
+
+  @ApiPropertyOptional({
+    description: 'Whether user is required to reset their password on next login',
+    default: false
+  })
+  @Expose()
+  passwordResetRequired?: boolean;
 
   @ApiProperty({ 
     description: 'User permissions (configurable format)', 
@@ -441,6 +455,13 @@ export class AccountUserSecurityDetailsDto {
   })
   @Expose()
   passwordChanged?: boolean;
+
+  @ApiPropertyOptional({
+    description: 'Whether user is required to reset their password on next login',
+    default: false
+  })
+  @Expose()
+  passwordResetRequired?: boolean;
 
   @ApiPropertyOptional({
     description: 'Date when password was last changed',

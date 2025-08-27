@@ -148,7 +148,24 @@ export class EmailQueueService {
       userName,
       backupCodes,
     };
+    await this.addEmailJob(jobData, options);
+  }
 
+  /**
+   * Add force password reset email job
+   */
+  async addForcePasswordResetEmailJob(
+    to: string,
+    userName: string,
+    reason?: string,
+    options?: { delay?: number; priority?: number; attempts?: number }
+  ): Promise<void> {
+    const jobData: EmailJobData = {
+      jobType: EmailJobType.FORCE_PASSWORD_RESET,
+      to,
+      userName,
+      reason,
+    };
     await this.addEmailJob(jobData, options);
   }
 

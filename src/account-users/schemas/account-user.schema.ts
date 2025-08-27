@@ -111,6 +111,12 @@ export class AccountUser {
   passwordChanged: boolean;
 
   @Prop({ 
+    type: Boolean,
+    default: false
+  })
+  passwordResetRequired: boolean;
+
+  @Prop({ 
     type: Date
   })
   firstLoginAt?: Date;

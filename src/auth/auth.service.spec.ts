@@ -15,6 +15,9 @@ import { ChangePasswordDto } from './dtos/change-password.dto';
 import { ForgotPasswordDto } from './dtos/forgot-password.dto';
 import { ResetPasswordDto } from './dtos/reset-password.dto';
 import { AuditEventType, AuditSubject } from '../audit/audit-event-type.enum';
+import { PasswordResetTokenRepository } from './repositories/password-reset-token.repository';
+import { EmailQueueService } from '../email-events/email-queue.service';
+import { ForcedPasswordResetDto } from './dtos/forced-password-reset.dto';
 
 describe('AuthService', () => {
   let service: AuthService;
@@ -27,6 +30,8 @@ describe('AuthService', () => {
   let mfaService: MfaService;
   let authEmailService: AuthEmailService;
   let configService: ConfigService;
+  let passwordResetTokenRepository: PasswordResetTokenRepository;
+  let emailQueueService: EmailQueueService;
 
   const mockUser = {
     id: 'user123',
@@ -49,86 +54,123 @@ describe('AuthService', () => {
     contact: { emailAddress: 'account@example.com' },
   };
 
+  const mockAuditService = {
+    log: jest.fn(),
+  };
+
+  const mockJwtService = {
+    sign: jest.fn().mockReturnValue('mock.jwt.token'),
+    verify: jest.fn().mockReturnValue({ userId: 'user123' }),
+  };
+
+  const mockSiweService = {
+    verifyMessage: jest.fn().mockResolvedValue('0x1234567890abcdef'),
+  };
+
+  const mockAccountUsersService = {
+    findAccountUserByEmail: jest.fn(),
+    findAccountUserByEmailForAuth: jest.fn(),
+    findAccountUserByWalletAddress: jest.fn(),
+    getAccountUserById: jest.fn(),
+    updateAccountUser: jest.fn(),
+    updateAccountUserSecurity: jest.fn(),
+  };
+
+  const mockAccountsService = {
+    findByWalletAddress: jest.fn(),
+    findByAccountId: jest.fn(),
+  };
+
+  const mockConfigService = {
+    get: jest.fn((key: string) => {
+      const config = {
+        'jwt.expiresIn': '15m',
+        'refreshToken.expiresIn': '7d',
+        'auth.accountLockout.maxFailedAttempts': 5,
+        'auth.accountLockout.lockoutDuration': 15,
+      };
+      return config[key];
+    }),
+  };
+
+  const mockPasswordService = {
+    comparePassword: jest.fn(),
+    hashPassword: jest.fn(),
+    validatePassword: jest.fn(),
+  };
+
+  const mockMfaService = {
+    isMfaGloballyEnabled: jest.fn(),
+    isMfaRequired: jest.fn(),
+    setupMfa: jest.fn(),
+    verifyMfa: jest.fn(),
+    generateBackupCodes: jest.fn(),
+  };
+
+  const mockAuthEmailService = {
+    sendPasswordResetEmail: jest.fn(),
+    sendMfaSetupEmail: jest.fn(),
+    sendMfaBackupCodesEmail: jest.fn(),
+    sendSecurityAlertEmail: jest.fn(),
+  };
+
+  const mockPasswordResetTokenRepository = {
+    findByToken: jest.fn(),
+    markAsUsed: jest.fn(),
+    create: jest.fn(),
+  };
+
+  const mockEmailQueueService = {
+    addForcePasswordResetEmailJob: jest.fn(),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AuthService,
         {
+          provide: AuditService,
+          useValue: mockAuditService,
+        },
+        {
           provide: JwtService,
-          useValue: {
-            sign: jest.fn().mockReturnValue('mock.jwt.token'),
-            verify: jest.fn().mockReturnValue({ userId: 'user123' }),
-          },
+          useValue: mockJwtService,
         },
         {
           provide: SiweService,
-          useValue: {
-            verifyMessage: jest.fn().mockResolvedValue('0x1234567890abcdef'),
-          },
+          useValue: mockSiweService,
         },
         {
           provide: AccountUsersService,
-          useValue: {
-            findAccountUserByEmail: jest.fn(),
-            findAccountUserByEmailForAuth: jest.fn(),
-            findAccountUserByWalletAddress: jest.fn(),
-            getAccountUserById: jest.fn(),
-            updateAccountUser: jest.fn(),
-          },
+          useValue: mockAccountUsersService,
         },
         {
           provide: AccountsService,
-          useValue: {
-            findByWalletAddress: jest.fn(),
-            findByAccountId: jest.fn(),
-          },
-        },
-        {
-          provide: AuditService,
-          useValue: {
-            log: jest.fn(),
-          },
-        },
-        {
-          provide: PasswordService,
-          useValue: {
-            comparePassword: jest.fn(),
-            hashPassword: jest.fn(),
-            validatePassword: jest.fn(),
-          },
-        },
-        {
-          provide: MfaService,
-          useValue: {
-            isMfaGloballyEnabled: jest.fn(),
-            isMfaRequired: jest.fn(),
-            setupMfa: jest.fn(),
-            verifyMfa: jest.fn(),
-            generateBackupCodes: jest.fn(),
-          },
-        },
-        {
-          provide: AuthEmailService,
-          useValue: {
-            sendPasswordResetEmail: jest.fn(),
-            sendMfaSetupEmail: jest.fn(),
-            sendMfaBackupCodesEmail: jest.fn(),
-            sendSecurityAlertEmail: jest.fn(),
-          },
+          useValue: mockAccountsService,
         },
         {
           provide: ConfigService,
-          useValue: {
-            get: jest.fn((key: string) => {
-              const config = {
-                'jwt.expiresIn': '15m',
-                'refreshToken.expiresIn': '7d',
-                'auth.accountLockout.maxFailedAttempts': 5,
-                'auth.accountLockout.lockoutDuration': 15,
-              };
-              return config[key];
-            }),
-          },
+          useValue: mockConfigService,
+        },
+        {
+          provide: PasswordService,
+          useValue: mockPasswordService,
+        },
+        {
+          provide: MfaService,
+          useValue: mockMfaService,
+        },
+        {
+          provide: AuthEmailService,
+          useValue: mockAuthEmailService,
+        },
+        {
+          provide: PasswordResetTokenRepository,
+          useValue: mockPasswordResetTokenRepository,
+        },
+        {
+          provide: EmailQueueService,
+          useValue: mockEmailQueueService,
         },
       ],
     }).compile();
@@ -143,6 +185,11 @@ describe('AuthService', () => {
     mfaService = module.get<MfaService>(MfaService);
     authEmailService = module.get<AuthEmailService>(AuthEmailService);
     configService = module.get<ConfigService>(ConfigService);
+    passwordResetTokenRepository = module.get<PasswordResetTokenRepository>(PasswordResetTokenRepository);
+    emailQueueService = module.get<EmailQueueService>(EmailQueueService);
+
+    // Reset all mocks before each test
+    jest.clearAllMocks();
   });
 
   it('should be defined', () => {
@@ -619,6 +666,281 @@ describe('AuthService', () => {
         expect(result.mfaGloballyEnabled).toBe(true);
         expect(result.mfaRequired).toBe(true);
       });
+    });
+  });
+
+  describe('forcePasswordReset', () => {
+    it('should force password reset for a user', async () => {
+      const adminUserId = 'admin123';
+      const targetUserEmail = 'user@example.com';
+      
+      const mockTargetUser = {
+        id: 'user123',
+        accountId: 'account123',
+        emailAddress: targetUserEmail,
+        name: 'Test User'
+      };
+
+      mockAccountUsersService.findAccountUserByEmail.mockResolvedValue(mockTargetUser);
+      mockAccountUsersService.updateAccountUserSecurity.mockResolvedValue(mockTargetUser);
+      mockAuditService.log.mockResolvedValue(undefined);
+
+      const result = await service.forcePasswordReset(adminUserId, targetUserEmail);
+
+      expect(result.success).toBe(true);
+      expect(result.message).toContain(targetUserEmail);
+      expect(mockAccountUsersService.updateAccountUserSecurity).toHaveBeenCalledWith(
+        mockTargetUser.id,
+        { passwordResetRequired: true }
+      );
+      expect(mockAuditService.log).toHaveBeenCalledWith({
+        subject: AuditSubject.AUTHENTICATION,
+        eventType: AuditEventType.PASSWORD_RESET,
+        identifier: mockTargetUser.accountId,
+        details: {
+          userEmail: targetUserEmail,
+          adminUserId,
+          action: 'forced_password_reset'
+        }
+      });
+    });
+
+    it('should throw error if target user not found', async () => {
+      const adminUserId = 'admin123';
+      const targetUserEmail = 'nonexistent@example.com';
+
+      mockAccountUsersService.findAccountUserByEmail.mockResolvedValue(null);
+
+      await expect(service.forcePasswordReset(adminUserId, targetUserEmail))
+        .rejects.toThrow(UnauthorizedException);
+    });
+
+    it('should force password reset with reason and sendEmail flags', async () => {
+      const adminUserId = 'admin123';
+      const targetUserEmail = 'user@example.com';
+      const reason = 'Security policy compliance';
+      const sendEmail = true;
+      
+      const mockTargetUser = {
+        id: 'user123',
+        accountId: 'account123',
+        emailAddress: targetUserEmail,
+        name: 'Test User'
+      };
+
+      mockAccountUsersService.findAccountUserByEmail.mockResolvedValue(mockTargetUser);
+      mockAccountUsersService.updateAccountUserSecurity.mockResolvedValue(mockTargetUser);
+      mockAuditService.log.mockResolvedValue(undefined);
+      mockEmailQueueService.addForcePasswordResetEmailJob.mockResolvedValue(undefined);
+
+      const result = await service.forcePasswordReset(adminUserId, targetUserEmail, reason, sendEmail);
+
+      expect(result.success).toBe(true);
+      expect(result.message).toContain(targetUserEmail);
+      expect(mockAccountUsersService.updateAccountUserSecurity).toHaveBeenCalledWith(
+        mockTargetUser.id,
+        { passwordResetRequired: true }
+      );
+      expect(mockAuditService.log).toHaveBeenCalledWith({
+        subject: AuditSubject.AUTHENTICATION,
+        eventType: AuditEventType.PASSWORD_RESET,
+        identifier: mockTargetUser.accountId,
+        details: {
+          userEmail: targetUserEmail,
+          adminUserId,
+          action: 'forced_password_reset',
+          reason,
+          sendEmail
+        }
+      });
+      expect(mockEmailQueueService.addForcePasswordResetEmailJob).toHaveBeenCalledWith(
+        targetUserEmail,
+        mockTargetUser.name,
+        reason
+      );
+    });
+
+    it('should queue email when sendEmail is true', async () => {
+      const adminUserId = 'admin123';
+      const targetUserEmail = 'user@example.com';
+      const reason = 'Security policy compliance';
+      const sendEmail = true;
+      
+      const mockTargetUser = {
+        id: 'user123',
+        accountId: 'account123',
+        emailAddress: targetUserEmail,
+        name: 'Test User'
+      };
+
+      mockAccountUsersService.findAccountUserByEmail.mockResolvedValue(mockTargetUser);
+      mockAccountUsersService.updateAccountUserSecurity.mockResolvedValue(mockTargetUser);
+      mockAuditService.log.mockResolvedValue(undefined);
+      mockEmailQueueService.addForcePasswordResetEmailJob.mockResolvedValue(undefined);
+
+      const result = await service.forcePasswordReset(adminUserId, targetUserEmail, reason, sendEmail);
+
+      expect(result.success).toBe(true);
+      expect(mockEmailQueueService.addForcePasswordResetEmailJob).toHaveBeenCalledWith(
+        targetUserEmail,
+        mockTargetUser.name,
+        reason
+      );
+    });
+
+    it('should not queue email when sendEmail is false', async () => {
+      const adminUserId = 'admin123';
+      const targetUserEmail = 'user@example.com';
+      const reason = 'Security policy compliance';
+      const sendEmail = false;
+      
+      const mockTargetUser = {
+        id: 'user123',
+        accountId: 'account123',
+        emailAddress: targetUserEmail,
+        name: 'Test User'
+      };
+
+      mockAccountUsersService.findAccountUserByEmail.mockResolvedValue(mockTargetUser);
+      mockAccountUsersService.updateAccountUserSecurity.mockResolvedValue(mockTargetUser);
+      mockAuditService.log.mockResolvedValue(undefined);
+
+      const result = await service.forcePasswordReset(adminUserId, targetUserEmail, reason, sendEmail);
+
+      expect(result.success).toBe(true);
+      expect(mockEmailQueueService.addForcePasswordResetEmailJob).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('forcedPasswordReset', () => {
+    it('should successfully reset password when forced reset is required', async () => {
+      const dto: ForcedPasswordResetDto = {
+        email: 'user@example.com',
+        currentPassword: 'OldPassword123!',
+        newPassword: 'NewPassword456!'
+      };
+
+      const mockUser = {
+        id: 'user123',
+        accountId: 'account123',
+        emailAddress: 'user@example.com',
+        passwordHash: '$2b$12$test.hash.here',
+        passwordResetRequired: true
+      };
+
+      mockAccountUsersService.findAccountUserByEmailForAuth.mockResolvedValue(mockUser);
+      mockPasswordService.comparePassword.mockResolvedValue(true);
+      mockPasswordService.validatePassword.mockReturnValue({ isValid: true, errors: [] });
+      mockPasswordService.hashPassword.mockResolvedValue('new.hash.here');
+      mockAccountUsersService.updateAccountUserSecurity.mockResolvedValue(mockUser);
+      mockAuditService.log.mockResolvedValue(undefined);
+
+      const result = await service.forcedPasswordReset(dto);
+
+      expect(result.success).toBe(true);
+      expect(result.message).toContain('Password has been reset successfully');
+      expect(mockAccountUsersService.updateAccountUserSecurity).toHaveBeenCalledWith(
+        mockUser.id,
+        {
+          passwordHash: 'new.hash.here',
+          passwordChanged: true,
+          passwordResetRequired: false,
+          failedLoginAttempts: 0,
+          accountLockedUntil: undefined,
+        }
+      );
+      expect(mockAuditService.log).toHaveBeenCalledWith({
+        subject: AuditSubject.AUTHENTICATION,
+        eventType: AuditEventType.PASSWORD_RESET,
+        identifier: mockUser.accountId,
+        details: {
+          userEmail: mockUser.emailAddress,
+          action: 'forced_password_reset_completed',
+          method: 'public_endpoint'
+        },
+      });
+    });
+
+    it('should throw error if user not found', async () => {
+      const dto: ForcedPasswordResetDto = {
+        email: 'nonexistent@example.com',
+        currentPassword: 'OldPassword123!',
+        newPassword: 'NewPassword456!'
+      };
+
+      mockAccountUsersService.findAccountUserByEmailForAuth.mockResolvedValue(null);
+
+      await expect(service.forcedPasswordReset(dto))
+        .rejects.toThrow('Invalid email or password');
+    });
+
+    it('should throw error if password reset not required', async () => {
+      const dto: ForcedPasswordResetDto = {
+        email: 'user@example.com',
+        currentPassword: 'OldPassword123!',
+        newPassword: 'NewPassword456!'
+      };
+
+      const mockUser = {
+        id: 'user123',
+        accountId: 'account123',
+        emailAddress: 'user@example.com',
+        passwordHash: '$2b$12$test.hash.here',
+        passwordResetRequired: false
+      };
+
+      mockAccountUsersService.findAccountUserByEmailForAuth.mockResolvedValue(mockUser);
+
+      await expect(service.forcedPasswordReset(dto))
+        .rejects.toThrow('Password reset not required for this account');
+    });
+
+    it('should throw error if current password is incorrect', async () => {
+      const dto: ForcedPasswordResetDto = {
+        email: 'user@example.com',
+        currentPassword: 'WrongPassword123!',
+        newPassword: 'NewPassword456!'
+      };
+
+      const mockUser = {
+        id: 'user123',
+        accountId: 'account123',
+        emailAddress: 'user@example.com',
+        passwordHash: '$2b$12$test.hash.here',
+        passwordResetRequired: true
+      };
+
+      mockAccountUsersService.findAccountUserByEmailForAuth.mockResolvedValue(mockUser);
+      mockPasswordService.comparePassword.mockResolvedValue(false);
+
+      await expect(service.forcedPasswordReset(dto))
+        .rejects.toThrow('Invalid email or password');
+    });
+
+    it('should throw error if new password does not meet policy', async () => {
+      const dto: ForcedPasswordResetDto = {
+        email: 'user@example.com',
+        currentPassword: 'OldPassword123!',
+        newPassword: 'weak'
+      };
+
+      const mockUser = {
+        id: 'user123',
+        accountId: 'account123',
+        emailAddress: 'user@example.com',
+        passwordHash: '$2b$12$test.hash.here',
+        passwordResetRequired: true
+      };
+
+      mockAccountUsersService.findAccountUserByEmailForAuth.mockResolvedValue(mockUser);
+      mockPasswordService.comparePassword.mockResolvedValue(true);
+      mockPasswordService.validatePassword.mockReturnValue({
+        isValid: false,
+        errors: ['Password must be at least 8 characters long']
+      });
+
+      await expect(service.forcedPasswordReset(dto))
+        .rejects.toThrow('New password does not meet policy: Password must be at least 8 characters long');
     });
   });
 });

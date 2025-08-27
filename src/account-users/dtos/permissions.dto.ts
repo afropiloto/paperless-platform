@@ -1,5 +1,5 @@
 import { Expose } from 'class-transformer';
-import { IsBoolean, IsString } from 'class-validator';
+import { IsBoolean, IsOptional, IsString } from 'class-validator';
 
 export class ModulesDto {
   @Expose()
@@ -45,4 +45,9 @@ export class ModuleRoleCombinationDto {
   @Expose()
   @IsString()
   role: string;
+
+  @Expose()
+  @IsString()
+  @IsOptional()
+  description?: string;
 }

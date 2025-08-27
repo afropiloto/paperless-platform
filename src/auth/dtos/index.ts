@@ -5,4 +5,6 @@ export * from './forgot-password.dto';
 export * from './login.dto';
 export * from './refresh-token.dto';
 export * from './reset-password.dto';
-export * from './password-reset-token.dto'; 
+export * from './password-reset-token.dto';
+export * from './force-password-reset.dto';
+export * from './forced-password-reset.dto'; 

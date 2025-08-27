@@ -25,6 +25,8 @@ import { GeneralResponseDto } from '../common/common-dto';
 import { MfaStatusDto } from './dtos/mfa-verification.dto';
 import { MfaDisableResponseDto, RegenerateBackupCodesResponseDto } from './dtos/mfa-management.dto';
 import { MfaVerifySetupResponseDto } from './dtos/mfa-setup.dto';
+import { EmailQueueService } from '../email-events/email-queue.service';
+import { ForcedPasswordResetDto } from './dtos/forced-password-reset.dto';
 
 @Injectable()
 export class AuthService {
@@ -42,6 +44,7 @@ export class AuthService {
     private readonly mfaService: MfaService,
     private readonly authEmailService: AuthEmailService,
     private readonly passwordResetTokenRepository: PasswordResetTokenRepository,
+    private readonly emailQueueService: EmailQueueService,
   ) {}
 
   async login(loginDto: LoginDto): Promise<AuthResponseDto> {
@@ -172,17 +175,40 @@ export class AuthService {
       });
     }
 
+    // Get account details
+    const accountDetails = await this.accountsService.findByAccountId(user.accountId);
+    if (!accountDetails) {
+      throw new UnauthorizedException('Account not found');
+    }
+
+    // Check if password reset is required
+    if (user.passwordResetRequired) {
+      this.logger.warn('Password reset required for user', { email, userId: user.id });
+      
+      // Return response indicating password reset is required
+      return plainToInstance(
+        AuthResponseDto,
+        {
+          success: false,
+          passwordResetRequired: true,
+          userId: user.id,
+          userEmail: user.emailAddress,
+          accountId: user.accountId,
+          accountName: accountDetails.accountName,
+          accountEmail: accountDetails.contact.emailAddress,
+          userName: user.name,
+          walletAddress: user.walletAddress,
+          permissions: user.permissions,
+        },
+        { excludeExtraneousValues: true },
+      );
+    }
+
     // Check if this is the user's first login
     if (!user.firstLoginAt) {
       await this.accountUsersService.updateAccountUser(user.id, {
         firstLoginAt: new Date(),
       });
-    }
-
-    // Get account details
-    const accountDetails = await this.accountsService.findByAccountId(user.accountId);
-    if (!accountDetails) {
-      throw new UnauthorizedException('Account not found');
     }
 
     // Prepare JWT payload
@@ -388,6 +414,7 @@ export class AuthService {
     await this.accountUsersService.updateAccountUserSecurity(tokenEntry.userId, {
       passwordHash: newHash,
       passwordChanged: true,
+      passwordResetRequired: false,
       failedLoginAttempts: 0,
       accountLockedUntil: undefined,
     });
@@ -405,6 +432,130 @@ export class AuthService {
     });
     this.logger.debug("returning response")
     return plainToInstance(GeneralResponseDto, {success: true, message: 'Password has been reset successfully' })
+  }
+
+  async forcedPasswordReset(dto: ForcedPasswordResetDto): Promise<{ success: boolean; message: string }> {
+    const { email, currentPassword, newPassword } = dto;
+
+    // Find user by email (including sensitive fields for auth)
+    const user = await this.accountUsersService.findAccountUserByEmailForAuth(email);
+    if (!user) {
+      this.logger.warn('Forced password reset attempted for non-existent user', { email });
+      throw new UnauthorizedException('Invalid email or password');
+    }
+
+    // Check if password reset is actually required
+    if (!user.passwordResetRequired) {
+      this.logger.warn('Forced password reset attempted when not required', { email, userId: user.id });
+      throw new UnauthorizedException('Password reset not required for this account');
+    }
+
+    // Validate current password
+    const passwordHash = user.passwordHash;
+    if (!passwordHash || !(await this.passwordService.comparePassword(currentPassword, passwordHash))) {
+      this.logger.warn('Invalid current password in forced password reset', { email, userId: user.id });
+      throw new UnauthorizedException('Invalid email or password');
+    }
+
+    // Enforce password policy for new password
+    const validation = this.passwordService.validatePassword(newPassword);
+    if (!validation.isValid) {
+      throw new UnauthorizedException('New password does not meet policy: ' + validation.errors.join(', '));
+    }
+
+    // Hash and update password
+    const newHash = await this.passwordService.hashPassword(newPassword);
+    await this.accountUsersService.updateAccountUserSecurity(user.id, {
+      passwordHash: newHash,
+      passwordChanged: true,
+      passwordResetRequired: false, // Clear the flag
+      failedLoginAttempts: 0, // Reset failed attempts
+      accountLockedUntil: undefined, // Unlock account if it was locked
+    });
+
+    // Audit log the action
+    await this.auditService.log({
+      subject: AuditSubject.AUTHENTICATION,
+      eventType: AuditEventType.PASSWORD_RESET,
+      identifier: user.accountId,
+      details: { 
+        userEmail: user.emailAddress,
+        action: 'forced_password_reset_completed',
+        method: 'public_endpoint'
+      },
+    });
+
+    this.logger.log(`Forced password reset completed for user ${email}`);
+
+    return {
+      success: true,
+      message: 'Password has been reset successfully. You can now log in with your new password.'
+    };
+  }
+
+  async forcePasswordReset(
+    adminUserId: string, 
+    targetUserEmail: string, 
+    reason?: string, 
+    sendEmail?: boolean
+  ): Promise<{ success: boolean; message: string }> {
+    // Find the target user by email
+    const targetUser = await this.accountUsersService.findAccountUserByEmail(targetUserEmail);
+    if (!targetUser) {
+      throw new UnauthorizedException('User not found');
+    }
+
+    // Update the user to require password reset
+    await this.accountUsersService.updateAccountUserSecurity(targetUser.id, {
+      passwordResetRequired: true,
+    });
+
+    // Prepare audit details
+    const auditDetails: any = {
+      userEmail: targetUser.emailAddress,
+      adminUserId,
+      action: 'forced_password_reset'
+    };
+
+    // Include reason in audit details if provided
+    if (reason) {
+      auditDetails.reason = reason;
+    }
+
+    // Include sendEmail flag in audit details if provided
+    if (sendEmail !== undefined) {
+      auditDetails.sendEmail = sendEmail;
+    }
+
+    // Audit log the action
+    await this.auditService.log({
+      subject: AuditSubject.AUTHENTICATION,
+      eventType: AuditEventType.PASSWORD_RESET,
+      identifier: targetUser.accountId,
+      details: auditDetails,
+    });
+
+    // Queue email notification if requested
+    if (sendEmail) {
+      try {
+        await this.emailQueueService.addForcePasswordResetEmailJob(
+          targetUser.emailAddress,
+          targetUser.name,
+          reason
+        );
+        this.logger.log(`Force password reset email queued for user ${targetUserEmail}`);
+      } catch (error) {
+        this.logger.error(`Failed to queue force password reset email for user ${targetUserEmail}:`, error);
+        // Don't fail the operation if email queuing fails
+      }
+    }
+
+    this.logger.log(`Password reset forced for user ${targetUserEmail} by admin ${adminUserId}${reason ? ` with reason: ${reason}` : ''}${sendEmail ? ' (email notification requested)' : ''}`);
+    
+    return {
+      success: true,
+      message: `Password reset requirement set for user ${targetUserEmail}`
+    };
   }
 
   // MFA Setup and Management Methods

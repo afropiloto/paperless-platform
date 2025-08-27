@@ -1,34 +1,33 @@
 import { Injectable, Logger, BadRequestException } from '@nestjs/common';
-import { ApplicationModule, ApplicationRole } from '../schemas/application-permissions.schema';
-import { UserPermission } from '../types/application-permissions.types';
+import { UserPermission } from '../types';
 import { plainToInstance } from 'class-transformer';
 import { ModuleRoleCombinationDto, ModulesDto, RolesDto } from '../dtos/permissions.dto';
+import { ModulePermissionsService } from './module-permissions.service';
 
 @Injectable()
 export class PermissionsValidationService {
   private readonly logger = new Logger(PermissionsValidationService.name);
+  constructor(private readonly modulePermissionsService: ModulePermissionsService) {}
 
   /**
    * Validates a single permission combination
    */
-  validatePermission(permission: UserPermission): void {
+  async validatePermission(permission: UserPermission): Promise<void> {
     const { module, role } = permission;
 
-    // Check if module is valid
-    if (!Object.values(ApplicationModule).includes(module as ApplicationModule)) {
+    // Validate against configured module-permissions
+    const validCombinations = await this.getValidCombinations();
+    const modules = await this.getValidModules();
+    const roles = await this.getValidRoles();
+    const moduleValid = modules.some(m => m.id === module);
+    const roleValid = roles.some(r => r.id === role);
+    if (!moduleValid) {
       throw new BadRequestException(`Invalid module: ${module}`);
     }
-
-    // Check if role is valid
-    if (!Object.values(ApplicationRole).includes(role as ApplicationRole)) {
+    if (!roleValid) {
       throw new BadRequestException(`Invalid role: ${role}`);
     }
-
-    // Check if the combination is valid
-    const validCombinations = this.getValidCombinations();
-    const isValidCombination = validCombinations.some(
-      c => c.module === module && c.role === role
-    );
+    const isValidCombination = validCombinations.some(c => c.module === module && c.role === role);
     
     if (!isValidCombination) {
       throw new BadRequestException(
@@ -41,7 +40,7 @@ export class PermissionsValidationService {
   /**
    * Validates an array of permissions
    */
-  validatePermissions(permissions: UserPermission[]): void {
+  async validatePermissions(permissions: UserPermission[]): Promise<void> {
     if (!Array.isArray(permissions)) {
       throw new BadRequestException('Permissions must be an array');
     }
@@ -54,84 +53,48 @@ export class PermissionsValidationService {
     }
 
     // Validate each permission
-    permissions.forEach(permission => {
-      this.validatePermission(permission);
-    });
+    for (const permission of permissions) {
+      await this.validatePermission(permission);
+    }
   }
 
   /**
    * Gets all valid modules
    */
-  getValidModules() {
-    const modules =  Object.values(ApplicationModule).map(module => ({
-      id: module,
-      name: module,
-      description: `${module} module`,
-      active: true
-    }));
-
-    return plainToInstance(ModulesDto, modules)
+  async getValidModules() {
+    const modules = await this.modulePermissionsService.getValidModules();
+    return plainToInstance(ModulesDto, modules);
   }
 
   /**
    * Gets all valid roles
    */
-  getValidRoles() {
-    const roles = Object.values(ApplicationRole).map(role => ({
-      id: role,
-      name: role,
-      description: `${role} role`,
-      active: true
-    }));
-
-    return plainToInstance(RolesDto, roles)
+  async getValidRoles() {
+    const roles = await this.modulePermissionsService.getValidRoles();
+    return plainToInstance(RolesDto, roles);
   }
 
   /**
    * Gets all valid permission combinations
    */
-  getValidCombinations() {
-    const combinations = [];
-    
-    // DealDesk combinations
-    combinations.push({ module: ApplicationModule.DEAL_DESK, role: ApplicationRole.AGENT });
-    combinations.push({ module: ApplicationModule.DEAL_DESK, role: ApplicationRole.SUPERVISOR });
-    combinations.push({ module: ApplicationModule.DEAL_DESK, role: ApplicationRole.MANAGER });
-    
-    // Paiperless combinations
-    combinations.push({ module: ApplicationModule.PAIPERLESS, role: ApplicationRole.AGENT });
-    combinations.push({ module: ApplicationModule.PAIPERLESS, role: ApplicationRole.SUPERVISOR });
-    combinations.push({ module: ApplicationModule.PAIPERLESS, role: ApplicationRole.MANAGER });
-    
-    // OnboardingDesk combinations
-    combinations.push({ module: ApplicationModule.ONBOARDING_DESK, role: ApplicationRole.AGENT });
-    combinations.push({ module: ApplicationModule.ONBOARDING_DESK, role: ApplicationRole.SUPERVISOR });
-    combinations.push({ module: ApplicationModule.ONBOARDING_DESK, role: ApplicationRole.MANAGER });
-    
-    // PortalAdmin combinations (more restricted)
-    combinations.push({ module: ApplicationModule.PORTAL_ADMIN, role: ApplicationRole.SUPERVISOR });
-    combinations.push({ module: ApplicationModule.PORTAL_ADMIN, role: ApplicationRole.MANAGER });
-    
-    return plainToInstance(ModuleRoleCombinationDto, combinations);
+  async getValidCombinations() {
+    const combos = await this.modulePermissionsService.getValidCombinations();
+    return plainToInstance(ModuleRoleCombinationDto, combos);
   }
 
   /**
    * Gets valid roles for a specific module
    */
-  getValidRolesForModule(module: string): string[] {
-    const validCombinations = this.getValidCombinations();
-    return validCombinations
-      .filter(c => c.module === module)
-      .map(c => c.role);
+  async getValidRolesForModule(module: string): Promise<string[]> {
+    const validCombinations = await this.getValidCombinations();
+    return validCombinations.filter(c => c.module === module).map(c => c.role);
   }
 
   /**
    * Gets valid modules for a specific role
    */
-  getValidModulesForRole(role: string): string[] {
-    const validCombinations = this.getValidCombinations();
-    return validCombinations
-      .filter(c => c.role === role)
-      .map(c => c.module);
+  async getValidModulesForRole(role: string): Promise<string[]> {
+    const validCombinations = await this.getValidCombinations();
+    return validCombinations.filter(c => c.role === role).map(c => c.module);
   }
 } 

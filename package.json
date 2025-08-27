@@ -21,7 +21,9 @@
     "script:deployTokenRegistry": "dotenv -e .env npx ts-node ./scripts/deployTokenRegistry.ts",
     "script:generateDidWeb": "dotenv -e .env npx ts-node ./scripts/generateDidWeb.ts",
     "script:generate-api-key": "ts-node ./scripts/generate-api-key.ts",
-    "script:migrate-auth-fields": "dotenv -e .env npx ts-node ./src/migrations/add-auth-fields.ts"
+    "script:migrate-auth-fields": "dotenv -e .env npx ts-node ./src/migrations/add-auth-fields.ts",
+    "script:seed-module-permissions": "ts-node ./scripts/seed-module-permissions.ts",
+    "script:migrate-valid-combinations": "node ./scripts/run-ts.js ./src/scripts/migrate-valid-combinations-to-module-permissions.ts"
   },
   "dependencies": {
     "@getbrevo/brevo": "^2.5.0",

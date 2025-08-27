@@ -56,13 +56,21 @@ export interface MfaBackupCodesEmailJobData extends BaseEmailJobData {
   backupCodes: string[];
 }
 
+// Force password reset email job data
+export interface ForcePasswordResetEmailJobData extends BaseEmailJobData {
+  jobType: EmailJobType.FORCE_PASSWORD_RESET;
+  userName: string;
+  reason?: string;
+}
+
 // Union type for all email job data
 export type EmailJobData = 
   | PasswordResetEmailJobData
   | WelcomeEmailJobData
   | UserInvitationEmailJobData
   | MfaSetupEmailJobData
-  | MfaBackupCodesEmailJobData;
+  | MfaBackupCodesEmailJobData
+  | ForcePasswordResetEmailJobData;
 
 // Email job result
 export interface EmailJobResult {

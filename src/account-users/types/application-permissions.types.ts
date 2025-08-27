@@ -16,6 +16,7 @@ export interface PermissionCombination {
   moduleId: string;
   roleId: string;
   active: boolean;
+  description?: string;
 }
 
 export interface ApplicationPermissionsConfig {
@@ -28,3 +29,10 @@ export interface UserPermission {
   module: string;
   role: string;
 } 
+
+export interface ModulePermissionsDocumentShape {
+  module: string;
+  description?: string;
+  allowableRoles: Array<{ role: string; description?: string }>;
+  active: boolean;
+}
