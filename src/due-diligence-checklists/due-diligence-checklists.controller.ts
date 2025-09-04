@@ -1,5 +1,5 @@
-import { Body, Controller, Get, HttpStatus, Logger, Param, ParseIntPipe, Patch, Post } from '@nestjs/common';
-import { ApiBody, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';;
+import { Body, Controller, Get, HttpStatus, Logger, Param, ParseIntPipe, Patch, Post, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth, ApiBody, ApiHeader, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';;
 
 import { CreateChecklistDto } from './dtos/create-checklist.dto';
 import { DueDiligenceChecklistsService } from './due-diligence-checklists.service';
@@ -7,10 +7,22 @@ import { DueDiligenceChecklistType } from './types/due-diligence-checklists.type
 import { ChecklistItemUpdateDto } from './dtos/update-checklist.dto';
 import { ChecklistInstanceDto } from './dtos/checklist-instance.dto';
 import { ChecklistResponseDto } from './dtos/checklist-response.dto';
+import { JwtGuard } from 'src/auth/guards/jwt-guard';
+import { ApiKeyGuard } from 'src/api-key-auth/api-key.guard';
+import { ClientAccess } from 'src/api-key-auth/decorators/client-access.decorator';
+import { ClientAccessGroup } from 'src/api-key-auth/types/api-key-auth.types';
 
 
 @ApiTags('Due Diligence Checklists')
 @Controller('due-diligence-checklists')
+@UseGuards(JwtGuard, ApiKeyGuard)
+@ApiHeader({
+  name: 'x-api-key',
+  description: 'The Client Application API Key',
+  example: '47f19331:86382a9cbeaa603325628d29859b10fa6df94385ef792ea340cb1208ab9fdb6e'
+})
+@ClientAccess(ClientAccessGroup.PAIPERLESS_PORTAL)
+@ApiBearerAuth()
 export class DueDiligenceChecklistsController {
   private readonly logger = new Logger(DueDiligenceChecklistsController.name);
 

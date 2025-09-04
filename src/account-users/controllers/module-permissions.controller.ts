@@ -1,10 +1,31 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post } from '@nestjs/common';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
+import { ApiBearerAuth, ApiHeader, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { ModulePermissionsService } from '../services/module-permissions.service';
-import { CreateOrUpdateModulePermissionsDto, ModulePermissionsDto } from '../dtos/module-permissions.dto';
+import { CreateOrUpdateModulePermissionsDto, ModulePermissionsDto } from 'src/account-users/dtos';
+import { JwtGuard } from 'src/auth/guards/jwt-guard';
+import { ApiKeyGuard } from 'src/api-key-auth/api-key.guard';
+import { ClientAccessGroup } from 'src/api-key-auth/types/api-key-auth.types';
+import { ClientAccess } from 'src/api-key-auth/decorators/client-access.decorator';
 
 @ApiTags('Module Permissions')
 @Controller('module-permissions')
+@UseGuards(JwtGuard, ApiKeyGuard)
+@ApiBearerAuth()
+@ClientAccess(ClientAccessGroup.SHARED)
+@ApiHeader({
+  name: 'x-api-key',
+  description: 'The Client Application API Key',
+  example: '47f19331:86382a9cbeaa603325628d29859b10fa6df94385ef792ea340cb1208ab9fdb6e'
+})
 export class ModulePermissionsController {
   constructor(private readonly service: ModulePermissionsService) {}
 

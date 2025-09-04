@@ -7,12 +7,12 @@ import {
   Param,
   ParseFilePipeBuilder,
   Post,
-  UploadedFile,
+  UploadedFile, UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import {
   ApiBody,
-  ApiConsumes,
+  ApiConsumes, ApiHeader,
   ApiOperation,
   ApiResponse,
   ApiTags,
@@ -24,9 +24,19 @@ import {
   VerifyTradeDocumentFileDto,
 } from './dtos/verify-trade-document.dto';
 import { plainToInstance } from 'class-transformer';
+import { ApiKeyGuard } from 'src/api-key-auth/api-key.guard';
+import { ClientAccess } from 'src/api-key-auth/decorators/client-access.decorator';
+import { ClientAccessGroup } from 'src/api-key-auth/types/api-key-auth.types';
 
 @Controller('verify/trade-document/')
 @ApiTags('Verify Trade Document')
+@UseGuards(ApiKeyGuard)
+@ApiHeader({
+  name: 'x-api-key',
+  description: 'The Client Application API Key',
+  example: '47f19331:86382a9cbeaa603325628d29859b10fa6df94385ef792ea340cb1208ab9fdb6e'
+})
+@ClientAccess(ClientAccessGroup.PAIPERLESS_APP)
 export class VerifyTradeDocumentController {
   private readonly logger = new Logger(VerifyTradeDocumentController.name);
 

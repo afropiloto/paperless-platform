@@ -8,14 +8,16 @@ import {
   Patch,
   Post,
   Query,
+  UseGuards,
 } from '@nestjs/common';
-import { 
-  ApiBody, 
-  ApiOperation, 
-  ApiParam, 
+import {
+  ApiBearerAuth,
+  ApiBody, ApiHeader,
+  ApiOperation,
+  ApiParam,
 
-  ApiResponse, 
-  ApiTags 
+  ApiResponse,
+  ApiTags,
 } from '@nestjs/swagger';
 import { AccountUsersService } from './account-users.service';
 import { 
@@ -25,15 +27,28 @@ import {
   AccountUsersSearchDto 
 } from './dtos';
 import { AccountUsersSearchResultsDto } from './dtos';
+import { JwtGuard } from 'src/auth/guards/jwt-guard';
+import { ApiKeyGuard } from 'src/api-key-auth/api-key.guard';
+import { ClientAccess } from 'src/api-key-auth/decorators/client-access.decorator';
+import { ClientAccessGroup } from 'src/api-key-auth/types/api-key-auth.types';
 
 @ApiTags('Account Users')
 @Controller('account-users')
+@UseGuards(JwtGuard, ApiKeyGuard)
+@ApiBearerAuth()
+@ClientAccess(ClientAccessGroup.SHARED)
+@ApiHeader({
+  name: 'x-api-key',
+  description: 'The Client Application API Key',
+  example: '47f19331:86382a9cbeaa603325628d29859b10fa6df94385ef792ea340cb1208ab9fdb6e'
+})
 export class AccountUsersController {
   private readonly logger = new Logger(AccountUsersController.name);
 
   constructor(private readonly accountUsersService: AccountUsersService) {}
 
   @Post('/account/:accountId')
+
   @ApiOperation({ 
     summary: 'Create account user',
     description: 'Creates a new account user with the specified permissions and details'
@@ -61,11 +76,8 @@ export class AccountUsersController {
     return  await this.accountUsersService.createAccountUser(createAccountUserDto);
   }
 
-  //@ApiKeyProtectedSwagger()
-  //@UseGuards(ApiKeyGuard)
-  //@ClientAccess('paiperless-portal', 'internal-only')
   @Get('account/:accountId')
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Get account users by account ID',
     description: 'Retrieves a paginated list of account users for a specific account with optional search and filtering'
   })

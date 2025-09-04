@@ -1,4 +1,4 @@
-export const LEGACY_MODULE_PERMISSIONS = [
+export const MODULE_PERMISSIONS_SEED = [
   {
     module: 'Portal-DealDesk',
     description: 'Deal processing and management',
@@ -46,9 +46,9 @@ export const LEGACY_MODULE_PERMISSIONS = [
   },
   {
     module: 'Paiperless-Admin',
-    description: 'Paiperless administration',
+    description: 'Account administration and user management',
     allowableRoles: [
-      { role: 'Manager', description: 'Can manage Account Users. Can manage Named Wallets for the Account' },
+      { role: 'Manager', description: 'Can manage Account Users. Can manage Named Wallets for the Account.' },
     ],
     active: true,
   },

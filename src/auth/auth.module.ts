@@ -1,7 +1,6 @@
 import { Module } from '@nestjs/common';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
-import { JwtModule } from '@nestjs/jwt';
 import { SiweService } from '../siwe/siwe.service';
 import { AccountsModule } from '../accounts/accounts.module';
 import { AccountUsersModule } from '../account-users/account-users.module';
@@ -22,6 +21,8 @@ import { PasswordResetTokenRepository } from './repositories/password-reset-toke
 import { PasswordResetCleanupService } from './services/password-reset-cleanup.service';
 import { ScheduleModule } from '@nestjs/schedule';
 import { AuthEmailProcessor } from './auth-email.processor';
+import { ApiKeyAuthModule } from '../api-key-auth/api-key-auth.module';
+import { JwtConfigModule } from '../jwt/jwt-config.module';
 
 @Module({
   imports: [
@@ -32,18 +33,13 @@ import { AuthEmailProcessor } from './auth-email.processor';
     AccountUsersModule,
     SiweModule,
     PasswordModule,
+    ApiKeyAuthModule,
     ScheduleModule.forRoot(),
     MongooseModule.forFeature([
       { name: PasswordResetToken.name, schema: PasswordResetTokenSchema }
     ]),
-    JwtModule.registerAsync({
-      imports: [ConfigModule],
-      useFactory: async (configService: ConfigService) => ({
-        secret: configService.get<string>('jwt.secretKey'),
-        signOptions: { expiresIn: '15m' },
-      }),
-      inject: [ConfigService],
-    }),
+    JwtConfigModule,
+    ApiKeyAuthModule
   ],
   controllers: [AuthController, UserManagementController],
   providers: [

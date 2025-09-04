@@ -1,11 +1,11 @@
 import { Body, Controller, Get, HttpStatus, Logger, Param, Post, UseGuards } from '@nestjs/common';
-import { 
-  ApiBody, 
-  ApiOperation, 
-  ApiParam, 
-  ApiResponse, 
+import {
+  ApiBody,
+  ApiOperation,
+  ApiParam,
+  ApiResponse,
   ApiTags,
-  ApiBearerAuth
+  ApiBearerAuth, ApiHeader,
 } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { RefreshTokenDto } from './dtos';
@@ -24,11 +24,22 @@ import { JwtGuard } from './guards/jwt-guard';
 import { UserPermissionGuard } from './guards/user-permission.guard';
 import { UserAccess } from './decorators/user-access.decorator';
 import { User } from './decorators/user.decorator';
-import { ForcePasswordResetDto, ForcePasswordResetResponseDto } from './dtos/force-password-reset.dto';
-import { ForcedPasswordResetDto, ForcedPasswordResetResponseDto } from './dtos/forced-password-reset.dto';
+import { ForcePasswordResetDto, ForcePasswordResetResponseDto } from 'src/auth/dtos';
+import { ForcedPasswordResetDto, ForcedPasswordResetResponseDto } from 'src/auth/dtos';
+import { ApiKeyGuard } from 'src/api-key-auth/api-key.guard';
+import { ClientInfo } from 'src/api-key-auth/decorators/client-info.decorator';
+import { ClientAccessGroup, ClientInfoDetails } from 'src/api-key-auth/types/api-key-auth.types';
+import { ClientAccess } from 'src/api-key-auth/decorators/client-access.decorator';
 
 @ApiTags('Authentication')
 @Controller('auth')
+@UseGuards(ApiKeyGuard)
+@ApiHeader({
+  name: 'x-api-key',
+  description: 'The Client Application API Key',
+  example: '47f19331:86382a9cbeaa603325628d29859b10fa6df94385ef792ea340cb1208ab9fdb6e'
+})
+@ClientAccess(ClientAccessGroup.SHARED)
 export class AuthController {
   private readonly logger = new Logger(AuthController.name);
   constructor(
@@ -101,6 +112,7 @@ export class AuthController {
     return await this.authService.login(loginDto);
   }
 
+  @UseGuards(ApiKeyGuard)
   @Post('login/email')
   @ApiOperation({ 
     summary: 'Login with email and password',
@@ -136,13 +148,23 @@ export class AuthController {
     status: HttpStatus.TOO_MANY_REQUESTS,
     description: 'Too many failed login attempts'
   })
-  async loginWithEmailPassword(@Body() loginDto: EmailPasswordLoginDto): Promise<AuthResponseDto> {
-    const response = await this.authService.loginWithEmailPassword(loginDto);
+  @ApiHeader({
+    name: 'x-api-key',
+    description: 'The Client Application API Key',
+    example: '47f19331:86382a9cbeaa603325628d29859b10fa6df94385ef792ea340cb1208ab9fdb6e'
+  })
+  @ClientAccess(ClientAccessGroup.SHARED)
+  async loginWithEmailPassword(@ClientInfo() client: ClientInfoDetails, @Body() loginDto: EmailPasswordLoginDto): Promise<AuthResponseDto> {
+    const response = await this.authService.loginWithEmailPassword(loginDto, client.name);
     this.logger.debug({response})
     return response;
   }
 
   @Post('refresh')
+  @ApiOperation({
+    summary: 'Refreshes the user\'s access token',
+    description: 'Refresh the user\'s access token using the saved refresh token'
+  })
   async refreshToken(@Body() refreshTokenDto: RefreshTokenDto) :Promise<TokenRefreshResponseDto> {
     return this.authService.refreshToken(refreshTokenDto.refreshToken);
   }
@@ -193,6 +215,8 @@ export class AuthController {
   }
 
   @Post('password/forced-reset')
+  @UseGuards(JwtGuard)
+  @ApiBearerAuth()
   @ApiOperation({ 
     summary: 'Reset password when forced by administrator',
     description: 'Reset password for users who have been forced to change their password by an administrator. This endpoint is public and does not require authentication.'
@@ -222,8 +246,8 @@ export class AuthController {
   @UseGuards(JwtGuard, UserPermissionGuard)
   @ApiBearerAuth()
   @UserAccess(
-    { module: 'Paiperless-Admin', minRole: 'Manager' },
-    { module: 'Portal-Admin', minRole: 'Manager' }
+    { module: 'Paiperless-Admin', roles: ['Manager'] },
+    { module: 'Portal-Admin', roles: ['Manager'] }
   )
   @ApiOperation({ 
     summary: 'Force password reset for a user',

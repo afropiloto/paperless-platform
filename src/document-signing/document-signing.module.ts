@@ -11,6 +11,8 @@ import {
   SIGN_DOCUMENT_ON_BEHALF_QUEUE,
 } from '../constants/app.constants';
 import { DocumentSigningContractService } from './document-signing-contract.service';
+import { JwtConfigModule } from 'src/jwt/jwt-config.module';
+import { ApiKeyAuthModule } from 'src/api-key-auth/api-key-auth.module';
 
 @Module({
   imports: [
@@ -25,6 +27,8 @@ import { DocumentSigningContractService } from './document-signing-contract.serv
       name: 'create-signing-event'
     }),
     TradeDocumentsModule,
+    JwtConfigModule,
+    ApiKeyAuthModule
   ],
   providers: [DocumentSigningService, DocumentSigningContractService, DocumentSigningRepository],
   controllers: [DocumentSigningController],

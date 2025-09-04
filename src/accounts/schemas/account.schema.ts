@@ -1,6 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { AccountStatus } from '../types/account.types';
-import { ApplicationModule } from '../../account-users/types';
+import { ApplicationModule } from 'src/account-users/types';
 
 @Schema({timestamps: false, _id: false})
 export class CompanyAddress {

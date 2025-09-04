@@ -1,6 +1,6 @@
 import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { Role, ROLE_RANK } from '../types/auth-roles.types';
+import { Role } from '../types/auth-roles.types';
 import { ModuleRoleThreshold } from '../decorators/user-access.decorator';
 
 @Injectable()
@@ -19,9 +19,11 @@ export class UserPermissionGuard implements CanActivate {
     );
     if (!required?.length) return true;
 
-    return required.some(({ module, minRole }) => {
-      const requiredRank = ROLE_RANK[minRole];
-      return userPerms.some((p) => p.module === module && ROLE_RANK[p.role] >= requiredRank);
+    return required.some(({ module, roles }) => {
+      // Check if user has any of the required roles for this module
+      return userPerms.some((p) => 
+        p.module === module && roles.includes(p.role)
+      );
     });
   }
 }

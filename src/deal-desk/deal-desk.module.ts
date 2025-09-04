@@ -14,12 +14,14 @@ import { DueDiligenceChecklistsModule } from '../due-diligence-checklists/due-di
 import { DueDiligenceChecklistsService } from '../due-diligence-checklists/due-diligence-checklists.service';
 import { TradeDocumentsModule } from '../trade-documents/trade-documents.module';
 import { ConfigModule } from '@nestjs/config';
-import { TradeFinanceModule } from '../trade-finance/tradeFinanceModule';
+import { TradeFinanceModule } from '../trade-finance/tradeFinance.module';
 import { AccountsModule } from '../accounts/accounts.module';
 import { IssueTradeDocumentModule } from '../issue-trade-document/issue-trade-document.module';
 import { DocumentSigningModule } from '../document-signing/document-signing.module';
 import { DocumentSigningBatchCheckService } from './document-signing-batch-check.service';
 import { AuditModule } from '../audit/audit.module';
+import { JwtConfigModule } from 'src/jwt/jwt-config.module';
+import { ApiKeyAuthModule } from 'src/api-key-auth/api-key-auth.module';
 
 @Module({
   imports: [
@@ -40,6 +42,8 @@ import { AuditModule } from '../audit/audit.module';
     DocumentSigningModule,
     FileStorageModule,
     AuditModule,
+    JwtConfigModule,
+    ApiKeyAuthModule
   ],
   controllers: [
     DealProcessingController,

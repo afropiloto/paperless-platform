@@ -1,5 +1,5 @@
-import { Controller, Get, Logger } from '@nestjs/common';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { Controller, Get, Logger, UseGuards } from '@nestjs/common';
+import { ApiHeader, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { ProviderInfoDto, TenantAppConfigDto, TenantChainConfigDto } from './dtos/tenantAppConfigDto';
 import { plainToInstance } from 'class-transformer';
 import { ConfigService } from '@nestjs/config';
@@ -7,10 +7,21 @@ import * as fs from 'fs/promises';
 import * as path from 'path';
 import { DidDto } from './dtos/DidDto';
 import { SUPPORTED_CHAINS } from '@trustvc/trustvc';
+import { JwtGuard } from 'src/auth/guards/jwt-guard';
+import { ApiKeyGuard } from 'src/api-key-auth/api-key.guard';
+import { ClientAccess } from 'src/api-key-auth/decorators/client-access.decorator';
+import { ClientAccessGroup } from 'src/api-key-auth/types/api-key-auth.types';
 
 
 @ApiTags('Tenant')
 @Controller('tenant')
+@UseGuards(ApiKeyGuard)
+@ApiHeader({
+  name: 'x-api-key',
+  description: 'The Client Application API Key',
+  example: '47f19331:86382a9cbeaa603325628d29859b10fa6df94385ef792ea340cb1208ab9fdb6e'
+})
+@ClientAccess(ClientAccessGroup.PAIPERLESS_APP)
 export class TenantController {
   private readonly logger = new Logger(TenantController.name);
   constructor(private configService: ConfigService) {

@@ -6,7 +6,6 @@ import { SearchResultsMetadata } from '../common/dtos/search.dto';
 import { AccountUser, AccountUserDocument, AccountUserStatus } from './schemas';
 import { CreateAccountUserDto, UpdateAccountUserDto, AccountUserResponseDto, UserPermissionDto, AccountUsersSearchDto, AccountUserSecurityDetailsDto } from './dtos';
 import { AccountUsersSearchResultsDto } from './dtos';
-import { ApplicationModule, ApplicationRole, ApplicationPermissions } from './schemas';
 
 @Injectable()
 export class AccountUsersRepository {
@@ -16,64 +15,8 @@ export class AccountUsersRepository {
     @InjectModel(AccountUser.name) private accountUserModel: Model<AccountUserDocument>,
   ) {}
 
-  /**
-   * Transforms DTO format (moduleId/roleId) to schema format (module/role)
-   */
-  private transformPermissionsToSchema(permissions: UserPermissionDto[]): ApplicationPermissions[] {
-    const moduleMap: Record<string, ApplicationModule> = {
-      'Portal-DealDesk': ApplicationModule.PORTAL_DEAL_DESK,
-      'Portal-OnboardingDesk': ApplicationModule.PORTAL_ONBOARDING_DESK,
-      'Portal-Admin': ApplicationModule.PORTAL_ADMIN,
-      'Paiperless-Trade-Documents': ApplicationModule.PAIPERLESS_TRADE_DOCUMENTS,
-      'Paiperless-Trade-Finance': ApplicationModule.PAIPERLESS_TRADE_FINANCE,
-      'Paiperless-Admin': ApplicationModule.PAIPERLESS_ADMIN
-    };
-
-
-   
-
-    const roleMap: Record<string, ApplicationRole> = {
-      'Agent': ApplicationRole.AGENT,
-      'Supervisor': ApplicationRole.SUPERVISOR,
-      'Manager': ApplicationRole.MANAGER,
-    };
-
-    return permissions.map(permission => ({
-      module: moduleMap[permission.module],
-      role: roleMap[permission.role],
-    }));
-  }
-
-  /**
-   * Transforms schema format (module/role) to DTO format (moduleId/roleId)
-   */
-  private transformPermissionsToDto(permissions: ApplicationPermissions[]): UserPermissionDto[] {
-    const moduleMap: Record<ApplicationModule, string> = {
-      [ApplicationModule.PORTAL_DEAL_DESK]: 'Portal-DealDesk',
-      [ApplicationModule.PORTAL_ONBOARDING_DESK]: 'Portal-OnboardingDesk',
-      [ApplicationModule.PORTAL_ADMIN]: 'Portal-Admin',
-      [ApplicationModule.PAIPERLESS_TRADE_DOCUMENTS]: 'Paiperless-Trade-Documents',
-      [ApplicationModule.PAIPERLESS_TRADE_FINANCE]: 'Paiperless-Trade-Finance',
-      [ApplicationModule.PAIPERLESS_ADMIN]: 'Paiperless-Admin'
-    };
-
-    const roleMap: Record<ApplicationRole, string> = {
-      [ApplicationRole.AGENT]: 'Agent',
-      [ApplicationRole.SUPERVISOR]: 'Supervisor',
-      [ApplicationRole.MANAGER]: 'Manager',
-    };
-
-    return permissions.map(permission => ({
-      module: moduleMap[permission.module],
-      role: roleMap[permission.role],
-    }));
-  }
-
   async create(createAccountUserDto: CreateAccountUserDto): Promise<AccountUserResponseDto> {
     try {
-      // Transform permissions from DTO format to schema format
-      const transformedPermissions = this.transformPermissionsToSchema(createAccountUserDto.permissions);
-
       const accountUserData: any = {
         accountId: new Types.ObjectId(createAccountUserDto.accountId),
         name: createAccountUserDto.name,
@@ -82,7 +25,7 @@ export class AccountUsersRepository {
         status: createAccountUserDto.status || 'Active',
         authMethod: createAccountUserDto.authMethod,
         mfaEnabled: createAccountUserDto.enableMfa,
-        permissions: transformedPermissions,
+        permissions: createAccountUserDto.permissions,
       };
 
       // Add password-related fields if provided (for email/password auth)
@@ -101,9 +44,6 @@ export class AccountUsersRepository {
       const savedAccountUser = await accountUser.save();
       const accountUserObject = savedAccountUser.toObject();
       
-      // Transform permissions back to DTO format for response
-      const responsePermissions = this.transformPermissionsToDto(accountUserObject.permissions);
-      
       return plainToInstance(AccountUserResponseDto, {
         id: accountUserObject._id.toString(),
         accountId: accountUserObject.accountId.toString(),
@@ -118,7 +58,7 @@ export class AccountUsersRepository {
         passwordChanged: accountUserObject.passwordChanged,
         passwordResetRequired: accountUserObject.passwordResetRequired,
         accountLockedUntil: accountUserObject.accountLockedUntil,
-        permissions: responsePermissions,
+        permissions: accountUserObject.permissions,
         createdAt: accountUserObject.createdAt,
         updatedAt: accountUserObject.updatedAt,
       }, { excludeExtraneousValues: true });
@@ -153,7 +93,7 @@ export class AccountUsersRepository {
       
       // Handle permissions - if provided, transform and include; if not provided, don't touch existing permissions
       if (updateAccountUserDto.permissions !== undefined) {
-        updateData.permissions = this.transformPermissionsToSchema(updateAccountUserDto.permissions);
+        updateData.permissions = updateAccountUserDto.permissions;
       }
 
       const accountUser = await this.accountUserModel.findByIdAndUpdate(
@@ -168,9 +108,6 @@ export class AccountUsersRepository {
 
       const accountUserObject = accountUser.toObject();
 
-      // Transform permissions back to DTO format for response
-      const responsePermissions = this.transformPermissionsToDto(accountUserObject.permissions);
-
       return plainToInstance(AccountUserResponseDto, {
         id: accountUserObject._id.toString(),
         accountId: accountUserObject.accountId.toString(),
@@ -180,7 +117,7 @@ export class AccountUsersRepository {
         status: accountUserObject.status,
         authMethod: accountUserObject.authMethod,
         mfaEnabled: accountUserObject.mfaEnabled,
-        permissions: responsePermissions,
+        permissions: accountUserObject.permissions,
         createdAt: accountUserObject.createdAt,
         updatedAt: accountUserObject.updatedAt,
       }, { excludeExtraneousValues: true });
@@ -261,9 +198,6 @@ export class AccountUsersRepository {
 
       const accountUserObject = accountUser.toObject();
 
-      // Transform permissions back to DTO format for response
-      const responsePermissions = this.transformPermissionsToDto(accountUserObject.permissions);
-
       return plainToInstance(AccountUserResponseDto, {
         id: accountUserObject._id.toString(),
         accountId: accountUserObject.accountId.toString(),
@@ -273,7 +207,7 @@ export class AccountUsersRepository {
         status: accountUserObject.status,
         authMethod: accountUserObject.authMethod,
         mfaEnabled: accountUserObject.mfaEnabled,
-        permissions: responsePermissions,
+        permissions: accountUserObject.permissions,
         createdAt: accountUserObject.createdAt,
         updatedAt: accountUserObject.updatedAt,
       }, { excludeExtraneousValues: true });
@@ -298,9 +232,6 @@ export class AccountUsersRepository {
 
       const accountUserObject = accountUser.toObject();
 
-      // Transform permissions back to DTO format for response
-      const responsePermissions = this.transformPermissionsToDto(accountUserObject.permissions);
-
       return plainToInstance(AccountUserResponseDto, {
         id: accountUserObject._id.toString(),
         accountId: accountUserObject.accountId.toString(),
@@ -310,7 +241,7 @@ export class AccountUsersRepository {
         status: accountUserObject.status,
         authMethod: accountUserObject.authMethod,
         mfaEnabled: accountUserObject.mfaEnabled,
-        permissions: responsePermissions,
+        permissions: accountUserObject.permissions,
         createdAt: accountUserObject.createdAt,
         updatedAt: accountUserObject.updatedAt,
       }, { excludeExtraneousValues: true });
@@ -337,9 +268,6 @@ export class AccountUsersRepository {
 
       const accountUserObject = accountUser.toObject();
 
-      // Transform permissions back to DTO format for response
-      const responsePermissions = this.transformPermissionsToDto(accountUserObject.permissions);
-
       return plainToInstance(AccountUserResponseDto, {
         id: accountUserObject._id.toString(),
         accountId: accountUserObject.accountId.toString(),
@@ -349,7 +277,7 @@ export class AccountUsersRepository {
         status: accountUserObject.status,
         authMethod: accountUserObject.authMethod,
         mfaEnabled: accountUserObject.mfaEnabled,
-        permissions: responsePermissions,
+        permissions: accountUserObject.permissions,
         createdAt: accountUserObject.createdAt,
         updatedAt: accountUserObject.updatedAt,
       }, { excludeExtraneousValues: true });
@@ -376,9 +304,6 @@ export class AccountUsersRepository {
 
       const accountUserObject = accountUser.toObject();
 
-      // Transform permissions back to DTO format for response
-      const responsePermissions = this.transformPermissionsToDto(accountUserObject.permissions);
-
       return plainToInstance(AccountUserResponseDto, {
         id: accountUserObject._id.toString(),
         accountId: accountUserObject.accountId.toString(),
@@ -392,7 +317,7 @@ export class AccountUsersRepository {
         firstLoginAt: accountUserObject.firstLoginAt,
         passwordChanged: accountUserObject.passwordChanged,
         accountLockedUntil: accountUserObject.accountLockedUntil,
-        permissions: responsePermissions,
+        permissions: accountUserObject.permissions,
         createdAt: accountUserObject.createdAt,
         updatedAt: accountUserObject.updatedAt,
       }, { excludeExtraneousValues: true });
@@ -419,9 +344,6 @@ export class AccountUsersRepository {
 
       const accountUserObject = accountUser.toObject();
 
-      // Transform permissions back to DTO format for response
-      const responsePermissions = this.transformPermissionsToDto(accountUserObject.permissions);
-
       // Return raw object with sensitive fields for authentication purposes
       return {
         id: accountUserObject._id.toString(),
@@ -442,7 +364,7 @@ export class AccountUsersRepository {
         passwordHash: accountUserObject.passwordHash,
         mfaSecret: accountUserObject.mfaSecret,
         mfaBackupCodes: accountUserObject.mfaBackupCodes,
-        permissions: responsePermissions,
+        permissions: accountUserObject.permissions,
         createdAt: accountUserObject.createdAt,
         updatedAt: accountUserObject.updatedAt,
       };
@@ -536,12 +458,9 @@ export class AccountUsersRepository {
         .exec();
 
       const data = results.map(result => {
-        // Transform permissions from schema format to DTO format
-        const transformedPermissions = this.transformPermissionsToDto(result.permissions);
-        
         return plainToInstance(AccountUserResponseDto, {
           ...result,
-          permissions: transformedPermissions,
+          permissions: result.permissions,
         }, {
           excludeExtraneousValues: true,
         });
@@ -594,9 +513,6 @@ export class AccountUsersRepository {
 
       const accountUserObject = accountUser.toObject();
 
-      // Transform permissions back to DTO format for response
-      const responsePermissions = this.transformPermissionsToDto(accountUserObject.permissions);
-
       return plainToInstance(AccountUserResponseDto, {
         id: accountUserObject._id.toString(),
         accountId: accountUserObject.accountId.toString(),
@@ -606,7 +522,7 @@ export class AccountUsersRepository {
         status: accountUserObject.status,
         authMethod: accountUserObject.authMethod,
         mfaEnabled: accountUserObject.mfaEnabled,
-        permissions: responsePermissions,
+        permissions: accountUserObject.permissions,
         createdAt: accountUserObject.createdAt,
         updatedAt: accountUserObject.updatedAt,
       }, { excludeExtraneousValues: true });
@@ -635,9 +551,6 @@ export class AccountUsersRepository {
 
       const accountUserObject = accountUser.toObject();
 
-      // Transform permissions from schema format to DTO format
-      const responsePermissions = this.transformPermissionsToDto(accountUserObject.permissions);
-
       return plainToInstance(AccountUserSecurityDetailsDto, {
         id: accountUserObject._id.toString(),
         accountId: accountUserObject.accountId.toString(),
@@ -656,7 +569,7 @@ export class AccountUsersRepository {
         mfaBackupCodes: accountUserObject.mfaBackupCodes,
         mfaSetupRequired: accountUserObject.mfaSetupRequired,
         firstLoginAt: accountUserObject.firstLoginAt,
-        permissions: responsePermissions,
+        permissions: accountUserObject.permissions,
         createdAt: accountUserObject.createdAt,
         updatedAt: accountUserObject.updatedAt,
       }, { excludeExtraneousValues: true });

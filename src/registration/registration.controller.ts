@@ -2,21 +2,30 @@ import {
   Body,
   Controller, FileTypeValidator, Get, Logger, MaxFileSizeValidator, Param,
   ParseFilePipe,
-  Post, Res, UploadedFile,
+  Post, Res, UploadedFile, UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { ApiBody, ApiConsumes, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBody, ApiConsumes, ApiHeader, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { RegistrationService } from './registration.service';
 import { CreateRegistrationDto } from './dtos/create-registration.dto';
 import { GeneralResponseDto } from '../common/common-dto';
 import { UploadRegistrationDocumentDto } from './dtos/upload-registration-document.dto';
 import { RegistrationDetailsDto } from './dtos/registration-details.dto';
-import { TradeDocumentFileVariant } from '../trade-documents/trade-document-file.types';
 import { Response } from 'express';
+import { ApiKeyGuard } from 'src/api-key-auth/api-key.guard';
+import { ClientAccess } from 'src/api-key-auth/decorators/client-access.decorator';
+import { ClientAccessGroup } from 'src/api-key-auth/types/api-key-auth.types';
 
 @ApiTags('Registration')
 @Controller('registration')
+@UseGuards(ApiKeyGuard)
+@ApiHeader({
+  name: 'x-api-key',
+  description: 'The Client Application API Key',
+  example: '47f19331:86382a9cbeaa603325628d29859b10fa6df94385ef792ea340cb1208ab9fdb6e'
+})
+@ClientAccess(ClientAccessGroup.PAIPERLESS_APP)
 export class RegistrationController {
   private readonly logger = new Logger(RegistrationController.name);
   constructor(private readonly registrationService: RegistrationService) {}

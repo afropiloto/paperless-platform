@@ -5,14 +5,13 @@ import {
   HttpStatus,
   Logger,
   Param,
-  ParseIntPipe,
   Post,
   Put,
-  Query,
+  Query, UseGuards,
   ValidationPipe,
 } from '@nestjs/common';
 import {
-  ApiBody,
+  ApiBody, ApiHeader,
   ApiOperation,
   ApiParam,
   ApiQuery,
@@ -28,9 +27,20 @@ import {
 import { DocumentSigningStatus } from './types/document-signing.types';
 import { SearchQueryDto } from 'src/common/dtos/search.dto';
 import { GeneralResponseDto } from '../common/common-dto';
+import { JwtGuard } from 'src/auth/guards/jwt-guard';
+import { ApiKeyGuard } from 'src/api-key-auth/api-key.guard';
+import { ClientAccess } from 'src/api-key-auth/decorators/client-access.decorator';
+import { ClientAccessGroup } from 'src/api-key-auth/types/api-key-auth.types';
 
 @ApiTags('Document Signing')
 @Controller('document-signing')
+@UseGuards(JwtGuard, ApiKeyGuard)
+@ApiHeader({
+  name: 'x-api-key',
+  description: 'The Client Application API Key',
+  example: '47f19331:86382a9cbeaa603325628d29859b10fa6df94385ef792ea340cb1208ab9fdb6e'
+})
+@ClientAccess(ClientAccessGroup.SHARED)
 export class DocumentSigningController {
   private readonly logger = new Logger(DocumentSigningController.name);
 

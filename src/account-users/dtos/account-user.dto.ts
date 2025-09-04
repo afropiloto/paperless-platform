@@ -2,46 +2,27 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Exclude, Expose, Transform, Type } from 'class-transformer';
 import { IsArray, IsEmail, IsEnum, IsMongoId, IsOptional, IsString, ValidateNested, IsBoolean } from 'class-validator';
 import { AccountUserStatus, AuthMethod } from '../schemas';
-import { ApplicationModule, ApplicationRole } from '../schemas';
-import { SearchQueryDto } from '../../common/dtos/search.dto';
+import { SearchQueryDto } from 'src/common/dtos/search.dto';
 import { Optional } from '@nestjs/common';
-
-// Legacy DTO for backward compatibility
-export class ApplicationPermissionsDto {
-  @ApiProperty({ 
-    description: 'Application module', 
-    enum: ApplicationModule 
-  })
-  @IsEnum(ApplicationModule)
-  @Expose()
-  module: ApplicationModule;
-
-  @ApiProperty({ 
-    description: 'User role in the module', 
-    enum: ApplicationRole 
-  })
-  @IsEnum(ApplicationRole)
-  @Expose()
-  role: ApplicationRole;
-}
+import { Role } from 'src/auth/types/auth-roles.types';
 
 // DTO for configurable permissions (matches validation service)
 export class UserPermissionDto {
   @ApiProperty({ 
-    description: 'Application module (e.g., DealDesk, Paiperless)',
-    example: 'DealDesk'
+    description: 'Application module', 
+    example: 'Portal-DealDesk'
   })
   @IsString()
   @Expose()
   module: string;
 
   @ApiProperty({ 
-    description: 'User role (e.g., Agent, Supervisor, Manager)',
-    example: 'Supervisor'
+    description: 'User role in the module', 
+    enum: Role
   })
-  @IsString()
+  @IsEnum(Role)
   @Expose()
-  role: string;
+  role: keyof typeof Role;
 }
 
 // Extended search DTO for account users endpoint

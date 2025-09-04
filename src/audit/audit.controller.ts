@@ -1,13 +1,24 @@
-import { Controller, Get, Logger, Param } from '@nestjs/common';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { Controller, Get, Logger, Param, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth, ApiHeader, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { AuditService } from './audit.service';
-import { AccountDetailsDto } from '../accounts/dtos/accounts.dto';
 import { AuditEventDto } from './dtos/audit-event.dto';
 import { AuditSubject } from './audit-event-type.enum';
+import { JwtGuard } from 'src/auth/guards/jwt-guard';
+import { ApiKeyGuard } from 'src/api-key-auth/api-key.guard';
+import { ClientAccess } from 'src/api-key-auth/decorators/client-access.decorator';
+import { ClientAccessGroup } from 'src/api-key-auth/types/api-key-auth.types';
 
 
 @ApiTags('Audit')
 @Controller('audit')
+@UseGuards(JwtGuard, ApiKeyGuard)
+@ApiHeader({
+  name: 'x-api-key',
+  description: 'The Client Application API Key',
+  example: '47f19331:86382a9cbeaa603325628d29859b10fa6df94385ef792ea340cb1208ab9fdb6e'
+})
+@ClientAccess(ClientAccessGroup.SHARED)
+@ApiBearerAuth()
 export class AuditController {
   private readonly logger = new Logger(AuditController.name);
   constructor(private readonly auditService: AuditService) {

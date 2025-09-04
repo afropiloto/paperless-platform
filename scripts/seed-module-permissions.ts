@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 import * as dotenv from 'dotenv';
 import { ModulePermissions, ModulePermissionsSchema } from '../src/account-users/schemas/module-permissions.schema';
-import { LEGACY_MODULE_PERMISSIONS } from '../src/account-users/config/module-permissions.seed';
+import { MODULE_PERMISSIONS_SEED } from '../src/account-users/config/module-permissions.seed';
 
 dotenv.config();
 
@@ -16,7 +16,7 @@ async function run() {
   await mongoose.connect(MONGO_URI);
   const ModulePermissionsModel = mongoose.model(ModulePermissions.name, ModulePermissionsSchema);
 
-  for (const item of LEGACY_MODULE_PERMISSIONS) {
+  for (const item of MODULE_PERMISSIONS_SEED) {
     await ModulePermissionsModel.updateOne(
       { module: item.module },
       {

@@ -195,7 +195,7 @@ export class MfaService {
     // First try TOTP verification
     if (this.verifyTotp(secret, code)) {
       const response ={ isValid: true, isBackupCode: false };
-      this.logger.debug(response);
+
       return response
     }
 
@@ -217,7 +217,6 @@ export class MfaService {
 
     const globalEnabled = this.isMfaGloballyEnabled();
 
-    this.logger.debug({userMfaEnabled, globalEnabled, mfaRequired: globalEnabled || userMfaEnabled})
     return globalEnabled || userMfaEnabled;
   }
 

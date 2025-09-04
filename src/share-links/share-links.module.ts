@@ -6,6 +6,8 @@ import { ShareLinksRepository } from './share-links.repository';
 import { ShareLink, ShareLinkSchema } from './schemas/share-link.schema';
 import { TradeDocumentsModule } from '../trade-documents/trade-documents.module';
 import { AuditModule } from '../audit/audit.module';
+import { JwtConfigModule } from 'src/jwt/jwt-config.module';
+import { ApiKeyAuthModule } from 'src/api-key-auth/api-key-auth.module';
 
 @Module({
   imports: [
@@ -14,6 +16,8 @@ import { AuditModule } from '../audit/audit.module';
     ]),
     forwardRef(() => TradeDocumentsModule),
     AuditModule,
+    JwtConfigModule,
+    ApiKeyAuthModule,
   ],
   controllers: [ShareLinksController],
   providers: [ShareLinksService, ShareLinksRepository],

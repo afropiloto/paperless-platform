@@ -1,15 +1,16 @@
-import { Module, forwardRef } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { TradeFinanceRepository } from './trade-finance.repository';
 import { TradeFinanceService } from './trade-finance.service';
 import { TradeFinanceController } from './trade-finance.controller';
 import { TradeFinance, TradeFinanceSchema } from './schemas/trade-finance.schema';
 import { TradeDocument, TradeDocumentSchema } from '../trade-documents/schema/trade-document.schema';
-import { DealDeskModule } from '../deal-desk/deal-desk.module';
 import { BullModule } from '@nestjs/bullmq';
 import {
   DealDeskQueues,
 } from '../constants/app.constants';
+import { JwtConfigModule } from 'src/jwt/jwt-config.module';
+import { ApiKeyAuthModule } from 'src/api-key-auth/api-key-auth.module';
 
 @Module({
   imports: [
@@ -18,6 +19,8 @@ import {
     BullModule.registerQueue(
       { name: DealDeskQueues.CUSTOMER_FUNDING_REQUESTS },
     ),
+    JwtConfigModule,
+    ApiKeyAuthModule,
   ],
   controllers: [TradeFinanceController],
   providers: [TradeFinanceRepository, TradeFinanceService],

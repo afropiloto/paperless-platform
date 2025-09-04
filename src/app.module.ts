@@ -18,7 +18,7 @@ import { RegistrationModule } from './registration/registration.module';
 import { VirusScanModule } from './virus-scan/virus-scan.module';
 import { AuthModule } from './auth/auth.module';
 import { SiweModule } from './siwe/siwe.module';
-import { TradeFinanceModule } from './trade-finance/tradeFinanceModule';
+import { TradeFinanceModule } from './trade-finance/tradeFinance.module';
 import { AppController } from './app.controller';
 import { DealDeskModule } from './deal-desk/deal-desk.module';
 import { DueDiligenceChecklistsModule } from './due-diligence-checklists/due-diligence-checklists.module';
@@ -33,6 +33,7 @@ import { DocumentSigningEventsModule } from './document-signing-events/document-
 import { ShareLinksModule } from './share-links/share-links.module';
 import { EmailClientModule } from './email-client/email-client.module';
 import { DataExtractionEventsModule } from './data-extraction-events/data-extraction-events.module';
+import { JwtConfigModule } from './jwt/jwt-config.module';
 
 @Module({
   imports: [
@@ -62,6 +63,7 @@ import { DataExtractionEventsModule } from './data-extraction-events/data-extrac
         }
       },
     }),
+    JwtConfigModule,
     AccountsModule,
     HealthcheckModule,
     TenantModule,

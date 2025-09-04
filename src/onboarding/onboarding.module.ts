@@ -8,6 +8,8 @@ import { DueDiligenceChecklistsModule } from '../due-diligence-checklists/due-di
 import { RegistrationModule } from '../registration/registration.module';
 import { BullModule } from '@nestjs/bullmq';
 import { AccountsQueue } from '../constants/app.constants';
+import { JwtConfigModule } from 'src/jwt/jwt-config.module';
+import { ApiKeyAuthModule } from 'src/api-key-auth/api-key-auth.module';
 
 @Module({
   imports: [
@@ -17,6 +19,8 @@ import { AccountsQueue } from '../constants/app.constants';
     BullModule.registerQueue({name: AccountsQueue.NEW_ACCOUNT_QUEUE}),
     DueDiligenceChecklistsModule,
     RegistrationModule,
+    JwtConfigModule,
+    ApiKeyAuthModule,
   ],
   providers: [OnboardingService, OnboardingRepository],
   controllers: [OnboardingController],

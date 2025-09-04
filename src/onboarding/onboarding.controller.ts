@@ -1,6 +1,6 @@
-import { Body, Controller, Get, HttpStatus, Logger, Param, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, HttpStatus, Logger, Param, Post, Query, UseGuards } from '@nestjs/common';
 import { OnboardingService } from './onboarding.service';
-import { ApiBody, ApiOperation, ApiParam, ApiQuery, ApiResponse } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiHeader, ApiOperation, ApiParam, ApiQuery, ApiResponse } from '@nestjs/swagger';
 import { CreateOnboardingProcessingDto } from './dtos/create-onboarding-processing.dto';
 import {
   OnboardingProcessingResponseDto,
@@ -8,10 +8,21 @@ import {
 } from './dtos/onboarding-processing-response.dto';
 import { OnboardingAnalyticsDto } from './dtos/analytics.dto';
 import { SearchQueryDto } from '../common/dtos/search.dto';
-import { plainToInstance } from 'class-transformer';
 import { UpdateOnboardingDecisionDto } from './dtos/update-onboarding-decision.dto';
+import { JwtGuard } from 'src/auth/guards/jwt-guard';
+import { ApiKeyGuard } from 'src/api-key-auth/api-key.guard';
+import { ClientAccess } from 'src/api-key-auth/decorators/client-access.decorator';
+import { ClientAccessGroup } from 'src/api-key-auth/types/api-key-auth.types';
 
 @Controller('onboarding')
+@UseGuards(JwtGuard, ApiKeyGuard)
+@ApiHeader({
+  name: 'x-api-key',
+  description: 'The Client Application API Key',
+  example: '47f19331:86382a9cbeaa603325628d29859b10fa6df94385ef792ea340cb1208ab9fdb6e'
+})
+@ClientAccess(ClientAccessGroup.PAIPERLESS_PORTAL)
+@ApiBearerAuth()
 export class OnboardingController {
   private readonly logger = new Logger(OnboardingController.name);
   constructor(private readonly onboardingService: OnboardingService) {}

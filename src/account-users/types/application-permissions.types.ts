@@ -29,10 +29,3 @@ export interface UserPermission {
   module: string;
   role: string;
 } 
-
-export interface ModulePermissionsDocumentShape {
-  module: string;
-  description?: string;
-  allowableRoles: Array<{ role: string; description?: string }>;
-  active: boolean;
-}

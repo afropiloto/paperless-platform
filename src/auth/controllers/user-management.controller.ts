@@ -10,13 +10,14 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { 
-  ApiBody, 
-  ApiOperation, 
-  ApiParam, 
-  ApiQuery, 
-  ApiResponse, 
-  ApiTags 
+import {
+  ApiBearerAuth,
+  ApiBody, ApiHeader,
+  ApiOperation,
+  ApiParam,
+  ApiQuery,
+  ApiResponse,
+  ApiTags,
 } from '@nestjs/swagger';
 import { UserManagementService } from '../services/user-management.service';
 import { 
@@ -29,10 +30,20 @@ import {
   BulkCreateResponseDto 
 } from '../dtos/user-management.dto';
 import { JwtGuard } from '../guards/jwt-guard';
+import { ApiKeyGuard } from 'src/api-key-auth/api-key.guard';
+import { ClientAccess } from 'src/api-key-auth/decorators/client-access.decorator';
+import { ClientAccessGroup } from 'src/api-key-auth/types/api-key-auth.types';
 
 @ApiTags('User Management')
 @Controller('auth/users')
-@UseGuards(JwtGuard)
+@UseGuards(JwtGuard, ApiKeyGuard)
+@ApiHeader({
+  name: 'x-api-key',
+  description: 'The Client Application API Key',
+  example: '47f19331:86382a9cbeaa603325628d29859b10fa6df94385ef792ea340cb1208ab9fdb6e'
+})
+@ClientAccess(ClientAccessGroup.SHARED)
+@ApiBearerAuth()
 export class UserManagementController {
   private readonly logger = new Logger(UserManagementController.name);
 

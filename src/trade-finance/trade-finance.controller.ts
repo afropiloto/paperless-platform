@@ -1,6 +1,15 @@
-import { Body, Controller, Delete, Get, Logger, Param, Post, Put, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Logger, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
 import { TradeFinanceService } from './trade-finance.service';
-import { ApiBody, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiHeader,
+  ApiOperation,
+  ApiParam,
+  ApiQuery,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import { CreateTradeFinanceDealDto } from './dtos/create-trade-finance-deal.dto';
 import { TradeFinanceDealDto } from './dtos/trade-finance-deal.dto';
 import { TradeFinanceSearchResultsDto } from './dtos/trade-finance-search-results.dto';
@@ -8,9 +17,21 @@ import { plainToInstance } from 'class-transformer';
 import { SubmitTradeDetailFundingDto } from './dtos/submit-trade-detail-funding.dto';
 import { TradeDetailFundingAction } from './types/trade-finance.types';
 import { SearchQueryDto } from '../common/dtos/search.dto';
+import { JwtGuard } from 'src/auth/guards/jwt-guard';
+import { ApiKeyGuard } from 'src/api-key-auth/api-key.guard';
+import { ClientAccess } from 'src/api-key-auth/decorators/client-access.decorator';
+import { ClientAccessGroup } from 'src/api-key-auth/types/api-key-auth.types';
 
 @ApiTags('Trade Finance')
 @Controller('trade-finance')
+@UseGuards(JwtGuard, ApiKeyGuard)
+@ApiHeader({
+  name: 'x-api-key',
+  description: 'The Client Application API Key',
+  example: '47f19331:86382a9cbeaa603325628d29859b10fa6df94385ef792ea340cb1208ab9fdb6e'
+})
+@ClientAccess(ClientAccessGroup.PAIPERLESS_APP)
+@ApiBearerAuth()
 export class TradeFinanceController {
   private readonly logger = new Logger(TradeFinanceController.name);
 

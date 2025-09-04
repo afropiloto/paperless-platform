@@ -9,7 +9,7 @@ import {
   Post,
   Res,
   NotFoundException,
-  Query,
+  Query, UseGuards,
 } from '@nestjs/common';
 import {
   ApiBody,
@@ -18,6 +18,7 @@ import {
   ApiResponse,
   ApiTags,
   ApiQuery,
+  ApiBearerAuth, ApiHeader,
 } from '@nestjs/swagger';
 import { DealProcessingService } from './deal-processing.service';
 import { ChecklistItemUpdateDto } from '../due-diligence-checklists/dtos/update-checklist.dto';
@@ -36,9 +37,21 @@ import { ChecklistInstanceDto } from '../due-diligence-checklists/dtos/checklist
 import { SearchQueryDto } from '../common/dtos/search.dto';
 import { PromissoryNoteContentDto } from '../trade-documents/dtos/trade-document.dto';
 import { GeneralResponseDto } from '../common/common-dto';
+import { JwtGuard } from 'src/auth/guards/jwt-guard';
+import { ApiKeyGuard } from 'src/api-key-auth/api-key.guard';
+import { ClientAccess } from 'src/api-key-auth/decorators/client-access.decorator';
+import { ClientAccessGroup } from 'src/api-key-auth/types/api-key-auth.types';
 
 @ApiTags('Deal Processing')
 @Controller('deal-processing')
+@UseGuards(JwtGuard, ApiKeyGuard)
+@ApiHeader({
+  name: 'x-api-key',
+  description: 'The Client Application API Key',
+  example: '47f19331:86382a9cbeaa603325628d29859b10fa6df94385ef792ea340cb1208ab9fdb6e'
+})
+@ClientAccess(ClientAccessGroup.PAIPERLESS_PORTAL)
+@ApiBearerAuth()
 export class DealProcessingController {
   private readonly logger = new Logger(DealProcessingController.name);
   constructor(private readonly dealProcessingService: DealProcessingService) {}

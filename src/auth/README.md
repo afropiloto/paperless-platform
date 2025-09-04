@@ -151,23 +151,17 @@ interface UserPermission {
 }
 
 enum Role {
-  Agent = 1,
-  Supervisor = 2,
-  Manager = 3,
+  Agent = 'Agent',
+  Supervisor = 'Supervisor',
+  Manager = 'Manager',
 }
-
-const ROLE_RANK = {
-  Agent: 1,
-  Supervisor: 2,
-  Manager: 3,
-};
 ```
 
 #### How it works
 
 1. Extracts user permissions from `req.user.permissions`
 2. Reads required permissions from the `@UserAccess` decorator metadata
-3. Compares user's role rank against required minimum role for each module
+3. Checks if user has any of the required roles for each required module
 4. Returns `true` if user has sufficient permissions, `false` otherwise
 
 #### Usage Examples
@@ -184,9 +178,9 @@ import { UserAccess } from '../auth/decorators/user-access.decorator';
 export class TradeDocumentsController {
   
   @Get()
-  @UserAccess({ module: 'trade-documents', minRole: 'Agent' })
+  @UserAccess({ module: 'trade-documents', roles: ['Agent', 'Supervisor', 'Manager'] })
   getDocuments() {
-    // Only users with Agent+ role in trade-documents module can access
+    // Only users with Agent, Supervisor, or Manager role in trade-documents module can access
   }
 }
 ```
@@ -195,27 +189,27 @@ export class TradeDocumentsController {
 ```typescript
 @Post()
 @UserAccess(
-  { module: 'trade-documents', minRole: 'Supervisor' },
-  { module: 'compliance', minRole: 'Agent' }
+  { module: 'trade-documents', roles: ['Supervisor', 'Manager'] },
+  { module: 'compliance', roles: ['Agent', 'Supervisor', 'Manager'] }
 )
 createDocument() {
-  // User must have Supervisor+ in trade-documents AND Agent+ in compliance
+  // User must have Supervisor or Manager in trade-documents AND Agent, Supervisor, or Manager in compliance
 }
 ```
 
 **Manager-only endpoint:**
 ```typescript
 @Delete(':id')
-@UserAccess({ module: 'trade-documents', minRole: 'Manager' })
+@UserAccess({ module: 'trade-documents', roles: ['Manager'] })
 deleteDocument() {
   // Only users with Manager role in trade-documents module can access
 }
 ```
 
-**Role hierarchy example:**
+**Role-specific endpoint:**
 ```typescript
 @Get('reports')
-@UserAccess({ module: 'analytics', minRole: 'Supervisor' })
+@UserAccess({ module: 'analytics', roles: ['Supervisor', 'Manager'] })
 getReports() {
   // Users with Supervisor or Manager role can access
   // Agent role users will be denied access
@@ -246,7 +240,7 @@ getUserData(@Req() req) {
 ```typescript
 @Post('admin-action')
 @UseGuards(JwtGuard, UserPermissionGuard)
-@UserAccess({ module: 'administration', minRole: 'Manager' })
+@UserAccess({ module: 'administration', roles: ['Manager'] })
 performAdminAction() {
   // Requires valid JWT + Manager role in administration module
 }
@@ -257,11 +251,11 @@ performAdminAction() {
 @Post('complex-operation')
 @UseGuards(JwtGuard, UserPermissionGuard)
 @UserAccess(
-  { module: 'trade-documents', minRole: 'Supervisor' },
-  { module: 'risk-management', minRole: 'Agent' }
+  { module: 'trade-documents', roles: ['Supervisor', 'Manager'] },
+  { module: 'risk-management', roles: ['Agent', 'Supervisor', 'Manager'] }
 )
 performComplexOperation() {
-  // Requires Supervisor+ in trade-documents AND Agent+ in risk-management
+  // Requires Supervisor or Manager in trade-documents AND Agent, Supervisor, or Manager in risk-management
 }
 ```
 
@@ -291,11 +285,11 @@ The `JwtGuard` must run first to populate `req.user` before the `UserPermissionG
 ### 2. Permission Granularity
 Use specific modules and appropriate role levels:
 ```typescript
-// Good - specific module and role
-@UserAccess({ module: 'trade-documents', minRole: 'Supervisor' })
+// Good - specific module and roles
+@UserAccess({ module: 'trade-documents', roles: ['Supervisor', 'Manager'] })
 
 // Avoid - too broad
-@UserAccess({ module: '*', minRole: 'Manager' })
+@UserAccess({ module: '*', roles: ['Manager'] })
 ```
 
 ### 3. Service Layer Security
@@ -426,7 +420,7 @@ JwtModule.registerAsync({
 3. **Permission Validation**: Always validate permissions server-side
 4. **Account Isolation**: Use `accountId` to prevent cross-account access
 5. **Audit Logging**: All authentication events are logged for audit purposes
-6. **Role Hierarchy**: Higher roles inherit permissions from lower roles
+6. **Cumulative Roles**: Users can have multiple roles for a module, each providing specific permissions
 7. **Module Isolation**: Permissions are scoped to specific modules
 
 ## Module Structure
@@ -469,7 +463,7 @@ getDocuments() { }
 
 // After
 @UseGuards(JwtGuard, UserPermissionGuard)
-@UserAccess({ module: 'trade-documents', minRole: 'Agent' })
+@UserAccess({ module: 'trade-documents', roles: ['Agent', 'Supervisor', 'Manager'] })
 @Get()
 getDocuments() { }
 ```

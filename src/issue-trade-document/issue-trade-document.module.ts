@@ -18,6 +18,8 @@ import { FinaliseIssueProcessor } from './processors/finalise-issue.processor';
 import { FileStorageModule } from '../file-storage/file-storage.module';
 import { TradeTrustModule } from '../trade-trust/trade-trust.module';
 import { AccountsModule } from '../accounts/accounts.module';
+import { JwtConfigModule } from 'src/jwt/jwt-config.module';
+import { ApiKeyAuthModule } from 'src/api-key-auth/api-key-auth.module';
 
 
 @Module({
@@ -39,7 +41,9 @@ import { AccountsModule } from '../accounts/accounts.module';
     FileStorageModule,
     TradeDocumentsModule,
     TradeTrustModule,
-    AccountsModule
+    AccountsModule,
+    JwtConfigModule,
+    ApiKeyAuthModule
   ],
   controllers: [IssueTradeDocumentController],
   providers: [

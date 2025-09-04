@@ -8,6 +8,8 @@ import { Registration, RegistrationSchema } from './schemas/registration.schema'
 import { AccountsModule } from '../accounts/accounts.module';
 import { BullModule } from '@nestjs/bullmq';
 import { OnboardingQueues } from '../constants/app.constants';
+import { JwtConfigModule } from 'src/jwt/jwt-config.module';
+import { ApiKeyAuthModule } from 'src/api-key-auth/api-key-auth.module';
 
 @Module({
   imports:[
@@ -15,6 +17,8 @@ import { OnboardingQueues } from '../constants/app.constants';
     BullModule.registerQueue({name: OnboardingQueues.NEW_ONBOARDING_REQUESTS}),
     FileStorageModule,
     AccountsModule,
+    JwtConfigModule,
+    ApiKeyAuthModule,
 
   ],
   providers: [RegistrationService, RegistrationRepository],

@@ -27,6 +27,7 @@ import { MfaDisableResponseDto, RegenerateBackupCodesResponseDto } from './dtos/
 import { MfaVerifySetupResponseDto } from './dtos/mfa-setup.dto';
 import { EmailQueueService } from '../email-events/email-queue.service';
 import { ForcedPasswordResetDto } from './dtos/forced-password-reset.dto';
+import { filterUserPermissionsByClientApplication } from 'src/utils/permissions-utils';
 
 @Injectable()
 export class AuthService {
@@ -127,7 +128,7 @@ export class AuthService {
     }
   }
 
-  async loginWithEmailPassword(loginDto: EmailPasswordLoginDto): Promise<AuthResponseDto> {
+  async loginWithEmailPassword(loginDto: EmailPasswordLoginDto, clientName: string): Promise<AuthResponseDto> {
     const { email, password } = loginDto;
 
     // Find user by email (including sensitive fields for auth)
@@ -142,7 +143,6 @@ export class AuthService {
       this.logger.warn('Account locked for email', { email, lockedUntil: user.accountLockedUntil });
       throw new UnauthorizedException('Account is locked. Please try again later.');
     }
-    this.logger.debug({user})
     // Validate password
     const passwordHash = user.passwordHash;
     if (!passwordHash || !(await this.passwordService.comparePassword(password, passwordHash))) {
@@ -211,12 +211,14 @@ export class AuthService {
       });
     }
 
+    const permissions = filterUserPermissionsByClientApplication(user.permissions, clientName.toLowerCase());
+
     // Prepare JWT payload
     const jwtPayload: JwtPayload = {
       accountId: user.accountId,
       userId: user.id,
       walletAddress: user.walletAddress,
-      permissions: user.permissions,
+      permissions: permissions,
     };
 
     // Generate tokens

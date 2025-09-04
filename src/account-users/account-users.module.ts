@@ -13,6 +13,7 @@ import { ModulePermissionsController } from './controllers/module-permissions.co
 import { ApiKeyAuthModule } from '../api-key-auth/api-key-auth.module';
 import { AccountsModule } from '../accounts/accounts.module';
 import { PasswordModule } from '../auth/password.module';
+import { JwtConfigModule } from 'src/jwt/jwt-config.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { PasswordModule } from '../auth/password.module';
     ApiKeyAuthModule,
     forwardRef(() => AccountsModule),
     PasswordModule,
+    JwtConfigModule,
   ],
   providers: [
     AccountUsersService,

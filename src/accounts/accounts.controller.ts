@@ -6,9 +6,9 @@ import {
   Param,
   Patch,
   Post,
-  Query,
+  Query, UseGuards,
 } from '@nestjs/common';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiHeader, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import {
   AccountCreationDto,
   AccountDetailsDto,
@@ -18,14 +18,26 @@ import {
 import { AccountsService } from './accounts.service';
 import { SearchQueryDto } from '../common/dtos/search.dto';
 import { ACCOUNT_SUMMARY_INCLUDE_FIELDS } from './accounts.constants';
+import { JwtGuard } from 'src/auth/guards/jwt-guard';
+import { ApiKeyGuard } from 'src/api-key-auth/api-key.guard';
+import { ClientAccess } from 'src/api-key-auth/decorators/client-access.decorator';
+import { ClientAccessGroup } from 'src/api-key-auth/types/api-key-auth.types';
 
 @ApiTags('Accounts')
 @Controller('accounts')
+@UseGuards(JwtGuard, ApiKeyGuard)
+@ApiHeader({
+  name: 'x-api-key',
+  description: 'The Client Application API Key',
+  example: '47f19331:86382a9cbeaa603325628d29859b10fa6df94385ef792ea340cb1208ab9fdb6e'
+})
+@ApiBearerAuth()
 export class AccountsController {
   private readonly logger = new Logger(AccountsController.name);
   constructor(private readonly accountsService: AccountsService) {}
 
   @Get(':accountId')
+  @ClientAccess(ClientAccessGroup.SHARED)
   @ApiOperation({
     summary: 'Retrieves account details by the Account ID',
   })
@@ -42,6 +54,7 @@ export class AccountsController {
   }
 
   @Get()
+  @ClientAccess(ClientAccessGroup.SHARED)
   @ApiOperation({
     summary: 'Retrieves the list of account details',
   })
@@ -61,6 +74,7 @@ export class AccountsController {
   }
 
   @Post()
+  @ClientAccess(ClientAccessGroup.PAIPERLESS_PORTAL)
   @ApiResponse({ status: 201, description: 'Account created successfully' })
   @ApiResponse({
     status: 400,
@@ -77,6 +91,7 @@ export class AccountsController {
   }
 
   @Patch(':id')
+  @ClientAccess(ClientAccessGroup.SHARED)
   @ApiResponse({ status: 200, description: 'Account updated successfully' })
   @ApiResponse({
     status: 400,
@@ -95,6 +110,7 @@ export class AccountsController {
   }
 
   @Patch(':id/status')
+  @ClientAccess(ClientAccessGroup.PAIPERLESS_PORTAL)
   @ApiResponse({
     status: 200,
     description: 'Account status updated successfully',

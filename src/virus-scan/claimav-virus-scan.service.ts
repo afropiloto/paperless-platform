@@ -19,8 +19,7 @@ export class ClamAvVirusScanService implements VirusScanService {
 
   }
 
-
-  async shallowScan(buffer: Buffer): Promise<void> {
+  async scanNow(buffer: Buffer): Promise<void> {
     const stream = Readable.from(buffer);
 
     return new Promise((resolve, reject) => {
@@ -38,7 +37,7 @@ export class ClamAvVirusScanService implements VirusScanService {
     })
   }
 
-  async queueDeepScan(fileId: string, filePathOrUrl: string): Promise<void> {
+  async queueScan(fileId: string, filePathOrUrl: string): Promise<void> {
     await this.virusScanQueue.add('deep-scan', {
       fileId,
       filePathOrUrl,

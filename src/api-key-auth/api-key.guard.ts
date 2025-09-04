@@ -13,10 +13,16 @@ export class ApiKeyGuard implements CanActivate {
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const req = context.switchToHttp().getRequest();
     const rawHeader = req.headers['x-api-key'];
-    if (!rawHeader || typeof rawHeader !== 'string') return false;
+    if (!rawHeader || typeof rawHeader !== 'string') {
+      this.logger.warn({message:"No Client Access Key provided for request"});
+      return false;
+    }
 
     const [keyId, rawKey] = rawHeader.split(':');
-    if (!keyId || !rawKey) return false;
+    if (!keyId || !rawKey) {
+      this.logger.warn({message:`Invalid format for Client Access Key provided for request`, rawHeader});
+      return false;
+    }
 
     const requiredGroups =
       this.reflector.getAllAndOverride<string[]>('accessGroups', [
@@ -25,12 +31,17 @@ export class ApiKeyGuard implements CanActivate {
       ]) ?? [];
 
     const client = await this.apiKeyService.validateApiKey(keyId, rawKey);
-    if (!client) return false;
+
+    if (!client) {
+      this.logger.warn({message:"Provided access key does not validate", keyId, rawKey})
+      return false;
+    }
 
     const hasAccess =
       requiredGroups.length === 0 ||
       requiredGroups.some((g) => client.accessGroups.includes(g));
 
+    this.logger.debug({hasAccess, requiredGroups, clientAccessGroups: client.accessGroups});
     if (hasAccess) req.client ={ ...client, originator: client.name};
     return hasAccess;
   }

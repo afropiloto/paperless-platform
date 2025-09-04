@@ -6,9 +6,10 @@ import {
   Param,
   Post,
   Query,
-  Res,
+  Res, UseGuards,
 } from '@nestjs/common';
 import {
+  ApiBearerAuth, ApiHeader,
   ApiOperation,
   ApiQuery,
   ApiResponse,
@@ -25,6 +26,10 @@ import { GeneralResponseDto } from '../common/common-dto';
 import { plainToInstance } from 'class-transformer';
 import { Response } from 'express';
 import { TradeDocumentFileVariant } from '../trade-documents/trade-document-file.types';
+import { JwtGuard } from 'src/auth/guards/jwt-guard';
+import { ApiKeyGuard } from 'src/api-key-auth/api-key.guard';
+import { ClientAccess } from 'src/api-key-auth/decorators/client-access.decorator';
+import { ClientAccessGroup } from 'src/api-key-auth/types/api-key-auth.types';
 
 @ApiTags('Share Links')
 @Controller('share-links')
@@ -32,6 +37,14 @@ export class ShareLinksController {
   constructor(private readonly shareLinksService: ShareLinksService) {}
 
   @Post(':accountId/:documentId')
+  @UseGuards(JwtGuard, ApiKeyGuard)
+  @ApiHeader({
+    name: 'x-api-key',
+    description: 'The Client Application API Key',
+    example: '47f19331:86382a9cbeaa603325628d29859b10fa6df94385ef792ea340cb1208ab9fdb6e'
+  })
+  @ClientAccess(ClientAccessGroup.PAIPERLESS_APP)
+  @ApiBearerAuth()
   @ApiOperation({
     summary: 'Creates a secure share link for a trade document',
     description:
@@ -152,6 +165,14 @@ export class ShareLinksController {
   }
 
   @Delete(':linkId')
+  @UseGuards(JwtGuard, ApiKeyGuard)
+  @ApiHeader({
+    name: 'x-api-key',
+    description: 'The Client Application API Key',
+    example: '47f19331:86382a9cbeaa603325628d29859b10fa6df94385ef792ea340cb1208ab9fdb6e'
+  })
+  @ClientAccess(ClientAccessGroup.PAIPERLESS_APP)
+  @ApiBearerAuth()
   @ApiOperation({
     summary: 'Delete a share link',
     description: 'Deletes a share link. Only the account owner can delete their share links.',
@@ -184,6 +205,14 @@ export class ShareLinksController {
   }
 
   @Get(':documentId')
+  @UseGuards(JwtGuard, ApiKeyGuard)
+  @ApiHeader({
+    name: 'x-api-key',
+    description: 'The Client Application API Key',
+    example: '47f19331:86382a9cbeaa603325628d29859b10fa6df94385ef792ea340cb1208ab9fdb6e'
+  })
+  @ClientAccess(ClientAccessGroup.PAIPERLESS_APP)
+  @ApiBearerAuth()
   @ApiOperation({
     summary: 'Get all share links for a document',
     description: 'Retrieves all active share links for a specific trade document.',
@@ -210,6 +239,8 @@ export class ShareLinksController {
   }
 
   @Get(':linkId/details')
+  @UseGuards(JwtGuard)
+  @ApiBearerAuth()
   @ApiOperation({
     summary: 'Get detailed information about a share link',
     description: 'Retrieves detailed information about a specific share link including access history.',

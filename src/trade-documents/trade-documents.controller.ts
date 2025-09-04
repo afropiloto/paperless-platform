@@ -13,12 +13,13 @@ import {
   Put,
   Query,
   Res,
-  UploadedFile,
+  UploadedFile, UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import {
+  ApiBearerAuth,
   ApiBody,
-  ApiConsumes,
+  ApiConsumes, ApiHeader,
   ApiOperation,
   ApiQuery,
   ApiResponse,
@@ -39,9 +40,21 @@ import { TradeDocumentFileVariant } from './trade-document-file.types';
 import { Response } from 'express';
 import { plainToInstance } from 'class-transformer';
 import { SearchQueryDto } from '../common/dtos/search.dto';
+import { JwtGuard } from 'src/auth/guards/jwt-guard';
+import { ApiKeyGuard } from 'src/api-key-auth/api-key.guard';
+import { ClientAccess } from 'src/api-key-auth/decorators/client-access.decorator';
+import { ClientAccessGroup } from 'src/api-key-auth/types/api-key-auth.types';
 
 @ApiTags('Trade Documents')
 @Controller('trade-documents')
+@UseGuards(JwtGuard, ApiKeyGuard)
+@ApiHeader({
+  name: 'x-api-key',
+  description: 'The Client Application API Key',
+  example: '47f19331:86382a9cbeaa603325628d29859b10fa6df94385ef792ea340cb1208ab9fdb6e'
+})
+@ClientAccess(ClientAccessGroup.PAIPERLESS_APP)
+@ApiBearerAuth()
 export class TradeDocumentsController {
   private readonly logger = new Logger(TradeDocumentsController.name);
   constructor(

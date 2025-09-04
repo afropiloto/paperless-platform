@@ -8,6 +8,8 @@ import { DATA_EXTRACTION_QUEUE_NAME } from '../constants/app.constants';
 import { TradeDocumentsRepository } from './trade-documents.repository';
 import { AccountsModule } from '../accounts/accounts.module';
 import { FileStorageModule } from '../file-storage/file-storage.module';
+import { JwtConfigModule } from 'src/jwt/jwt-config.module';
+import { ApiKeyAuthModule } from 'src/api-key-auth/api-key-auth.module';
 
 @Module({
   imports: [
@@ -15,6 +17,8 @@ import { FileStorageModule } from '../file-storage/file-storage.module';
     BullModule.registerQueue({name: DATA_EXTRACTION_QUEUE_NAME}),
     AccountsModule,
     FileStorageModule,
+    JwtConfigModule,
+    ApiKeyAuthModule,
   ],
   controllers: [TradeDocumentsController],
   providers: [TradeDocumentsService, TradeDocumentsRepository],

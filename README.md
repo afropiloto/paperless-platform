@@ -3,14 +3,9 @@
 # Todo:
 1. Setup ai.paiperless.com with dns-txt record for identify verification
 2. Migrate data extraction to extend.ai
-   - Need to setup and test the processors on extend.ai
-3. Document signing
-   - Need to test the document signing cron job is working as we expect
-4. Application Permissions
-   - Need to introduce the idea of modules being platform-only to ensure that modules such as Deal Desk are not assigned to customers. Customers should access Paiperless/Trade Documents and/or Finance
-   - This needs the API to be updated so that if it's not the Paiperless account we don't return the platform-only modules and permissions
-   - Convert Paiperless module into Trade-Documents module and add Finance module
-   - Ensure we define the allowable combinations
+   - Need to set-up and test the processors on extend.ai
+3. Build Tests for each module
+4. End-to-End Testing
 
 ## Seeding Module Permissions
 You can seed the module-permissions collection with the predefined combinations.
@@ -31,12 +26,7 @@ npm run script:seed-module-permissions
 - **Customize**
   - Edit `src/account-users/config/module-permissions.seed.ts` to add/remove modules or roles, tweak descriptions, or toggle `active`.
 
-- **Alternative: migrate from legacy combinations**
-  - If you want to populate using the combinations from the legacy validation logic, run:
-```bash
-npm run script:migrate-valid-combinations
-```
-  - This will read the current combinations and upsert matching module-permission documents.
+
 5. Security
    * Need to add setup API Key guards on endpoints
    * Need to add JWT guard to controllers
@@ -174,7 +164,7 @@ If there is no API key provided. not recognised or the provided key is valid but
 @Controller('finance')
 export class FinanceController {
   @Get('review')
-  @ClientAccess('paiperless-portal', 'internal-only') // Only Paiperless or Portal can access
+  @ClientAccess('paiperless-portal', 'paiperless') // Only Paiperless or Portal can access
   reviewStuff(@Req() req) {
     return `Welcome ${req.user.name}, your level grants access to review.`;
   }
@@ -189,7 +179,7 @@ Keys for client applications can be generated using the CLI script
 Where `<clientName>` is the name given to the application for identification purposes (for example `paiperless`) and `<groups>` is a space delimited list of application groups.
 Example Usage:
 ```bash
-npx run script:generate-api-key "paiperless-portal" shared internal-only paiperless-portal-only
+pnpm run script:generate-api-key "paiperless-portal" shared paiperless-app paiperless-portal
 ```
 This will generate output similar to the following:
 ```bash
@@ -212,26 +202,25 @@ The Permissions define the modules that the user account has access to and what 
 2. __Supervisor__ - represents an operational role that can perform tasks that involve costs. For example, on Paiperless a Supervisor can  A Supervisor can Issue Trade Documents and Request Funding.
 3. __Manager__ - represents an administrative role that can perform administrative tasks on the account. For example, on Paiperless a Manager can update the Account Details and add/remove user accounts.
 
-In the current implementation, the roles are hierarchical so a Supervisor is an Agent and a Supervisor.
+In the current implementation, the roles are cumulative so a user may have both the Agent and Supervisor roles for a module.
 
 A module isn't strictly an application, for Paiperless App, we have the Trade Documents module and the Finance Module which can be assigned to different users.
 User Permissions are managed within the Paiperless application (for customer accounts) and within the Paiperless Portal for Paiperless accounts.
-
 When a user logs in, their permissions are retrieved and stored in the JWT token. This allows client applications to make decisions about which features to they can access.
 However, to enforce this we check these permissions at request time. 
 
 We configure endpoints with User Permission checks using Guards and decorators. 
-* The `JwtAuthGuard` enforces that a JWT token must be provided
+* The `JwtGuard` enforces that a JWT token must be provided
 * The `UserPermissionGuard` enforces that user permissions should be checked.
-* The `@UserAccess()` decorator is used to specify the module and role that the user must have in order to access the endpoint
+* The `@UserAccess()` decorator is used to specify the module and roles that the user must have in order to access the endpoint
 
 For example:
 ```typescript
-@UseGuards(JwtAuthGuard, UserPermissionGuard)
+@UseGuards(JwtGuard, UserPermissionGuard)
 @Controller('finance')
 export class FinanceController {
   @Get('review')
-  @UserAccess({ module: 'Finance', minRole: 'Supervisor' }) // Supervisor or Manager
+  @UserAccess({ module: 'Finance', roles: ['Supervisor', 'Manager'] }) // Supervisor or Manager
   reviewStuff(@Req() req) {
     return `Welcome ${req.user.name}, your level grants access to review.`;
   }
