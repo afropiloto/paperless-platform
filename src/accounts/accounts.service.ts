@@ -87,6 +87,22 @@ export class AccountsService {
     return this.accountsRepository.findByWalletAddress(walletAddress);
   }
 
+  async findByCompanyName(companyName: string) {
+    return this.accountsRepository.findByCompanyName(companyName);
+  }
+
+  async findContactsByEmail(email: string) {
+    return this.accountsRepository.findContactsByEmail(email);
+  }
+
+  async findUsersByEmail(email: string) {
+    return this.accountsRepository.findUsersByEmail(email);
+  }
+
+  async findUsersByWalletAddress(walletAddress: string) {
+    return this.accountsRepository.findUsersByWalletAddress(walletAddress);
+  }
+
   searchAccounts(searchParams: SearchQueryDto, includes: string[]) {
     return this.accountsRepository.findAccounts(searchParams, includes);
   }

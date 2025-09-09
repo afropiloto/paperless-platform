@@ -1,7 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { ChecklistItemStatus } from '../../deal-desk/types/deal-desk.types';
 import { Type } from 'class-transformer';
-import { DueDiligenceChecklistType } from '../types/due-diligence-checklists.types';
+import { DueDiligenceChecklistType, CheckType } from '../types/due-diligence-checklists.types';
 import { NoteEntry } from '../../common/schemas/note-entry.schema';
 
 @Schema({ timestamps: false, _id: false })
@@ -15,6 +15,13 @@ export class ChecklistItem {
     default: ChecklistItemStatus.NOT_STARTED,
   })
   status: ChecklistItemStatus;
+
+  @Prop({
+    type: String,
+    enum: CheckType,
+    required: true,
+  })
+  checkType: CheckType;
 
   @Prop({ type: [NoteEntry], default: [] })
   @Type(() => NoteEntry)

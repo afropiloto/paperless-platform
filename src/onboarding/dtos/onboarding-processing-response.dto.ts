@@ -1,11 +1,10 @@
 import { Exclude, Expose, Transform, Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEnum, IsString } from 'class-validator';
-import { ChecklistInstanceDto } from '../../due-diligence-checklists/dtos/checklist-instance.dto';
-import { TradeDocumentFileDTO } from '../../trade-documents/dtos/trade-document-file.dto';
-import { SearchResultsMetadata } from '../../common/dtos/search.dto';
+import { ChecklistInstanceDto } from 'src/due-diligence-checklists/dtos/checklist-instance.dto';
+import { SearchResultsMetadata } from 'src/common/dtos/search.dto';
 
-import { NoteResponseDto } from '../../common/dto/note-response.dto';
+import { NoteResponseDto } from 'src/common/dto/note-response.dto';
 import { OnboardingDecision, OnboardingStatus } from '../types/onboarding.types';
 
 export enum PromissoryNoteState {

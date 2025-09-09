@@ -16,6 +16,7 @@ export enum ChecklistItemStatus {
   IN_PROGRESS = 'IN_PROGRESS',
   ADVERSE = 'ADVERSE',
   SATISFACTORY = 'SATISFACTORY',
+  CRITICAL='CRITICAL'
 }
 
 export enum FundingDecisionType {

@@ -32,6 +32,9 @@ export class OnboardingProcessing extends Document {
   @Prop()
   dueDiligenceChecklistId: string;
 
+  @Prop()
+  onboardingChecksChecklistId: string;
+
   @Prop({
     type: OnboardingDecisionDetails,
   })

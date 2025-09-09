@@ -85,4 +85,12 @@ export class RegistrationService {
       }
     };
   }
+
+  async findByCompanyName(companyName: string, options?: { excludeStatuses?: string[] }): Promise<RegistrationDetailsDto[]> {
+    return this.registrationRepository.findByCompanyName(companyName, options);
+  }
+
+  async findByWalletAddress(walletAddress: string, options?: { excludeStatuses?: string[] }): Promise<RegistrationDetailsDto[]> {
+    return this.registrationRepository.findByWalletAddress(walletAddress, options);
+  }
 }

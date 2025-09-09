@@ -1,5 +1,6 @@
 import { Exclude, Expose, Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
+import { CheckType } from '../types/due-diligence-checklists.types';
 
 @Exclude()
 export class ChecklistItemResponseDto {
@@ -16,6 +17,30 @@ export class ChecklistItemResponseDto {
   })
   @Expose()
   guidance: string;
+
+  @ApiProperty({
+    description: 'Type of checklist item (manual or automated)',
+    enum: CheckType,
+    example: CheckType.MANUAL
+  })
+  @Expose()
+  checkType: CheckType;
+
+  @ApiProperty({
+    description: 'Event type for automated checks',
+    example: 'ONBOARDING_CHECK_EMAIL_UNIQUENESS',
+    required: false
+  })
+  @Expose()
+  eventType?: string;
+
+  @ApiProperty({
+    description: 'Configuration for automated checks',
+    example: { timeout: 30000, retryAttempts: 3 },
+    required: false
+  })
+  @Expose()
+  checkConfig?: Record<string, any>;
 }
 
 @Exclude()

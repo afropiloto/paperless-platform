@@ -56,6 +56,7 @@ export enum DealDeskEvents {
 
 export enum OnboardingQueues {
   NEW_ONBOARDING_REQUESTS="new-onboarding-request-queue",
+  ONBOARDING_CHECKS="onboarding-checks-queue",
 }
 
 export enum OnboardingEvents {

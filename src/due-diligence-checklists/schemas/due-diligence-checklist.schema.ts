@@ -1,6 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
-import { DueDiligenceChecklistType } from '../types/due-diligence-checklists.types';
+import { DueDiligenceChecklistType, CheckType } from '../types/due-diligence-checklists.types';
 
 @Schema({_id: false, timestamps: false})
 export class ChecklistItem {
@@ -9,6 +9,19 @@ export class ChecklistItem {
 
   @Prop({ required: true })
   guidance: string;
+
+  @Prop({ 
+    type: String, 
+    enum: CheckType, 
+    default: CheckType.MANUAL 
+  })
+  checkType: CheckType;
+
+  @Prop({ required: false })
+  eventType?: string;
+
+  @Prop({ type: Object, required: false })
+  checkConfig?: Record<string, any>;
 }
 
 export const ChecklistItemSchema = SchemaFactory.createForClass(ChecklistItem);

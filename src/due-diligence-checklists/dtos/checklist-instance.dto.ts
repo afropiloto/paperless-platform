@@ -1,6 +1,6 @@
 import { Exclude, Expose, Transform, Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
-import { DueDiligenceChecklistType } from '../types/due-diligence-checklists.types';
+import { DueDiligenceChecklistType, CheckType } from '../types/due-diligence-checklists.types';
 
 @Exclude()
 export class NoteDto {
@@ -37,11 +37,19 @@ export class ChecklistItemInstanceDto {
 
   @ApiProperty({
     description: 'Current status of the checklist item',
-    enum: ['Not Started', 'In Progress', 'Adverse', 'Satisfactory'],
+    enum: ['Not Started', 'In Progress', 'Adverse', 'Satisfactory', 'Critical'],
     example: 'Satisfactory'
   })
   @Expose()
   status: string;
+
+  @ApiProperty({
+    description: 'Type of checklist item (manual or automated)',
+    enum: CheckType,
+    example: CheckType.MANUAL
+  })
+  @Expose()
+  checkType: CheckType;
 
   @ApiProperty({
     description: 'Notes added to this checklist item',

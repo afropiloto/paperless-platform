@@ -145,4 +145,48 @@ export class AccountsRepository {
     }
 
   }
+
+  async findByCompanyName(companyName: string): Promise<AccountDetailsDto[]> {
+    const accounts = await this.accountModel.find({ 
+      'company.name': { $regex: new RegExp(companyName, 'i') } 
+    }).lean().exec();
+    
+    return accounts.map(account => {
+      const transformedObject = {
+        id: account._id,
+        ...account
+      };
+      return plainToInstance(AccountDetailsDto, transformedObject, { 
+        excludeExtraneousValues: true 
+      });
+    });
+  }
+
+  async findContactsByEmail(email: string): Promise<AccountDetailsDto[]> {
+    const accounts = await this.accountModel.find({ 
+      'contact.emailAddress': { $regex: new RegExp(email, 'i') } 
+    }).lean().exec();
+    
+    return accounts.map(account => {
+      const transformedObject = {
+        id: account._id,
+        ...account
+      };
+      return plainToInstance(AccountDetailsDto, transformedObject, { 
+        excludeExtraneousValues: true 
+      });
+    });
+  }
+
+  async findUsersByEmail(email: string): Promise<AccountDetailsDto[]> {
+    // This would need to be implemented based on the account-users relationship
+    // For now, returning empty array as we need to understand the relationship structure
+    return [];
+  }
+
+  async findUsersByWalletAddress(walletAddress: string): Promise<AccountDetailsDto[]> {
+    // This would need to be implemented based on the account-users relationship
+    // For now, returning empty array as we need to understand the relationship structure
+    return [];
+  }
 }

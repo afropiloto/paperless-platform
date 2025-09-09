@@ -15,6 +15,7 @@ export interface NewOnboardingRequestDto {
   registrationId: string;
   status: OnboardingStatus,
   dueDiligenceChecklistId: string
+  onboardingChecksChecklistId?: string;
   onboardingDecision: {
     decision: OnboardingDecision;
   },

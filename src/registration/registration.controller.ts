@@ -25,7 +25,7 @@ import { ClientAccessGroup } from 'src/api-key-auth/types/api-key-auth.types';
   description: 'The Client Application API Key',
   example: '47f19331:86382a9cbeaa603325628d29859b10fa6df94385ef792ea340cb1208ab9fdb6e'
 })
-@ClientAccess(ClientAccessGroup.PAIPERLESS_APP)
+@ClientAccess(ClientAccessGroup.PAIPERLESS_APP, ClientAccessGroup.PAIPERLESS_PORTAL)
 export class RegistrationController {
   private readonly logger = new Logger(RegistrationController.name);
   constructor(private readonly registrationService: RegistrationService) {}

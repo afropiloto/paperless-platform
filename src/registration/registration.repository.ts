@@ -61,4 +61,31 @@ export class RegistrationRepository {
     if (registrationFileDetails.length !== 1) {throw new NotFoundException('Registration File not found');}
     return registrationFileDetails ? plainToInstance(RegistrationDocumentDetails, registrationFileDetails[0]) : null
   }
+
+  async findByCompanyName(companyName: string, options?: { excludeStatuses?: string[] }): Promise<RegistrationDetailsDto[]> {
+    const query: any = { 'company.name': { $regex: new RegExp(companyName, 'i') } };
+    
+    if (options?.excludeStatuses && options.excludeStatuses.length > 0) {
+      query.status = { $nin: options.excludeStatuses };
+    }
+
+    const registrations = await this.registrationModel.find(query).lean().exec();
+    return registrations.map(registration => 
+      plainToInstance(RegistrationDetailsDto, registration)
+    );
+  }
+
+  async findByWalletAddress(walletAddress: string, options?: { excludeStatuses?: string[] }): Promise<RegistrationDetailsDto[]> {
+    const query: any = { 'company.accountWalletAddress': walletAddress };
+    
+    if (options?.excludeStatuses && options.excludeStatuses.length > 0) {
+      query.status = { $nin: options.excludeStatuses };
+    }
+
+    const registrations = await this.registrationModel.find(query).lean().exec();
+    return registrations.map(registration => 
+      plainToInstance(RegistrationDetailsDto, registration)
+    );
+  }
+
 }

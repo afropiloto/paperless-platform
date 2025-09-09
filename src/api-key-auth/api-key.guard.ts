@@ -41,7 +41,6 @@ export class ApiKeyGuard implements CanActivate {
       requiredGroups.length === 0 ||
       requiredGroups.some((g) => client.accessGroups.includes(g));
 
-    this.logger.debug({hasAccess, requiredGroups, clientAccessGroups: client.accessGroups});
     if (hasAccess) req.client ={ ...client, originator: client.name};
     return hasAccess;
   }

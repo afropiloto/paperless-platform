@@ -3,7 +3,7 @@ import { ApiBearerAuth, ApiBody, ApiHeader, ApiOperation, ApiParam, ApiResponse,
 
 import { CreateChecklistDto } from './dtos/create-checklist.dto';
 import { DueDiligenceChecklistsService } from './due-diligence-checklists.service';
-import { DueDiligenceChecklistType } from './types/due-diligence-checklists.types';
+import { DueDiligenceChecklistType, ChecklistUpdateOriginator } from './types/due-diligence-checklists.types';
 import { ChecklistItemUpdateDto } from './dtos/update-checklist.dto';
 import { ChecklistInstanceDto } from './dtos/checklist-instance.dto';
 import { ChecklistResponseDto } from './dtos/checklist-response.dto';
@@ -150,6 +150,7 @@ export class DueDiligenceChecklistsController {
     return await this.checklistService.updateChecklistInstance(
       id,
       updates,
+      ChecklistUpdateOriginator.MANUAL
     );
   }
 }

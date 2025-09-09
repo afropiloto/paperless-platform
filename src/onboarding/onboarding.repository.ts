@@ -298,4 +298,22 @@ export class OnboardingRepository {
     if (!result) {return null}
     return plainToInstance(OnboardingProcessing, result);
   }
+
+  async update(id: string, updates: Partial<NewOnboardingRequestDto>): Promise<OnboardingProcessingResponseDto> {
+    try {
+      const updatedOnboarding = await this.onboardingProcessingModel
+        .findByIdAndUpdate(id, updates, { new: true })
+        .lean()
+        .exec();
+      
+      if (!updatedOnboarding) {
+        throw new NotFoundException('Onboarding processing record not found');
+      }
+
+      return plainToInstance(OnboardingProcessingResponseDto, updatedOnboarding);
+    } catch (error) {
+      this.logger.error(`Failed to update onboarding processing ${id}: ${error.message}`);
+      throw error;
+    }
+  }
 }

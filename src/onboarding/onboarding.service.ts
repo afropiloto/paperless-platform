@@ -126,28 +126,11 @@ export class OnboardingService {
     }
   }
 
-  async updateChecklist(
-    id: string,
-    updates: ChecklistItemUpdateDto[],
-  ): Promise<ChecklistInstanceDto> {
-    try {
-      const dealProcessing = await this.onboardingRepository.findById(id);
-      if (!dealProcessing) {
-        throw new NotFoundException('Deal Processing details not found');
-      }
-      return await this.dueDiligenceChecklistsService.updateChecklistInstance(
-        dealProcessing.dueDiligenceChecklistId,
-        updates,
-      );
-    } catch (error) {
-      this.logger.error(
-        `Failed to get update Deal Checklist: ${error.message}`,
-      );
-      throw error;
-    }
-  }
-
   async getOnboardingProcessingByRegistrationId(registrationId: string) {
     return await this.onboardingRepository.findByRegistrationId(registrationId);
+  }
+
+  async updateOnboardingProcessing(id: string, updates: Partial<NewOnboardingRequestDto>) {
+    return await this.onboardingRepository.update(id, updates);
   }
 }

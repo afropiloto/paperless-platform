@@ -1,7 +1,8 @@
 import { IsString, IsOptional, IsEnum, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
-import { ChecklistItemStatus } from '../../deal-desk/types/deal-desk.types';
+import { ChecklistItemStatus } from 'src/deal-desk/types/deal-desk.types';
+import { ChecklistUpdateOriginator } from '../types/due-diligence-checklists.types';
 
 
 export class NoteUpdateDto {
@@ -54,4 +55,6 @@ export class ChecklistItemUpdateDto {
   @ValidateNested()
   @Type(() => NoteUpdateDto)
   notes?: NoteUpdateDto[];
+
+  
 } 

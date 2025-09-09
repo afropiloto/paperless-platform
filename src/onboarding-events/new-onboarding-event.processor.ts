@@ -4,10 +4,10 @@ import { Inject, Logger } from '@nestjs/common';
 import { AuditService } from '../audit/audit.service';
 import { RegistrationService } from '../registration/registration.service';
 import { OnboardingService } from '../onboarding/onboarding.service';
+import { OnboardingChecksService } from '../onboarding-checks/onboarding-checks.service';
 import { Job } from 'bullmq';
-import { Promise } from 'mongoose';
 import { OnboardingJobData } from './onboarding-events.types';
-import { CreateOnboardingProcessingDto } from '../onboarding/dtos/create-onboarding-processing.dto';
+import { CreateOnboardingProcessingDto, NewOnboardingRequestDto } from '../onboarding/dtos/create-onboarding-processing.dto';
 import { AuditEventType, AuditSubject } from '../audit/audit-event-type.enum';
 
 @Processor(OnboardingQueues.NEW_ONBOARDING_REQUESTS)
@@ -21,6 +21,8 @@ export class NewOnboardingQueueProcessor extends WorkerHost {
     private readonly registrationService: RegistrationService,
     @Inject()
     private readonly onboardingService: OnboardingService,
+    @Inject()
+    private readonly onboardingChecksService: OnboardingChecksService,
   ) {super()}
 
   async process(job: Job<OnboardingJobData>): Promise<void> {
@@ -44,12 +46,35 @@ export class NewOnboardingQueueProcessor extends WorkerHost {
       await this.onboardingService.createOnboardingProcessing(
         createOnboardingDetails,
       );
+    // Create onboarding checks checklist instance
+    const checklistInstanceId = await this.onboardingChecksService.createChecklistInstance();
+
+    // Update onboarding record with checklist ID
+    await this.onboardingService.updateOnboardingProcessing(
+      onboardingRecord._id,
+      { onboardingChecksChecklistId: checklistInstanceId } as Partial<NewOnboardingRequestDto>
+    );
+
+    // Get checklist template and queue automated checks
+    const checklistTemplate = await this.onboardingChecksService.getChecklistTemplate();
+    await this.onboardingChecksService.queueAutomatedChecks(
+      checklistTemplate,
+      {
+        checklistInstanceId,
+        registrationId: job.data.registrationId,
+        onboardingProcessingId: onboardingRecord._id
+      }
+    );
 
     await this.auditService.log({
       subject: AuditSubject.ONBOARDING,
       eventType: AuditEventType.CREATED,
       identifier: onboardingRecord._id,
-      details: {registrationId: registrationDetails.registrationId, onboardingId: onboardingRecord._id},
+      details: {
+        registrationId: registrationDetails.registrationId, 
+        onboardingId: onboardingRecord._id,
+        checklistInstanceId
+      },
     });
   }
 }

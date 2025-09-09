@@ -1,6 +1,6 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { CreateChecklistDto } from './dtos/create-checklist.dto';
-import { DueDiligenceChecklistType } from './types/due-diligence-checklists.types';
+import { DueDiligenceChecklistType, ChecklistUpdateOriginator, CheckType } from './types/due-diligence-checklists.types';
 import { DueDiligenceChecklistRepository } from './due-diligence-checklists.repository';
 import { plainToInstance } from 'class-transformer';
 import { ChecklistResponseDto } from './dtos/checklist-response.dto';
@@ -74,7 +74,7 @@ export class DueDiligenceChecklistsService {
       await this.checklistRepository.getLatest(checklistType);
 
     if (!latestChecklist) {
-      throw new NotFoundException('No due diligence checklist found');
+      throw new NotFoundException(`No due diligence checklist found for ${checklistType}`);
     }
 
     // Construct the checklist object
@@ -86,6 +86,7 @@ export class DueDiligenceChecklistsService {
         items: section.items.map((item) => ({
           title: item.title,
           status: ChecklistItemStatus.NOT_STARTED,
+          checkType: item.checkType,
           notes: [],
         })),
       }))
@@ -95,10 +96,19 @@ export class DueDiligenceChecklistsService {
 
   }
 
-  async updateChecklistInstance(checklistId: string, updates: ChecklistItemUpdateDto[]) {
-
+  async updateChecklistInstance(
+    checklistId: string, 
+    updates: ChecklistItemUpdateDto[],
+    originatorUpdateType: ChecklistUpdateOriginator = ChecklistUpdateOriginator.MANUAL
+  ) {
     try {
       const currentChecklist = await this.checklistInstanceRepository.findById(checklistId);
+      
+      // Get the template to check item types
+      const template = await this.checklistRepository.getByVersion(
+        currentChecklist.type,
+        currentChecklist.version
+      );
 
       for (const update of updates) {
         // Find the section and item indices
@@ -111,14 +121,24 @@ export class DueDiligenceChecklistsService {
           );
         }
 
-        const itemIndex = currentChecklist.sections[
-          sectionIndex
-          ].items.findIndex((item) => item.title === update.itemTitle);
+        const itemIndex = currentChecklist.sections[sectionIndex]
+          .items.findIndex((item) => item.title === update.itemTitle);
         if (itemIndex === -1) {
           throw new NotFoundException(
             `Item with title "${update.itemTitle}" not found in section "${update.sectionTitle}"`,
           );
         }
+
+        // Get the template item to check its type
+        const templateSection = template.sections.find(s => s.title === update.sectionTitle);
+        const templateItem = templateSection?.items.find(i => i.title === update.itemTitle);
+        
+        if (!templateItem) {
+          throw new NotFoundException('Template item not found');
+        }
+
+        // Enforce originator restrictions
+        this.validateUpdateOriginator(templateItem.checkType, originatorUpdateType);
 
         // Update status if provided
         if (update.status) {
@@ -144,11 +164,28 @@ export class DueDiligenceChecklistsService {
         }
       }
 
-      return await this.checklistInstanceRepository.findById(checklistId)
-
+      return await this.checklistInstanceRepository.findById(checklistId);
     }
     catch (error) {
       this.logger.error(`Failed to update checklist instance with id "${checklistId}". Error: ${error.message}`);
+      throw error;
+    }
+  }
+
+  private validateUpdateOriginator(
+    itemCheckType: CheckType, 
+    originator: ChecklistUpdateOriginator
+  ): void {
+    if (itemCheckType === CheckType.MANUAL && originator !== ChecklistUpdateOriginator.MANUAL) {
+      throw new ForbiddenException(
+        'Only manual updates are allowed for this checklist item'
+      );
+    }
+    
+    if (itemCheckType === CheckType.AUTOMATED && originator !== ChecklistUpdateOriginator.AUTOMATED) {
+      throw new ForbiddenException(
+        'Only automated updates are allowed for this checklist item'
+      );
     }
   }
 
