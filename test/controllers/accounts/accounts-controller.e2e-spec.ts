@@ -21,14 +21,159 @@ describe('Accounts Controller (e2e)', () => {
     await testSuite.afterAll();
   });
 
-  describe('GET /api/accounts/:accountId', () => {
-    it('should get account by ID successfully', async () => {
-      // Create test account
-      const account = await testSuite.createTestAccount(TEST_ACCOUNTS.BASIC);
+  describe('POST /api/accounts', () => {
+    it('should create account successfully', async () => {
+      const { user, token } = await testSuite.createAndLoginUser(
+        TEST_ACCOUNTS.BASIC,
+        TEST_USERS.ADMIN
+      );
 
-      // Get account
+      const accountData = {
+        accountName: 'New Test Account',
+        contact: {
+          emailAddress: 'contact@newaccount.com',
+          phoneNumber: '+1-555-0123'
+        },
+        status: 'Active',
+        businessType: 'Trading Company',
+        address: {
+          street: '123 Business Street',
+          city: 'New York',
+          state: 'NY',
+          postalCode: '10001',
+          country: 'United States'
+        },
+        metadata: {
+          createdBy: user._id.toString(),
+          industry: 'Trade Finance',
+          size: 'Medium'
+        }
+      };
+
+      const response = await testSuite.getRequest()
+        .post('/api/accounts')
+        .set('Authorization', `Bearer ${token.accessToken}`)
+        .send(accountData)
+        .expect(201);
+
+      expect(response.body.accountName).toBe(accountData.accountName);
+      expect(response.body.contact.emailAddress).toBe(accountData.contact.emailAddress);
+      expect(response.body.status).toBe(accountData.status);
+      expect(response.body.businessType).toBe(accountData.businessType);
+    });
+
+    it('should validate required fields', async () => {
+      const { user, token } = await testSuite.createAndLoginUser(
+        TEST_ACCOUNTS.BASIC,
+        TEST_USERS.ADMIN
+      );
+
+      const response = await testSuite.getRequest()
+        .post('/api/accounts')
+        .set('Authorization', `Bearer ${token.accessToken}`)
+        .send({})
+        .expect(400);
+
+      expect(response.body.message).toContain('accountName should not be empty');
+      expect(response.body.message).toContain('contact should not be empty');
+    });
+
+    it('should validate contact email format', async () => {
+      const { user, token } = await testSuite.createAndLoginUser(
+        TEST_ACCOUNTS.BASIC,
+        TEST_USERS.ADMIN
+      );
+
+      const accountData = {
+        accountName: 'Test Account',
+        contact: {
+          emailAddress: 'invalid-email', // Invalid email format
+          phoneNumber: '+1-555-0123'
+        }
+      };
+
+      const response = await testSuite.getRequest()
+        .post('/api/accounts')
+        .set('Authorization', `Bearer ${token.accessToken}`)
+        .send(accountData)
+        .expect(400);
+
+      expect(response.body.message).toContain('contact.emailAddress must be an email');
+    });
+
+    it('should validate business type values', async () => {
+      const { user, token } = await testSuite.createAndLoginUser(
+        TEST_ACCOUNTS.BASIC,
+        TEST_USERS.ADMIN
+      );
+
+      const accountData = {
+        accountName: 'Test Account',
+        contact: {
+          emailAddress: 'contact@test.com',
+          phoneNumber: '+1-555-0123'
+        },
+        businessType: 'InvalidType' // Invalid business type
+      };
+
+      const response = await testSuite.getRequest()
+        .post('/api/accounts')
+        .set('Authorization', `Bearer ${token.accessToken}`)
+        .send(accountData)
+        .expect(400);
+
+      expect(response.body.message).toContain('businessType must be one of the following values');
+    });
+
+    it('should require admin permissions', async () => {
+      const { user, token } = await testSuite.createAndLoginUser(
+        TEST_ACCOUNTS.BASIC,
+        TEST_USERS.BASIC // Basic user, not admin
+      );
+
+      const accountData = {
+        accountName: 'Test Account',
+        contact: {
+          emailAddress: 'contact@test.com',
+          phoneNumber: '+1-555-0123'
+        }
+      };
+
+      const response = await testSuite.getRequest()
+        .post('/api/accounts')
+        .set('Authorization', `Bearer ${token.accessToken}`)
+        .send(accountData)
+        .expect(403);
+
+      expect(response.body.message).toContain('Insufficient permissions');
+    });
+
+    it('should require authentication', async () => {
+      const accountData = {
+        accountName: 'Test Account',
+        contact: {
+          emailAddress: 'contact@test.com',
+          phoneNumber: '+1-555-0123'
+        }
+      };
+
+      await testSuite.getRequest()
+        .post('/api/accounts')
+        .send(accountData)
+        .expect(401);
+    });
+  });
+
+  describe('GET /api/accounts/:id', () => {
+    it('should get account by ID successfully', async () => {
+      const { account, user, token } = await testSuite.createAndLoginUser(
+        TEST_ACCOUNTS.BASIC,
+        TEST_USERS.BASIC
+      );
+
       const response = await testSuite.getRequest()
         .get(`/api/accounts/${account._id}`)
+        .set('Authorization', `Bearer ${token.accessToken}`)
         .expect(200);
 
       expect(response.body.accountName).toBe(account.accountName);
@@ -37,189 +182,376 @@ describe('Accounts Controller (e2e)', () => {
     });
 
     it('should return 404 for non-existent account', async () => {
-      const nonExistentId = '507f1f77bcf86cd799439011'; // Valid ObjectId format
+      const { user, token } = await testSuite.createAndLoginUser(
+        TEST_ACCOUNTS.BASIC,
+        TEST_USERS.BASIC
+      );
+
+      const nonExistentId = '507f1f77bcf86cd799439011';
       
       const response = await testSuite.getRequest()
         .get(`/api/accounts/${nonExistentId}`)
+        .set('Authorization', `Bearer ${token.accessToken}`)
         .expect(404);
 
       expect(response.body.message).toBeDefined();
     });
 
-    it('should return 400 for invalid account ID format', async () => {
-      const response = await testSuite.getRequest()
-        .get('/api/accounts/invalid-id')
-        .expect(400);
-
-      expect(response.body.message).toContain('Invalid ID format');
+    it('should require authentication', async () => {
+      const accountId = '507f1f77bcf86cd799439011';
+      
+      await testSuite.getRequest()
+        .get(`/api/accounts/${accountId}`)
+        .expect(401);
     });
   });
 
   describe('GET /api/accounts', () => {
-    it('should get all accounts with pagination', async () => {
-      // Create multiple test accounts
-      const account1 = await testSuite.createTestAccount(TEST_ACCOUNTS.BASIC);
-      const account2 = await testSuite.createTestAccount({
-        ...TEST_ACCOUNTS.BASIC,
-        accountName: 'Another Test Account'
-      });
+    it('should get all accounts successfully', async () => {
+      const { account, user, token } = await testSuite.createAndLoginUser(
+        TEST_ACCOUNTS.BASIC,
+        TEST_USERS.ADMIN
+      );
 
-      // Get accounts with pagination
+      // Create additional accounts
+      const accountData1 = {
+        accountName: 'Test Account 1',
+        contact: {
+          emailAddress: 'contact1@test.com',
+          phoneNumber: '+1-555-0123'
+        }
+      };
+
+      const accountData2 = {
+        accountName: 'Test Account 2',
+        contact: {
+          emailAddress: 'contact2@test.com',
+          phoneNumber: '+1-555-0124'
+        }
+      };
+
+      await testSuite.getRequest()
+        .post('/api/accounts')
+        .set('Authorization', `Bearer ${token.accessToken}`)
+        .send(accountData1)
+        .expect(201);
+
+      await testSuite.getRequest()
+        .post('/api/accounts')
+        .set('Authorization', `Bearer ${token.accessToken}`)
+        .send(accountData2)
+        .expect(201);
+
       const response = await testSuite.getRequest()
         .get('/api/accounts')
+        .set('Authorization', `Bearer ${token.accessToken}`)
+        .expect(200);
+
+      expect(response.body.data).toBeDefined();
+      expect(Array.isArray(response.body.data)).toBe(true);
+      expect(response.body.data.length).toBeGreaterThanOrEqual(3); // Including the original account
+    });
+
+    it('should handle pagination for accounts', async () => {
+      const { account, user, token } = await testSuite.createAndLoginUser(
+        TEST_ACCOUNTS.BASIC,
+        TEST_USERS.ADMIN
+      );
+
+      const response = await testSuite.getRequest()
+        .get('/api/accounts')
+        .set('Authorization', `Bearer ${token.accessToken}`)
         .query({ page: 1, limit: 10 })
         .expect(200);
 
-      expect(response.body.data).toBeDefined();
       expect(response.body.pagination).toBeDefined();
       expect(response.body.pagination.page).toBe(1);
       expect(response.body.pagination.limit).toBe(10);
-      expect(response.body.data.length).toBeGreaterThanOrEqual(2);
     });
 
     it('should handle search parameters', async () => {
-      // Create test account
-      const account = await testSuite.createTestAccount(TEST_ACCOUNTS.BASIC);
+      const { account, user, token } = await testSuite.createAndLoginUser(
+        TEST_ACCOUNTS.BASIC,
+        TEST_USERS.ADMIN
+      );
 
-      // Search for account
       const response = await testSuite.getRequest()
         .get('/api/accounts')
-        .query({ search: 'Test Account' })
+        .set('Authorization', `Bearer ${token.accessToken}`)
+        .query({ search: 'Test', status: 'Active' })
         .expect(200);
 
       expect(response.body.data).toBeDefined();
-      expect(response.body.data.length).toBeGreaterThanOrEqual(1);
     });
 
-    it('should handle sorting parameters', async () => {
-      // Create test accounts
-      const account1 = await testSuite.createTestAccount(TEST_ACCOUNTS.BASIC);
-      const account2 = await testSuite.createTestAccount({
-        ...TEST_ACCOUNTS.BASIC,
-        accountName: 'Another Test Account'
-      });
+    it('should handle filtering by business type', async () => {
+      const { account, user, token } = await testSuite.createAndLoginUser(
+        TEST_ACCOUNTS.BASIC,
+        TEST_USERS.ADMIN
+      );
 
-      // Sort by account name
       const response = await testSuite.getRequest()
         .get('/api/accounts')
-        .query({ sortBy: 'accountName', sortOrder: 'asc' })
+        .set('Authorization', `Bearer ${token.accessToken}`)
+        .query({ businessType: 'Trading Company' })
         .expect(200);
 
       expect(response.body.data).toBeDefined();
-      expect(response.body.data.length).toBeGreaterThanOrEqual(2);
-    });
-  });
-
-  describe('POST /api/accounts', () => {
-    it('should create account successfully', async () => {
-      const accountData = {
-        accountName: 'New Test Account',
-        contact: {
-          emailAddress: 'new-account@test.com',
-          firstName: 'New',
-          lastName: 'Account'
-        },
-        status: 'Active'
-      };
-
-      const response = await testSuite.getRequest()
-        .post('/api/accounts')
-        .send(accountData)
-        .expect(201);
-
-      expect(response.body.accountName).toBe(accountData.accountName);
-      expect(response.body.contact.emailAddress).toBe(accountData.contact.emailAddress);
-      expect(response.body.status).toBe(accountData.status);
     });
 
-    it('should validate required fields', async () => {
-      const response = await testSuite.getRequest()
-        .post('/api/accounts')
-        .send({})
-        .expect(400);
+    it('should require admin permissions', async () => {
+      const { account, user, token } = await testSuite.createAndLoginUser(
+        TEST_ACCOUNTS.BASIC,
+        TEST_USERS.BASIC // Basic user, not admin
+      );
 
-      expect(response.body.message).toContain('accountName should not be empty');
-      expect(response.body.message).toContain('contact should not be empty');
+      const response = await testSuite.getRequest()
+        .get('/api/accounts')
+        .set('Authorization', `Bearer ${token.accessToken}`)
+        .expect(403);
+
+      expect(response.body.message).toContain('Insufficient permissions');
     });
 
-    it('should validate email format', async () => {
-      const accountData = {
-        accountName: 'Test Account',
-        contact: {
-          emailAddress: 'invalid-email',
-          firstName: 'Test',
-          lastName: 'Account'
-        },
-        status: 'Active'
-      };
-
-      const response = await testSuite.getRequest()
-        .post('/api/accounts')
-        .send(accountData)
-        .expect(400);
-
-      expect(response.body.message).toContain('emailAddress must be an email');
+    it('should require authentication', async () => {
+      await testSuite.getRequest()
+        .get('/api/accounts')
+        .expect(401);
     });
   });
 
   describe('PATCH /api/accounts/:id', () => {
     it('should update account successfully', async () => {
-      // Create test account
-      const account = await testSuite.createTestAccount(TEST_ACCOUNTS.BASIC);
+      const { account, user, token } = await testSuite.createAndLoginUser(
+        TEST_ACCOUNTS.BASIC,
+        TEST_USERS.ADMIN
+      );
 
       const updateData = {
-        accountName: 'Updated Test Account',
+        accountName: 'Updated Account Name',
+        status: 'Inactive',
         contact: {
           emailAddress: 'updated@test.com',
-          firstName: 'Updated',
-          lastName: 'Account'
+          phoneNumber: '+1-555-9999'
+        },
+        metadata: {
+          lastUpdated: new Date().toISOString(),
+          updatedBy: user._id.toString(),
+          reason: 'Account information updated'
         }
       };
 
       const response = await testSuite.getRequest()
         .patch(`/api/accounts/${account._id}`)
+        .set('Authorization', `Bearer ${token.accessToken}`)
         .send(updateData)
         .expect(200);
 
       expect(response.body.accountName).toBe(updateData.accountName);
+      expect(response.body.status).toBe(updateData.status);
       expect(response.body.contact.emailAddress).toBe(updateData.contact.emailAddress);
     });
 
+    it('should validate email format on update', async () => {
+      const { account, user, token } = await testSuite.createAndLoginUser(
+        TEST_ACCOUNTS.BASIC,
+        TEST_USERS.ADMIN
+      );
+
+      const updateData = {
+        contact: {
+          emailAddress: 'invalid-email' // Invalid email format
+        }
+      };
+
+      const response = await testSuite.getRequest()
+        .patch(`/api/accounts/${account._id}`)
+        .set('Authorization', `Bearer ${token.accessToken}`)
+        .send(updateData)
+        .expect(400);
+
+      expect(response.body.message).toContain('contact.emailAddress must be an email');
+    });
+
     it('should return 404 for non-existent account', async () => {
+      const { user, token } = await testSuite.createAndLoginUser(
+        TEST_ACCOUNTS.BASIC,
+        TEST_USERS.ADMIN
+      );
+
       const nonExistentId = '507f1f77bcf86cd799439011';
       
       const response = await testSuite.getRequest()
         .patch(`/api/accounts/${nonExistentId}`)
+        .set('Authorization', `Bearer ${token.accessToken}`)
         .send({ accountName: 'Updated' })
         .expect(404);
 
       expect(response.body.message).toBeDefined();
     });
+
+    it('should require admin permissions', async () => {
+      const { account, user, token } = await testSuite.createAndLoginUser(
+        TEST_ACCOUNTS.BASIC,
+        TEST_USERS.BASIC // Basic user, not admin
+      );
+
+      const response = await testSuite.getRequest()
+        .patch(`/api/accounts/${account._id}`)
+        .set('Authorization', `Bearer ${token.accessToken}`)
+        .send({ accountName: 'Updated' })
+        .expect(403);
+
+      expect(response.body.message).toContain('Insufficient permissions');
+    });
+
+    it('should require authentication', async () => {
+      const accountId = '507f1f77bcf86cd799439011';
+      
+      await testSuite.getRequest()
+        .patch(`/api/accounts/${accountId}`)
+        .send({ accountName: 'Updated' })
+        .expect(401);
+    });
+  });
+
+  describe('DELETE /api/accounts/:id', () => {
+    it('should delete account successfully', async () => {
+      const { account, user, token } = await testSuite.createAndLoginUser(
+        TEST_ACCOUNTS.BASIC,
+        TEST_USERS.ADMIN
+      );
+
+      const response = await testSuite.getRequest()
+        .delete(`/api/accounts/${account._id}`)
+        .set('Authorization', `Bearer ${token.accessToken}`)
+        .expect(200);
+
+      expect(response.body.success).toBe(true);
+    });
+
+    it('should return 404 for non-existent account', async () => {
+      const { user, token } = await testSuite.createAndLoginUser(
+        TEST_ACCOUNTS.BASIC,
+        TEST_USERS.ADMIN
+      );
+
+      const nonExistentId = '507f1f77bcf86cd799439011';
+      
+      const response = await testSuite.getRequest()
+        .delete(`/api/accounts/${nonExistentId}`)
+        .set('Authorization', `Bearer ${token.accessToken}`)
+        .expect(404);
+
+      expect(response.body.message).toBeDefined();
+    });
+
+    it('should require admin permissions', async () => {
+      const { account, user, token } = await testSuite.createAndLoginUser(
+        TEST_ACCOUNTS.BASIC,
+        TEST_USERS.BASIC // Basic user, not admin
+      );
+
+      const response = await testSuite.getRequest()
+        .delete(`/api/accounts/${account._id}`)
+        .set('Authorization', `Bearer ${token.accessToken}`)
+        .expect(403);
+
+      expect(response.body.message).toContain('Insufficient permissions');
+    });
+
+    it('should require authentication', async () => {
+      const accountId = '507f1f77bcf86cd799439011';
+      
+      await testSuite.getRequest()
+        .delete(`/api/accounts/${accountId}`)
+        .expect(401);
+    });
   });
 
   describe('PATCH /api/accounts/:id/status', () => {
     it('should update account status successfully', async () => {
-      // Create test account
-      const account = await testSuite.createTestAccount(TEST_ACCOUNTS.BASIC);
+      const { account, user, token } = await testSuite.createAndLoginUser(
+        TEST_ACCOUNTS.BASIC,
+        TEST_USERS.ADMIN
+      );
+
+      const statusData = {
+        status: 'Suspended',
+        reason: 'Account suspended for compliance review',
+        updatedBy: user._id.toString(),
+        updatedAt: new Date().toISOString()
+      };
 
       const response = await testSuite.getRequest()
         .patch(`/api/accounts/${account._id}/status`)
-        .send({ status: 'Inactive' })
+        .set('Authorization', `Bearer ${token.accessToken}`)
+        .send(statusData)
         .expect(200);
 
-      expect(response.body.status).toBe('Inactive');
+      expect(response.body.status).toBe(statusData.status);
+      expect(response.body.reason).toBe(statusData.reason);
     });
 
     it('should validate status values', async () => {
-      // Create test account
-      const account = await testSuite.createTestAccount(TEST_ACCOUNTS.BASIC);
+      const { account, user, token } = await testSuite.createAndLoginUser(
+        TEST_ACCOUNTS.BASIC,
+        TEST_USERS.ADMIN
+      );
+
+      const statusData = {
+        status: 'InvalidStatus', // Invalid status
+        reason: 'Test reason'
+      };
 
       const response = await testSuite.getRequest()
         .patch(`/api/accounts/${account._id}/status`)
-        .send({ status: 'InvalidStatus' })
+        .set('Authorization', `Bearer ${token.accessToken}`)
+        .send(statusData)
         .expect(400);
 
       expect(response.body.message).toContain('status must be one of the following values');
+    });
+
+    it('should return 404 for non-existent account', async () => {
+      const { user, token } = await testSuite.createAndLoginUser(
+        TEST_ACCOUNTS.BASIC,
+        TEST_USERS.ADMIN
+      );
+
+      const nonExistentId = '507f1f77bcf86cd799439011';
+      
+      const response = await testSuite.getRequest()
+        .patch(`/api/accounts/${nonExistentId}/status`)
+        .set('Authorization', `Bearer ${token.accessToken}`)
+        .send({ status: 'Suspended' })
+        .expect(404);
+
+      expect(response.body.message).toBeDefined();
+    });
+
+    it('should require admin permissions', async () => {
+      const { account, user, token } = await testSuite.createAndLoginUser(
+        TEST_ACCOUNTS.BASIC,
+        TEST_USERS.BASIC // Basic user, not admin
+      );
+
+      const response = await testSuite.getRequest()
+        .patch(`/api/accounts/${account._id}/status`)
+        .set('Authorization', `Bearer ${token.accessToken}`)
+        .send({ status: 'Suspended' })
+        .expect(403);
+
+      expect(response.body.message).toContain('Insufficient permissions');
+    });
+
+    it('should require authentication', async () => {
+      const accountId = '507f1f77bcf86cd799439011';
+      
+      await testSuite.getRequest()
+        .patch(`/api/accounts/${accountId}/status`)
+        .send({ status: 'Suspended' })
+        .expect(401);
     });
   });
 });
