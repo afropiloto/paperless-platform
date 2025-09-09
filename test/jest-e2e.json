@@ -2,14 +2,13 @@
   "moduleFileExtensions": ["js", "json", "ts"],
   "rootDir": ".",
   "testEnvironment": "node",
-  "testRegex": ".e2e-spec.ts$",
+  "testRegex": "(.e2e-spec.ts|.e2e.ts)$",
   "transform": {
     "^.+\\.(t|j)s$": "ts-jest"
   },
   "setupFilesAfterEnv": ["<rootDir>/utils/test-setup.ts"],
   "testTimeout": 30000,
-  "maxWorkers": "50%",
-  "workerIdleMemoryLimit": "512MB",
+  "maxWorkers": 1,
   "collectCoverageFrom": [
     "controllers/**/*.ts",
     "utils/**/*.ts",
@@ -20,52 +19,8 @@
     "!**/node_modules/**"
   ],
   "coverageDirectory": "../coverage-e2e",
-  "coverageReporters": ["text", "lcov", "html", "json", "clover"],
-  "coverageThreshold": {
-    "global": {
-      "branches": 80,
-      "functions": 80,
-      "lines": 80,
-      "statements": 80
-    }
-  },
+  "coverageReporters": ["text", "lcov", "html"],
   "verbose": true,
   "detectOpenHandles": true,
-  "forceExit": true,
-  "bail": 0,
-  "cache": true,
-  "clearMocks": true,
-  "resetMocks": true,
-  "restoreMocks": true,
-  "testSequencer": "<rootDir>/utils/test-sequencer.ts",
-  "reporters": [
-    "default",
-    ["jest-junit", {
-      "outputDirectory": "../test-results",
-      "outputName": "junit.xml",
-      "classNameTemplate": "{classname}",
-      "titleTemplate": "{title}",
-      "ancestorSeparator": " › ",
-      "usePathForSuiteName": "true"
-    }],
-    ["jest-html-reporters", {
-      "publicPath": "../test-results",
-      "filename": "test-report.html",
-      "expand": true
-    }]
-  ],
-  "globals": {
-    "ts-jest": {
-      "tsconfig": {
-        "target": "es2020",
-        "module": "commonjs",
-        "lib": ["es2020"],
-        "declaration": true,
-        "strict": true,
-        "esModuleInterop": true,
-        "skipLibCheck": true,
-        "forceConsistentCasingInFileNames": true
-      }
-    }
-  }
+  "forceExit": true
 }

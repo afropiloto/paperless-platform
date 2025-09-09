@@ -1,11 +1,13 @@
 import { BaseE2ETest } from '../../utils/base-e2e-test';
-import { TEST_ACCOUNTS, TEST_USERS } from '../../fixtures/test-data';
+import { TEST_ACCOUNTS, TEST_USERS } from '../../fixtures/typed-test-data';
+
+class DocumentSigningTestSuite extends BaseE2ETest {}
 
 describe('Document Signing Controller (e2e)', () => {
-  let testSuite: BaseE2ETest;
+  let testSuite: DocumentSigningTestSuite;
 
   beforeAll(async () => {
-    testSuite = new BaseE2ETest();
+    testSuite = new DocumentSigningTestSuite();
     await testSuite.beforeAll();
   });
 
@@ -254,7 +256,7 @@ describe('Document Signing Controller (e2e)', () => {
         signers: [user.walletAddress],
         expirationDays: 30,
         status: 'Pending',
-        accountId: account._id.toString()
+        accountId: account.id
       };
 
       const response = await testSuite.getRequest()
@@ -296,7 +298,7 @@ describe('Document Signing Controller (e2e)', () => {
         signers: [], // Empty array
         expirationDays: 30,
         status: 'Pending',
-        accountId: account._id.toString()
+        accountId: account.id
       };
 
       const response = await testSuite.getRequest()
@@ -319,7 +321,7 @@ describe('Document Signing Controller (e2e)', () => {
         signers: [user.walletAddress],
         expirationDays: -1, // Invalid negative value
         status: 'Pending',
-        accountId: account._id.toString()
+        accountId: account.id
       };
 
       const response = await testSuite.getRequest()

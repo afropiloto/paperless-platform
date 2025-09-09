@@ -1,5 +1,5 @@
 import { BaseE2ETest } from '../../utils/base-e2e-test';
-import { TEST_ACCOUNTS, TEST_USERS } from '../../fixtures/test-data';
+import { TEST_ACCOUNTS, TEST_USERS } from '../../fixtures/typed-test-data';
 
 describe('Accounts Controller (e2e)', () => {
   let testSuite: BaseE2ETest;
@@ -32,9 +32,11 @@ describe('Accounts Controller (e2e)', () => {
         accountName: 'New Test Account',
         contact: {
           emailAddress: 'contact@newaccount.com',
-          phoneNumber: '+1-555-0123'
+          phoneNumber: '+1-555-0123',
+          name: 'New Contact',
+          position: 'Manager'
         },
-        status: 'Active',
+        status: 'ACTIVE',
         businessType: 'Trading Company',
         address: {
           street: '123 Business Street',
@@ -88,7 +90,9 @@ describe('Accounts Controller (e2e)', () => {
         accountName: 'Test Account',
         contact: {
           emailAddress: 'invalid-email', // Invalid email format
-          phoneNumber: '+1-555-0123'
+          phoneNumber: '+1-555-0123',
+          name: 'Test Contact',
+          position: 'Manager'
         }
       };
 
@@ -111,7 +115,9 @@ describe('Accounts Controller (e2e)', () => {
         accountName: 'Test Account',
         contact: {
           emailAddress: 'contact@test.com',
-          phoneNumber: '+1-555-0123'
+          phoneNumber: '+1-555-0123',
+          name: 'Test Contact',
+          position: 'Manager'
         },
         businessType: 'InvalidType' // Invalid business type
       };
@@ -135,7 +141,9 @@ describe('Accounts Controller (e2e)', () => {
         accountName: 'Test Account',
         contact: {
           emailAddress: 'contact@test.com',
-          phoneNumber: '+1-555-0123'
+          phoneNumber: '+1-555-0123',
+          name: 'Test Contact',
+          position: 'Manager'
         }
       };
 
@@ -153,7 +161,9 @@ describe('Accounts Controller (e2e)', () => {
         accountName: 'Test Account',
         contact: {
           emailAddress: 'contact@test.com',
-          phoneNumber: '+1-555-0123'
+          phoneNumber: '+1-555-0123',
+          name: 'Test Contact',
+          position: 'Manager'
         }
       };
 
@@ -218,7 +228,9 @@ describe('Accounts Controller (e2e)', () => {
         accountName: 'Test Account 1',
         contact: {
           emailAddress: 'contact1@test.com',
-          phoneNumber: '+1-555-0123'
+          phoneNumber: '+1-555-0123',
+          name: 'Test Contact 1',
+          position: 'Manager'
         }
       };
 
@@ -226,7 +238,9 @@ describe('Accounts Controller (e2e)', () => {
         accountName: 'Test Account 2',
         contact: {
           emailAddress: 'contact2@test.com',
-          phoneNumber: '+1-555-0124'
+          phoneNumber: '+1-555-0124',
+          name: 'Test Contact 2',
+          position: 'Manager'
         }
       };
 
@@ -278,7 +292,7 @@ describe('Accounts Controller (e2e)', () => {
       const response = await testSuite.getRequest()
         .get('/api/accounts')
         .set('Authorization', `Bearer ${token.accessToken}`)
-        .query({ search: 'Test', status: 'Active' })
+        .query({ search: 'Test', status: 'ACTIVE' })
         .expect(200);
 
       expect(response.body.data).toBeDefined();
@@ -329,10 +343,12 @@ describe('Accounts Controller (e2e)', () => {
 
       const updateData = {
         accountName: 'Updated Account Name',
-        status: 'Inactive',
+        status: 'SUSPENDED',
         contact: {
           emailAddress: 'updated@test.com',
-          phoneNumber: '+1-555-9999'
+          phoneNumber: '+1-555-9999',
+          name: 'Updated Contact',
+          position: 'Manager'
         },
         metadata: {
           lastUpdated: new Date().toISOString(),
@@ -360,7 +376,9 @@ describe('Accounts Controller (e2e)', () => {
 
       const updateData = {
         contact: {
-          emailAddress: 'invalid-email' // Invalid email format
+          emailAddress: 'invalid-email', // Invalid email format
+          name: 'Test Contact',
+          position: 'Manager'
         }
       };
 
@@ -477,7 +495,7 @@ describe('Accounts Controller (e2e)', () => {
       );
 
       const statusData = {
-        status: 'Suspended',
+        status: 'SUSPENDED',
         reason: 'Account suspended for compliance review',
         updatedBy: user._id.toString(),
         updatedAt: new Date().toISOString()
@@ -524,7 +542,7 @@ describe('Accounts Controller (e2e)', () => {
       const response = await testSuite.getRequest()
         .patch(`/api/accounts/${nonExistentId}/status`)
         .set('Authorization', `Bearer ${token.accessToken}`)
-        .send({ status: 'Suspended' })
+        .send({ status: 'SUSPENDED' })
         .expect(404);
 
       expect(response.body.message).toBeDefined();
@@ -539,7 +557,7 @@ describe('Accounts Controller (e2e)', () => {
       const response = await testSuite.getRequest()
         .patch(`/api/accounts/${account._id}/status`)
         .set('Authorization', `Bearer ${token.accessToken}`)
-        .send({ status: 'Suspended' })
+        .send({ status: 'SUSPENDED' })
         .expect(403);
 
       expect(response.body.message).toContain('Insufficient permissions');
@@ -550,7 +568,7 @@ describe('Accounts Controller (e2e)', () => {
       
       await testSuite.getRequest()
         .patch(`/api/accounts/${accountId}/status`)
-        .send({ status: 'Suspended' })
+        .send({ status: 'SUSPENDED' })
         .expect(401);
     });
   });

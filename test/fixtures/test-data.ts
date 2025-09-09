@@ -2,6 +2,12 @@
  * Test data fixtures for consistent testing
  */
 
+import { AccountUserStatus, AuthMethod } from "src/account-users/schemas/account-user.schema";
+import { AccountStatus } from "src/accounts/types/account.types";
+import { TradeDocumentType, TradeDocumentStatus } from "src/types/trade-documents.types";
+import { DealProcessingStatus } from "src/deal-desk/types/deal-desk.types";
+import { ApplicationModule, ApplicationRole } from 'src/account-users/schemas';
+
 export const TEST_ACCOUNTS = {
   BASIC: {
     accountName: 'Basic Test Account',
@@ -9,8 +15,10 @@ export const TEST_ACCOUNTS = {
       emailAddress: 'basic@test.com',
       firstName: 'Basic',
       lastName: 'Test',
+      name: 'Basic Test',
+      position: 'Manager',
     },
-    status: 'Active',
+    status: AccountStatus.ACTIVE,
   },
   INACTIVE: {
     accountName: 'Inactive Test Account',
@@ -18,8 +26,10 @@ export const TEST_ACCOUNTS = {
       emailAddress: 'inactive@test.com',
       firstName: 'Inactive',
       lastName: 'Test',
+      name: 'Inactive Test',
+      position: 'Manager',
     },
-    status: 'Inactive',
+    status: 'SUSPENDED',
   },
   PENDING: {
     accountName: 'Pending Test Account',
@@ -27,8 +37,10 @@ export const TEST_ACCOUNTS = {
       emailAddress: 'pending@test.com',
       firstName: 'Pending',
       lastName: 'Test',
+      name: 'Pending Test',
+      position: 'Manager',
     },
-    status: 'Pending',
+    status: AccountStatus.UNDER_REVIEW,
   },
 };
 
@@ -37,40 +49,40 @@ export const TEST_USERS = {
     name: 'Basic Test User',
     emailAddress: 'basic-user@test.com',
     walletAddress: '0x1234567890123456789012345678901234567890',
-    status: 'Active',
-    permissions: [{ module: 'DealDesk', role: 'Agent' }],
-    authMethod: 'email-password',
+    status: AccountUserStatus.ACTIVE,
+    permissions: [{ module: ApplicationModule.PORTAL_DEAL_DESK, role: ApplicationRole.AGENT }],
+    authMethod: AuthMethod.EMAIL_PASSWORD,
     mfaEnabled: false,
   },
   ADMIN: {
     name: 'Admin Test User',
     emailAddress: 'admin-user@test.com',
     walletAddress: '0x2345678901234567890123456789012345678901',
-    status: 'Active',
+    status: AccountUserStatus.ACTIVE,
     permissions: [
-      { module: 'DealDesk', role: 'Admin' },
-      { module: 'TradeDocuments', role: 'Admin' },
-      { module: 'Analytics', role: 'Viewer' },
+      { module: ApplicationModule.PORTAL_DEAL_DESK, role: ApplicationRole.MANAGER },
+      { module: ApplicationModule.PAIPERLESS_TRADE_DOCUMENTS, role: ApplicationRole.MANAGER },
+      { module: ApplicationModule.PORTAL_ADMIN, role: ApplicationRole.AGENT },
     ],
-    authMethod: 'email-password',
+    authMethod: AuthMethod.EMAIL_PASSWORD,
     mfaEnabled: false,
   },
   WALLET_USER: {
     name: 'Wallet Test User',
     emailAddress: 'wallet-user@test.com',
     walletAddress: '0x3456789012345678901234567890123456789012',
-    status: 'Active',
-    permissions: [{ module: 'DealDesk', role: 'Agent' }],
-    authMethod: 'wallet',
+    status: AccountUserStatus.ACTIVE,
+    permissions: [{ module: ApplicationModule.PORTAL_DEAL_DESK, role: ApplicationRole.AGENT }],
+    authMethod: AuthMethod.SIWE,
     mfaEnabled: false,
   },
   MFA_USER: {
     name: 'MFA Test User',
     emailAddress: 'mfa-user@test.com',
     walletAddress: '0x4567890123456789012345678901234567890123',
-    status: 'Active',
-    permissions: [{ module: 'DealDesk', role: 'Agent' }],
-    authMethod: 'email-password',
+    status: AccountUserStatus.ACTIVE,
+    permissions: [{ module: ApplicationModule.PORTAL_DEAL_DESK, role: ApplicationRole.AGENT }],
+    authMethod: AuthMethod.EMAIL_PASSWORD,
     mfaEnabled: true,
     mfaSecret: 'test-mfa-secret',
     backupCodes: ['123456', '789012', '345678', '901234', '567890'],
@@ -79,9 +91,9 @@ export const TEST_USERS = {
     name: 'Inactive Test User',
     emailAddress: 'inactive-user@test.com',
     walletAddress: '0x5678901234567890123456789012345678901234',
-    status: 'Inactive',
-    permissions: [{ module: 'DealDesk', role: 'Agent' }],
-    authMethod: 'email-password',
+    status: AccountUserStatus.SUSPENDED,
+    permissions: [{ module: ApplicationModule.PORTAL_DEAL_DESK, role: ApplicationRole.AGENT }],
+    authMethod: AuthMethod.EMAIL_PASSWORD,
     mfaEnabled: false,
   },
 };
@@ -90,8 +102,8 @@ export const TEST_TRADE_DOCUMENTS = {
   INVOICE: {
     title: 'Test Invoice',
     description: 'Test invoice document',
-    documentType: 'Invoice',
-    status: 'Draft',
+    documentType: TradeDocumentType.INVOICE,
+    status: TradeDocumentStatus.IN_PROGRESS,
     metadata: {
       amount: 1000,
       currency: 'USD',
@@ -102,8 +114,8 @@ export const TEST_TRADE_DOCUMENTS = {
   CONTRACT: {
     title: 'Test Contract',
     description: 'Test contract document',
-    documentType: 'Contract',
-    status: 'Draft',
+    documentType: TradeDocumentType.OTHER,
+    status: TradeDocumentStatus.IN_PROGRESS,
     metadata: {
       contractType: 'Service Agreement',
       startDate: new Date(),
@@ -113,8 +125,8 @@ export const TEST_TRADE_DOCUMENTS = {
   RECEIPT: {
     title: 'Test Receipt',
     description: 'Test receipt document',
-    documentType: 'Receipt',
-    status: 'Draft',
+    documentType: TradeDocumentType.OTHER,
+    status: TradeDocumentStatus.IN_PROGRESS,
     metadata: {
       amount: 500,
       currency: 'USD',
@@ -129,7 +141,7 @@ export const TEST_DEALS = {
     dealType: 'Invoice Financing',
     amount: 50000,
     currency: 'USD',
-    status: 'Pending',
+    status: DealProcessingStatus.NEW,
     description: 'Test invoice financing deal',
     metadata: {
       invoiceId: 'INV-001',
@@ -142,7 +154,7 @@ export const TEST_DEALS = {
     dealType: 'Asset Based Lending',
     amount: 100000,
     currency: 'USD',
-    status: 'Pending',
+    status: DealProcessingStatus.NEW,
     description: 'Test asset based lending deal',
     metadata: {
       collateralType: 'Inventory',
@@ -271,12 +283,12 @@ export const TEST_PASSWORDS = {
 };
 
 export const TEST_PERMISSIONS = {
-  DEAL_DESK_AGENT: { module: 'DealDesk', role: 'Agent' },
-  DEAL_DESK_ADMIN: { module: 'DealDesk', role: 'Admin' },
-  TRADE_DOCUMENTS_VIEWER: { module: 'TradeDocuments', role: 'Viewer' },
-  TRADE_DOCUMENTS_EDITOR: { module: 'TradeDocuments', role: 'Editor' },
-  ANALYTICS_VIEWER: { module: 'Analytics', role: 'Viewer' },
-  USER_MANAGEMENT_ADMIN: { module: 'UserManagement', role: 'Admin' },
+  DEAL_DESK_AGENT: { module: ApplicationModule.PORTAL_DEAL_DESK, role: ApplicationRole.AGENT },
+  DEAL_DESK_ADMIN: { module: ApplicationModule.PORTAL_DEAL_DESK, role: ApplicationRole.MANAGER },
+  TRADE_DOCUMENTS_VIEWER: { module: ApplicationModule.PAIPERLESS_TRADE_DOCUMENTS, role: ApplicationRole.AGENT },
+  TRADE_DOCUMENTS_EDITOR: { module: ApplicationModule.PAIPERLESS_TRADE_DOCUMENTS, role: ApplicationRole.SUPERVISOR },
+  ANALYTICS_VIEWER: { module: ApplicationModule.PORTAL_ADMIN, role: ApplicationRole.AGENT },
+  USER_MANAGEMENT_ADMIN: { module: ApplicationModule.PORTAL_ADMIN, role: ApplicationRole.MANAGER },
 };
 
 export const TEST_MFA_CODES = {
