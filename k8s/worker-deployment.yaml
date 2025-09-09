@@ -1,0 +1,90 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: trade-docs-worker
+  namespace: trade-docs-platform
+  labels:
+    app: trade-docs-worker
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: trade-docs-worker
+  template:
+    metadata:
+      labels:
+        app: trade-docs-worker
+    spec:
+      containers:
+      - name: worker
+        image: trade-docs-worker:latest
+        envFrom:
+        - configMapRef:
+            name: trade-docs-config
+        - secretRef:
+            name: trade-docs-secrets
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+        livenessProbe:
+          exec:
+            command:
+            - pgrep
+            - -f
+            - main-worker.js
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          exec:
+            command:
+            - pgrep
+            - -f
+            - main-worker.js
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+        startupProbe:
+          exec:
+            command:
+            - pgrep
+            - -f
+            - main-worker.js
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 10
+      imagePullSecrets:
+      - name: gcr-json-key
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: trade-docs-worker-hpa
+  namespace: trade-docs-platform
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: trade-docs-worker
+  minReplicas: 3
+  maxReplicas: 15
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80

@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: trade-docs-platform
+  labels:
+    name: trade-docs-platform
+    environment: production

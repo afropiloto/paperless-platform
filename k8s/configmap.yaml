@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: trade-docs-config
+  namespace: trade-docs-platform
+data:
+  NODE_ENV: "production"
+  PORT: "3001"
+  REDIS_HOST: "redis-service"
+  REDIS_PORT: "6379"
+  MONGODB_URI: "mongodb://mongodb-service:27017/tradedocs"
+  ONBOARDING_CHECKS_CONCURRENCY: "5"
