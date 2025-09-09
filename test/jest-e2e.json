@@ -5,5 +5,19 @@
   "testRegex": ".e2e-spec.ts$",
   "transform": {
     "^.+\\.(t|j)s$": "ts-jest"
-  }
+  },
+  "setupFilesAfterEnv": ["<rootDir>/utils/test-setup.ts"],
+  "testTimeout": 30000,
+  "maxWorkers": 1,
+  "collectCoverageFrom": [
+    "controllers/**/*.ts",
+    "utils/**/*.ts",
+    "!**/*.d.ts",
+    "!**/node_modules/**"
+  ],
+  "coverageDirectory": "../coverage-e2e",
+  "coverageReporters": ["text", "lcov", "html"],
+  "verbose": true,
+  "detectOpenHandles": true,
+  "forceExit": true
 }
