@@ -3,9 +3,10 @@ import { OnboardingChecksService } from './onboarding-checks.service';
 import { DueDiligenceChecklistsModule } from '../due-diligence-checklists/due-diligence-checklists.module';
 import { RegistrationModule } from '../registration/registration.module';
 import { AccountsModule } from '../accounts/accounts.module';
-import { DuplicateRegistrationCheckProcessor } from './processors/duplicate-registration-check.processor';
-import { EmailUniquenessCheckProcessor } from './processors/email-uniqueness-check.processor';
-import { WalletUniquenessCheckProcessor } from './processors/wallet-uniqueness-check.processor';
+import { OnboardingChecksRouter } from './processors/onboarding-checks-router.processor';
+import { DuplicateRegistrationCheckService } from './services/duplicate-registration-check.service';
+import { EmailUniquenessCheckService } from './services/email-uniqueness-check.service';
+import { WalletUniquenessCheckService } from './services/wallet-uniqueness-check.service';
 import { BullModule } from '@nestjs/bullmq';
 import { OnboardingQueues } from '../constants/app.constants';
 
@@ -20,9 +21,10 @@ import { OnboardingQueues } from '../constants/app.constants';
   ],
   providers: [
     OnboardingChecksService,
-    DuplicateRegistrationCheckProcessor,
-    EmailUniquenessCheckProcessor,
-    WalletUniquenessCheckProcessor,
+    OnboardingChecksRouter,
+    DuplicateRegistrationCheckService,
+    EmailUniquenessCheckService,
+    WalletUniquenessCheckService,
   ],
   exports: [OnboardingChecksService],
 })

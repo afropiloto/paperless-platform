@@ -1,40 +1,26 @@
-import { Processor, WorkerHost } from '@nestjs/bullmq';
-import { Inject, Logger } from '@nestjs/common';
-import { Job } from 'bullmq';
+import { Injectable, Logger } from '@nestjs/common';
 import { OnboardingCheckEventData } from '../types/onboarding-checks.types';
 import { OnboardingChecksService } from '../onboarding-checks.service';
-import { RegistrationService } from 'src/registration/registration.service';
-import { AccountsService } from 'src/accounts/accounts.service';
-import { ChecklistItemStatus } from 'src/deal-desk/types/deal-desk.types';
-import { OnboardingQueues } from 'src/constants/app.constants';
+import { RegistrationService } from '../../registration/registration.service';
+import { AccountsService } from '../../accounts/accounts.service';
+import { ChecklistItemStatus } from '../../deal-desk/types/deal-desk.types';
 
-@Processor(OnboardingQueues.ONBOARDING_CHECKS)
-export class WalletUniquenessCheckProcessor extends WorkerHost {
-  private readonly logger = new Logger(WalletUniquenessCheckProcessor.name);
+@Injectable()
+export class WalletUniquenessCheckService {
+  private readonly logger = new Logger(WalletUniquenessCheckService.name);
 
   constructor(
-    @Inject()
     private readonly onboardingChecksService: OnboardingChecksService,
-    @Inject()
     private readonly registrationService: RegistrationService,
-    @Inject()
     private readonly accountsService: AccountsService,
-  ) {
-    super();
-  }
+  ) {}
 
-  async process(job: Job<OnboardingCheckEventData>): Promise<void> {
-    // Only process wallet uniqueness check events
-    if (job.name !== 'ONBOARDING_CHECK_WALLET_UNIQUENESS') {
-      this.logger.debug(`Skipping job ${job.id} with event type ${job.name} - not a wallet uniqueness check`);
-      return;
-    }
-
-    this.logger.log(`Processing wallet uniqueness check for registration ${job.data.registrationId}`);
+  async executeCheck(data: OnboardingCheckEventData): Promise<void> {
+    this.logger.log(`Processing wallet uniqueness check for registration ${data.registrationId}`);
     
     try {
       const registration = await this.registrationService.getRegistrationDetails(
-        job.data.registrationId
+        data.registrationId
       );
 
       if (!registration) {
@@ -42,30 +28,37 @@ export class WalletUniquenessCheckProcessor extends WorkerHost {
       }
 
       const walletAddress = registration.company.accountWalletAddress;
-      this.logger.debug({walletAddress})
+      this.logger.debug({walletAddress});
+      
       // Check for existing accounts with same wallet
       const existingAccount = await this.accountsService.findByWalletAddress(walletAddress);
-      this.logger.debug({existingAccount})
+      this.logger.debug({existingAccount});
 
       // Check for existing account users with same wallet
       const existingAccountUsers = await this.accountsService.findUsersByWalletAddress(walletAddress);
-      this.logger.debug({existingAccountUsers})
+      this.logger.debug({existingAccountUsers});
+      
       // Check for existing registrations with same wallet (exclude completed/rejected)
       const existingRegistrations = await this.registrationService.findByWalletAddress(
         walletAddress,
         { excludeStatuses: ['COMPLETED', 'REJECTED'] }
       );
-      this.logger.debug({existingRegistrations})
+      this.logger.debug({existingRegistrations});
 
       const hasDuplicates = existingAccount ||
                            existingAccountUsers.length > 0 || 
                            existingRegistrations.length > 0;
 
-      this.logger.debug({existingAccount, existingAccountUsers:existingAccountUsers.length, existingRegistrations: existingRegistrations.length})
+      this.logger.debug({
+        existingAccount, 
+        existingAccountUsers: existingAccountUsers.length, 
+        existingRegistrations: existingRegistrations.length
+      });
+      
       await this.onboardingChecksService.updateAutomatedChecklistItem(
-        job.data.checklistInstanceId,
-        job.data.sectionTitle,
-        job.data.itemTitle,
+        data.checklistInstanceId,
+        data.sectionTitle,
+        data.itemTitle,
         hasDuplicates ? ChecklistItemStatus.CRITICAL : ChecklistItemStatus.SATISFACTORY,
         [{
           text: hasDuplicates 
@@ -75,17 +68,19 @@ export class WalletUniquenessCheckProcessor extends WorkerHost {
         }]
       );
 
-      this.logger.log(`Wallet uniqueness check completed for registration ${job.data.registrationId}: ${hasDuplicates ? 'DUPLICATE WALLET FOUND' : 'WALLET UNIQUE'}`);
+      this.logger.log(`Wallet uniqueness check completed for registration ${data.registrationId}: ${hasDuplicates ? 'DUPLICATE WALLET FOUND' : 'WALLET UNIQUE'}`);
     } catch (error) {
-      this.logger.error(`Error in wallet uniqueness check for registration ${job.data.registrationId}: ${error.message}`);
+      this.logger.error(`Error in wallet uniqueness check for registration ${data.registrationId}: ${error.message}`);
       
       await this.onboardingChecksService.updateAutomatedChecklistItem(
-        job.data.checklistInstanceId,
-        job.data.sectionTitle,
-        job.data.itemTitle,
+        data.checklistInstanceId,
+        data.sectionTitle,
+        data.itemTitle,
         ChecklistItemStatus.CRITICAL,
         [{ text: `Error: ${error.message}`, userId: 'system' }]
       );
+      
+      throw error; // Re-throw to let the router handle retry logic
     }
   }
 }

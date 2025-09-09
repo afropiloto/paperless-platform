@@ -1,40 +1,26 @@
-import { Processor, WorkerHost } from '@nestjs/bullmq';
-import { Inject, Logger } from '@nestjs/common';
-import { Job } from 'bullmq';
+import { Injectable, Logger } from '@nestjs/common';
 import { OnboardingCheckEventData } from '../types/onboarding-checks.types';
 import { OnboardingChecksService } from '../onboarding-checks.service';
 import { RegistrationService } from '../../registration/registration.service';
 import { AccountsService } from '../../accounts/accounts.service';
 import { ChecklistItemStatus } from '../../deal-desk/types/deal-desk.types';
-import { OnboardingQueues } from '../../constants/app.constants';
 
-@Processor(OnboardingQueues.ONBOARDING_CHECKS)
-export class DuplicateRegistrationCheckProcessor extends WorkerHost {
-  private readonly logger = new Logger(DuplicateRegistrationCheckProcessor.name);
+@Injectable()
+export class DuplicateRegistrationCheckService {
+  private readonly logger = new Logger(DuplicateRegistrationCheckService.name);
 
   constructor(
-    @Inject()
     private readonly onboardingChecksService: OnboardingChecksService,
-    @Inject()
     private readonly registrationService: RegistrationService,
-    @Inject()
     private readonly accountsService: AccountsService,
-  ) {
-    super();
-  }
+  ) {}
 
-  async process(job: Job<OnboardingCheckEventData>): Promise<void> {
-    // Only process duplicate registration check events
-    if (job.name !== 'ONBOARDING_CHECK_DUPLICATE_REGISTRATION') {
-      this.logger.debug(`Skipping job ${job.id} with event type ${job.name} - not a duplicate registration check`);
-      return;
-    }
-
-    this.logger.log(`Processing duplicate registration check for registration ${job.data.registrationId}`);
+  async executeCheck(data: OnboardingCheckEventData): Promise<void> {
+    this.logger.log(`Processing duplicate registration check for registration ${data.registrationId}`);
     
     try {
       const registration = await this.registrationService.getRegistrationDetails(
-        job.data.registrationId
+        data.registrationId
       );
 
       if (!registration) {
@@ -57,9 +43,9 @@ export class DuplicateRegistrationCheckProcessor extends WorkerHost {
       const hasDuplicates = existingRegistrations.length > 0 || existingAccounts.length > 0;
       
       await this.onboardingChecksService.updateAutomatedChecklistItem(
-        job.data.checklistInstanceId,
-        job.data.sectionTitle,
-        job.data.itemTitle,
+        data.checklistInstanceId,
+        data.sectionTitle,
+        data.itemTitle,
         hasDuplicates ? ChecklistItemStatus.CRITICAL : ChecklistItemStatus.SATISFACTORY,
         [{
           text: hasDuplicates 
@@ -69,17 +55,19 @@ export class DuplicateRegistrationCheckProcessor extends WorkerHost {
         }]
       );
 
-      this.logger.log(`Duplicate registration check completed for registration ${job.data.registrationId}: ${hasDuplicates ? 'DUPLICATES FOUND' : 'NO DUPLICATES'}`);
+      this.logger.log(`Duplicate registration check completed for registration ${data.registrationId}: ${hasDuplicates ? 'DUPLICATES FOUND' : 'NO DUPLICATES'}`);
     } catch (error) {
-      this.logger.error(`Error in duplicate registration check for registration ${job.data.registrationId}: ${error.message}`);
+      this.logger.error(`Error in duplicate registration check for registration ${data.registrationId}: ${error.message}`);
       
       await this.onboardingChecksService.updateAutomatedChecklistItem(
-        job.data.checklistInstanceId,
-        job.data.sectionTitle,
-        job.data.itemTitle,
+        data.checklistInstanceId,
+        data.sectionTitle,
+        data.itemTitle,
         ChecklistItemStatus.CRITICAL,
         [{ text: `Error: ${error.message}`, userId: 'system' }]
       );
+      
+      throw error; // Re-throw to let the router handle retry logic
     }
   }
 }
