@@ -43,9 +43,9 @@ services:
     container_name: trade-docs-api
     ports:
       - "3001:3001"
+    env_file:
+      - env.development
     environment:
-      - NODE_ENV=development
-      - PORT=3001
       - MONGODB_URI=mongodb://admin:password@mongodb:27017/tradedocs?authSource=admin
       - REDIS_HOST=redis
       - REDIS_PORT=6379
@@ -69,13 +69,13 @@ services:
       context: .
       dockerfile: Dockerfile.worker
     container_name: trade-docs-worker
+    env_file:
+      - env.development
     environment:
-      - NODE_ENV=development
       - MONGODB_URI=mongodb://admin:password@mongodb:27017/tradedocs?authSource=admin
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - REDIS_PASSWORD=
-      - ONBOARDING_CHECKS_CONCURRENCY=5
     depends_on:
       mongodb:
         condition: service_healthy

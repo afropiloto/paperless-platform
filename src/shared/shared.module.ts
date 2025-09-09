@@ -1,41 +1,59 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { BullModule } from '@nestjs/bullmq';
 import appConfig from '../config/app.config';
+import environmentConfig from '../config/environment.config';
+import { ConfigurationService } from '../config/configuration.service';
+import { ProcessorConfigService } from '../config/processor-config.service';
+import { ConfigurationValidationService } from '../config/configuration-validation.service';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
       cache: true,
-      load: [appConfig],
+      load: [appConfig, environmentConfig],
     }),
-    MongooseModule.forRoot(
-      process.env.MONGODB_URI || 'mongodb://localhost/tradedocs',
-    ),
-    BullModule.forRoot({
-      connection: {
-        host: process.env.REDIS_HOST || 'localhost',
-        port: parseInt(process.env.REDIS_PORT, 10) || 6379,
-        password: process.env.REDIS_PASSWORD || "",
-        enableReadyCheck: true,
-      },
-      defaultJobOptions: {
-        removeOnComplete: 1000,
-        removeOnFail: 5000,
-        attempts: 3,
-        backoff: {
-          type: 'exponential',
-          delay: 2000
-        }
-      },
+    MongooseModule.forRootAsync({
+      useFactory: (configService: ConfigService) => ({
+        uri: configService.get<string>('environment.database.uri'),
+      }),
+      inject: [ConfigService],
     }),
+    BullModule.forRootAsync({
+      useFactory: (configService: ConfigService) => ({
+        connection: {
+          host: configService.get<string>('environment.redis.host'),
+          port: configService.get<number>('environment.redis.port'),
+          password: configService.get<string>('environment.redis.password'),
+          enableReadyCheck: true,
+        },
+        defaultJobOptions: {
+          removeOnComplete: 1000,
+          removeOnFail: 5000,
+          attempts: 3,
+          backoff: {
+            type: 'exponential',
+            delay: 2000
+          }
+        },
+      }),
+      inject: [ConfigService],
+    }),
+  ],
+  providers: [
+    ConfigurationService,
+    ProcessorConfigService,
+    ConfigurationValidationService,
   ],
   exports: [
     ConfigModule,
     MongooseModule,
     BullModule,
+    ConfigurationService,
+    ProcessorConfigService,
+    ConfigurationValidationService,
   ],
 })
 export class SharedModule {}

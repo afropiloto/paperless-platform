@@ -9,4 +9,33 @@ data:
   REDIS_HOST: "redis-service"
   REDIS_PORT: "6379"
   MONGODB_URI: "mongodb://mongodb-service:27017/tradedocs"
-  ONBOARDING_CHECKS_CONCURRENCY: "5"
+  
+  # Worker Configuration
+  ONBOARDING_CHECKS_CONCURRENCY: "10"
+  EMAIL_PROCESSING_CONCURRENCY: "5"
+  DATA_EXTRACTION_CONCURRENCY: "3"
+  DOCUMENT_SIGNING_CONCURRENCY: "5"
+  DEAL_DESK_CONCURRENCY: "3"
+  
+  # API Configuration
+  API_RATE_LIMIT_TTL: "60"
+  API_RATE_LIMIT_LIMIT: "100"
+  API_TIMEOUT: "30000"
+  
+  # Logging Configuration
+  LOG_LEVEL: "info"
+  LOG_FORMAT: "json"
+  LOG_FILE_ENABLED: "true"
+  LOG_FILE_PATH: "/app/logs/app.log"
+  
+  # Health Check Configuration
+  HEALTH_CHECK_TIMEOUT: "5000"
+  HEALTH_CHECK_INTERVAL: "30000"
+  
+  # Monitoring Configuration
+  METRICS_ENABLED: "true"
+  METRICS_PORT: "9090"
+  
+  # Development Configuration
+  DEBUG_MODE: "false"
+  HOT_RELOAD: "false"

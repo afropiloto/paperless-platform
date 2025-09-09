@@ -9,6 +9,8 @@ import { EmailUniquenessCheckService } from './services/email-uniqueness-check.s
 import { WalletUniquenessCheckService } from './services/wallet-uniqueness-check.service';
 import { BullModule } from '@nestjs/bullmq';
 import { OnboardingQueues } from '../constants/app.constants';
+import { ConfigurationService } from '../config/configuration.service';
+import { ProcessorConfigService } from '../config/processor-config.service';
 
 @Module({
   imports: [
@@ -25,7 +27,9 @@ import { OnboardingQueues } from '../constants/app.constants';
     DuplicateRegistrationCheckService,
     EmailUniquenessCheckService,
     WalletUniquenessCheckService,
+    ConfigurationService,
+    ProcessorConfigService,
   ],
-  exports: [OnboardingChecksService],
+  exports: [OnboardingChecksService, ConfigurationService, ProcessorConfigService],
 })
 export class OnboardingChecksModule {}

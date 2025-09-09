@@ -8,9 +8,15 @@ import * as bodyParser from 'body-parser';
 import { LoggingInterceptor } from './interceptors/request-logger.interceptor';
 import { join } from 'path';
 import * as express from 'express';
+import { ConfigurationValidationService } from './config/configuration-validation.service';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  
+  // Validate configuration
+  const configValidationService = app.get(ConfigurationValidationService);
+  configValidationService.validateConfiguration();
+  configValidationService.logConfigurationSummary();
   
   // Add static file serving for .well-known directory
   app.use('/.well-known', express.static(join(__dirname, '..', 'public')));

@@ -1,11 +1,18 @@
 # Trade Documents Platform
 
-# Todo:
-1. Setup ai.paiperless.com with dns-txt record for identify verification
-2. Migrate data extraction to extend.ai
-   - Need to set-up and test the processors on extend.ai
-3. Build Tests for each module
-4. End-to-End Testing
+A comprehensive NestJS-based platform for managing trade documents with automated onboarding checks, document processing, and multi-tenant architecture.
+
+## 🏗️ Architecture Overview
+
+The platform consists of two main applications:
+
+- **API Application**: Handles HTTP requests, serves REST endpoints, and manages user interactions
+- **Worker Application**: Processes background jobs, automated checks, and event-driven tasks
+
+Both applications share:
+- **MongoDB**: Primary database for data persistence
+- **Redis**: Queue management and caching layer
+- **Automated Checks System**: Template-driven verification system
 
 ## Seeding Module Permissions
 You can seed the module-permissions collection with the predefined combinations.

@@ -1,22 +1,24 @@
 import { Processor, WorkerHost } from '@nestjs/bullmq';
-import { Logger } from '@nestjs/common';
+import { Logger, Inject } from '@nestjs/common';
 import { Job } from 'bullmq';
 import { OnboardingCheckEventData } from '../types/onboarding-checks.types';
 import { OnboardingQueues } from '../../constants/app.constants';
 import { DuplicateRegistrationCheckService } from '../services/duplicate-registration-check.service';
 import { EmailUniquenessCheckService } from '../services/email-uniqueness-check.service';
 import { WalletUniquenessCheckService } from '../services/wallet-uniqueness-check.service';
+import { ConfigurationService } from '../../config/configuration.service';
 
 @Processor(OnboardingQueues.ONBOARDING_CHECKS, {
-  concurrency: parseInt(process.env.ONBOARDING_CHECKS_CONCURRENCY || '5'),
+  concurrency: 5, // Will be overridden by environment config
 })
 export class OnboardingChecksRouter extends WorkerHost {
   private readonly logger = new Logger(OnboardingChecksRouter.name);
 
   constructor(
-    private readonly duplicateRegistrationCheckService: DuplicateRegistrationCheckService,
-    private readonly emailUniquenessCheckService: EmailUniquenessCheckService,
-    private readonly walletUniquenessCheckService: WalletUniquenessCheckService,
+    @Inject() private readonly duplicateRegistrationCheckService: DuplicateRegistrationCheckService,
+    @Inject() private readonly emailUniquenessCheckService: EmailUniquenessCheckService,
+    @Inject() private readonly walletUniquenessCheckService: WalletUniquenessCheckService,
+    private readonly configurationService: ConfigurationService,
   ) {
     super();
   }
