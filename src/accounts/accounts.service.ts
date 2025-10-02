@@ -31,7 +31,6 @@ export class AccountsService {
       throw new BadRequestException('Invalid account id');
     }
     const account = await this.accountsRepository.findAccountById(accountId);
-    this.logger.debug({ accountId, account });
     if (!account) {
       throw new NotFoundException('Account not found');
     }

@@ -103,6 +103,7 @@ export class VerifyTradeDocumentController {
     )
     file: Express.Multer.File,
   ) {
+    this.logger.debug(file.originalname)
     return plainToInstance(
       TradeDocumentVerificationResultsDto,
       await this.verifyTradeDocumentService.verifyTradeDocument(file),

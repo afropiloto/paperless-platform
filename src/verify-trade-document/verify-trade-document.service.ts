@@ -33,7 +33,10 @@ export class VerifyTradeDocumentService {
     }
 
     // Check the document verifies
-    return this.performVerification(documentTrackingId, documentHash);
+    this.logger.debug({documentTrackingId, documentHash});
+    const results = await this.performVerification(documentTrackingId, documentHash);
+    this.logger.debug({results});
+    return results;
   }
 
   private async extractVerificationDetailsFromFile(file: Express.Multer.File) {
@@ -66,9 +69,10 @@ export class VerifyTradeDocumentService {
     const verificationDetails =
       await this.tradeDocumentsRepository.getDocumentByTrackingId(
         documentTrackingId,
-        ['verifiableDataUrlHash', 'issueDetails', 'accountId'],
+        ['verifiableDocumentHash', 'issueDetails', 'accountId'],
         [],
       );
+    this.logger.debug({verificationDetails})
     if (!verificationDetails) {
       this.logger.error({
         message: 'failed to obtain verification details',
@@ -109,7 +113,7 @@ export class VerifyTradeDocumentService {
         [],
         [
           'wrappedContent',
-          'verifiableDataUrlHash',
+          'verifiableDocumentHash',
           'tradeDocumentFile',
           'merkleRoot',
         ],

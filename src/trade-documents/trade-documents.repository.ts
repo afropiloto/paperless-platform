@@ -196,6 +196,7 @@ export class TradeDocumentsRepository {
     excludes: string[] = [],
   ): Promise<TradeDocumentDto> {
     const selections = this.getSelections(includes, excludes);
+    this.logger.debug({selections})
     const document = await this.tradeDocumentModel
       .findOne({
         documentTrackingId: trackingId,

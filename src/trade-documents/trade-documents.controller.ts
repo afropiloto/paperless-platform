@@ -65,6 +65,7 @@ export class TradeDocumentsController {
   // Trade Document File endpoints
   // *******************************************************************************************************************
   @Get('/:accountId/:documentId/file/:fileVariant')
+  @ClientAccess(ClientAccessGroup.PAIPERLESS_PORTAL)
   @ApiOperation({
     summary:
       'Retrieves the trade document file content an account by document Id',
@@ -241,6 +242,7 @@ export class TradeDocumentsController {
   // Trade Document endpoints
   // *******************************************************************************************************************
   @Get(':accountId/:documentId')
+  @ClientAccess(ClientAccessGroup.PAIPERLESS_PORTAL)
   @ApiOperation({
     summary: 'Retrieves a trade document for an account by document Id',
   })
@@ -269,6 +271,7 @@ export class TradeDocumentsController {
   }
 
   @Get(':accountId/')
+  @ClientAccess(ClientAccessGroup.PAIPERLESS_PORTAL)
   @ApiOperation({
     summary:
       'Retrieves summary information about existing trade document for an account based on a search criteria.',

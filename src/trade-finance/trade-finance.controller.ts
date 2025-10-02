@@ -97,6 +97,7 @@ export class TradeFinanceController {
   }
 
   @Get('/:accountId/deals/:dealId')
+  @ClientAccess(ClientAccessGroup.PAIPERLESS_PORTAL)
   @ApiOperation({
     summary: 'Retrieve a specific trade finance deal',
   })
