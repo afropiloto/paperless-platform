@@ -1,0 +1,174 @@
+[{
+  
+  "checklistType": "ONBOARDING",
+  "version": 1,
+  "sections": [
+    {
+      "title": "Company Identification Checks",
+      "guidance": "Complete the Company Identification Checks",
+      "items": [
+        {
+          "title": "Legal Name Verification",
+          "guidance": "Check the company legal name matches name in official regigration documents and cross check with national or international company regisration database",
+          "checkType": "MANUAL"
+        },
+        {
+          "title": "Company Registration Number Check",
+          "guidance": "Validate the company’s registration number with the appropriate government authority or regulatory body",
+          "checkType": "MANUAL"
+        },
+        {
+          "title": "Registered Address Verification",
+          "guidance": "Cross-check the company's registered address with official documents (e.g., incorporation certificate). Confirm through a third-party address verification tool or service",
+          "checkType": "MANUAL"
+        },
+        {
+          "title": "Industry Classification",
+          "guidance": "Verify the company’s business activities match their registered industry code (e.g., NAICS, SIC)",
+          "checkType": "MANUAL"
+        },
+        {
+          "title": "Parent/Subsidiaries Information",
+          "guidance": "Confirm the ownership structure and any subsidiaries to understand the overall corporate structure",
+          "checkType": "MANUAL"
+        }
+      ]
+    },
+    {
+      "title": "Business Owner/Beneficial Owner Identification",
+      "guidance": "Complete the Owner Identification Checks",
+      "items": [
+        {
+          "title": "Owner and Key Executive Identification",
+          "guidance": "Obtain and validate the details of beneficial owners, directors, and key executives. Verify the identification and ownership percentages",
+          "checkType": "MANUAL"
+        },
+        {
+          "title": "Ownership Verification",
+          "guidance": "Ensure that ownership information is up-to-date and matches shareholder records (e.g., annual returns, shareholder registry).",
+          "checkType": "MANUAL"
+        },
+        {
+          "title": "Directors and Shareholders Scrutiny",
+          "guidance": "Cross-check with government or regulatory databases to verify ownership and historical involvement with other businesses",
+          "checkType": "MANUAL"
+        }
+      ]
+    },
+    {
+      "title": "Sanctions & Watch List Screening",
+      "guidance": "Complete the following checks for sanctions and watchlist",
+      "items": [
+        {
+          "title": "Sanctions Lists Screening",
+          "guidance": "Use an updated tool or service to check against global sanctions lists (e.g., OFAC, UN, EU). Verify the company, its owners, and key executives are not listed on any sanctions or restricted entities list.",
+          "checkType": "MANUAL"
+        },
+        {
+          "title": "Politically Exposed Persons (PEP) Check",
+          "guidance": "Verify whether any beneficial owners, directors, or executives are politically exposed persons. Use dedicated services for PEP screening (e.g., World-Check, LexisNexis).",
+          "checkType": "MANUAL"
+        },
+        {
+          "title": "Adverse Media Screening",
+          "guidance": "Conduct media searches to identify negative press or allegations of fraudulent activity, money laundering, etc",
+          "checkType": "MANUAL"
+        }
+      ]
+    },
+    {
+      "title": "Automated Checks",
+      "guidance": "Automated checks for onboarding",
+      "items": [
+        {
+          "title": "Wallet Uniqueness Check",
+          "guidance": "Checks that the Wallet Address associated with this Registration has not been registered previously",
+          "checkType": "AUTOMATED",
+          "eventType": "ONBOARDING_CHECK_WALLET_UNIQUENESS"
+        }
+      ]
+    }
+  ]
+},
+{
+  "checklistType": "DEAL_PROCESSING",
+  "version": 1,
+  "sections": [
+    {
+      "title": "Know your business",
+      "guidance": "Complete the following checklist to ensure we can deal with the business",
+      "items": [
+        {
+          "title": "Company Registration Documents",
+          "guidance": "Verify company registration documents, including certificates of incorporation and business licenses"
+        },
+        {
+          "title": "Director and UBO Checks",
+          "guidance": "Verify identities of directors and ultimate beneficial owners, including ownership structure"
+        },
+        {
+          "title": "KYC Checks",
+          "guidance": "Complete standard Know Your Customer checks including identity verification"
+        },
+        {
+          "title": "Sanctions and Watchlists",
+          "guidance": "Screen company and key individuals against sanctions lists and watchlists"
+        },
+        {
+          "title": "Credit Bureau Reports",
+          "guidance": "Review credit reports and financial history from credit bureaus"
+        }
+      ]
+    },
+    {
+      "title": "Counter Party Checks",
+      "guidance": "Complete the following checklist to ensure the counter party is reliable",
+      "items": [
+        {
+          "title": "Buyer Verification",
+          "guidance": "Verify buyer's identity, business operations, and legitimacy"
+        },
+        {
+          "title": "Payment Behaviour",
+          "guidance": "Review buyer's payment history and behavior with other suppliers"
+        },
+        {
+          "title": "Contracts",
+          "guidance": "Review contracts between seller and buyer for terms and conditions"
+        }
+      ]
+    },
+    {
+      "title": "Invoice Validation",
+      "guidance": "Check each of the invoices included in the deal to esnure their authenticity",
+      "items": [
+        {
+          "title": "Invoice Authenticity",
+          "guidance": "Verify authenticity of invoices through supporting documentation"
+        },
+        {
+          "title": "Delivery Evidence",
+          "guidance": "Check proof of delivery or service completion"
+        },
+        {
+          "title": "Assignment Deeds",
+          "guidance": "Review invoice assignment documentation and legal requirements"
+        },
+        {
+          "title": "Debtor Acknowledgement",
+          "guidance": "Obtain acknowledgement from debtor regarding invoice validity"
+        }
+      ]
+    },
+    {
+      "title": "Fraud Checks",
+      "guidance": "Review invoices and related documents for evidence of fraud.",
+      "items": [
+        {
+          "title": "Fraud Checks",
+          "guidance": "Perform fraud detection checks on invoices and related documents"
+        }
+      ]
+    }
+  ]
+}]

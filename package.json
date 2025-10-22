@@ -35,8 +35,9 @@
     "script:deployTokenRegistry": "dotenv -e .env npx ts-node ./scripts/deployTokenRegistry.ts",
     "script:generateDidWeb": "dotenv -e .env npx ts-node ./scripts/generateDidWeb.ts",
     "script:generate-api-key": "ts-node ./scripts/generate-api-key.ts",
-    "script:migrate-auth-fields": "dotenv -e .env npx ts-node ./src/migrations/add-auth-fields.ts",
     "script:seed-module-permissions": "ts-node ./scripts/seed-module-permissions.ts",
+    "script:seed-account-user": "ts-node ./scripts/seed-account-user.ts",
+    "script:seed-due-diligence-checklists": "ts-node ./scripts/seed-due-diligence-checklists.ts",
     "script:add-onboarding-check": "dotenv -e .env -- npx ts-node ./scripts/add-onboarding-check.ts"
   },
   "dependencies": {
