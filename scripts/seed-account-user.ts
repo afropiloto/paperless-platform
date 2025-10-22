@@ -4,15 +4,51 @@ import { Account, AccountSchema } from '../src/accounts/schemas/account.schema';
 import { AccountUser, AccountUserSchema, AccountUserStatus, AuthMethod } from '../src/account-users/schemas/account-user.schema';
 import { ApplicationModule, ApplicationRole } from '../src/account-users/schemas/application-permissions.schema';
 import { AccountStatus } from '../src/accounts/types/account.types';
+import { PasswordService } from '../src/auth/services/password.service';
+import { ConfigService } from '@nestjs/config';
 
 dotenv.config();
 
 const MONGO_URI = process.env.MONGODB_URI as string;
 
+// Initialize PasswordService with a mock ConfigService
+const mockConfigService = {
+  get: (key: string) => {
+    // Return default values for password policy
+    const defaults: Record<string, any> = {
+      'auth.password.minLength': 8,
+      'auth.password.requireUppercase': true,
+      'auth.password.requireLowercase': true,
+      'auth.password.requireNumbers': true,
+      'auth.password.requireSpecialChars': true,
+    };
+    return defaults[key];
+  }
+} as ConfigService;
+
+const passwordService = new PasswordService(mockConfigService);
+
+// Get wallet address from command line arguments
+const WALLET_ADDRESS = process.argv[2];
+
+if (!WALLET_ADDRESS) {
+  console.error('Error: Wallet address is required as a command line argument');
+  console.error('Usage: npm run script:seed-account-user <wallet_address>');
+  console.error('Example: npm run script:seed-account-user 0xB320cf3e10FdD73fbCc81f225ACb71faE0342aDf');
+  process.exit(1);
+}
+
+// Validate wallet address format (basic Ethereum address validation)
+if (!WALLET_ADDRESS.match(/^0x[a-fA-F0-9]{40}$/)) {
+  console.error('Error: Invalid wallet address format. Must be a valid Ethereum address (0x followed by 40 hex characters)');
+  console.error('Provided address:', WALLET_ADDRESS);
+  process.exit(1);
+}
+
 // Default seed data for Account and AccountUser
 const DEFAULT_ACCOUNT_DATA = {
   accountName: 'Paperles',
-  walletAddress: '0xB320cf3e10FdD73fbCc81f225ACb71faE0342aDf', // Placeholder wallet address
+  walletAddress: WALLET_ADDRESS,
   company: {
     name: 'Paperless',
     address: {
@@ -44,7 +80,7 @@ const DEFAULT_ACCOUNT_USERS_DATA = [
   {
     name: 'Lee Tarone',
     emailAddress: 'lee@paperless.money',
-    walletAddress: '0xB320cf3e10FdD73fbCc81f225ACb71faE0342aDf',
+    walletAddress: WALLET_ADDRESS,
     status: AccountUserStatus.ACTIVE,
     permissions: [
         { module: ApplicationModule.PORTAL_DEAL_DESK, role: ApplicationRole.AGENT },
@@ -61,15 +97,12 @@ const DEFAULT_ACCOUNT_USERS_DATA = [
     ],
     authMethod: AuthMethod.EMAIL_PASSWORD,
     mfaEnabled: false,
-    mfaSetupRequired: false,
-    passwordChanged: true,
-    passwordResetRequired: false,
-    failedLoginAttempts: 0
+    mfaSetupRequired: false
   },
   {
     name: 'Bill Matthews',
     emailAddress: 'bill@paperless.money',
-    walletAddress: '0xB320cf3e10FdD73fbCc81f225ACb71faE0342aDf',
+    walletAddress: WALLET_ADDRESS,
     status: AccountUserStatus.ACTIVE,
     permissions: [
         { module: ApplicationModule.PORTAL_DEAL_DESK, role: ApplicationRole.AGENT },
@@ -86,10 +119,7 @@ const DEFAULT_ACCOUNT_USERS_DATA = [
     ],
     authMethod: AuthMethod.EMAIL_PASSWORD,
     mfaEnabled: false,
-    mfaSetupRequired: false,
-    passwordChanged: true,
-    passwordResetRequired: false,
-    failedLoginAttempts: 0
+    mfaSetupRequired: false
   }
 ];
 
@@ -99,6 +129,7 @@ async function run() {
     process.exit(1);
   }
 
+  console.log(`Using wallet address: ${WALLET_ADDRESS}`);
   await mongoose.connect(MONGO_URI);
   
   const AccountModel = mongoose.model(Account.name, AccountSchema);
@@ -133,10 +164,21 @@ async function run() {
       if (existingUser) {
         console.log(`Account user '${userData.emailAddress}' already exists`);
       } else {
-        // Create the account user
+        // Generate secure password for the user
+        const generatedPassword = passwordService.generateSecurePassword(16);
+        console.log(`Generated password for ${userData.emailAddress} (${userData.name}): ${generatedPassword}`);
+        
+        // Hash the password
+        const passwordHash = await passwordService.hashPassword(generatedPassword);
+        
+        // Create the account user with hashed password
         const accountUserData = {
           ...userData,
-          accountId: accountId
+          accountId: accountId,
+          passwordHash: passwordHash,
+          passwordChanged: false, // User must change password on first login
+          passwordResetRequired: false,
+          failedLoginAttempts: 0
         };
         
         const accountUser = new AccountUserModel(accountUserData);
