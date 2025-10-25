@@ -183,11 +183,20 @@ Keys for client applications can be generated using the CLI script
 
 `npx run script:generate-api-key '<clientName>' <groups>`
 
-Where `<clientName>` is the name given to the application for identification purposes (for example `paiperless`) and `<groups>` is a space delimited list of application groups.
+Where `<clientName>` is the name given to the application for identification purposes (for example `paiperless-portal`) and `<groups>` is a space delimited list of application groups.
 Example Usage:
 ```bash
 pnpm run script:generate-api-key "paiperless-portal" shared paiperless-app paiperless-portal
 ```
+
+Current groups are
+
+| Group Name        | Description                                                             |
+|-------------------|-------------------------------------------------------------------------|
+| shared            | Can access API endpoints that are shared across all client applications |
+| paiperless-portal | Can access API endpoints that are specific to the Paperless Portal      |
+| paiperless-app    | Can access API endpoints that are specific to the Paperless Application |
+
 This will generate output similar to the following:
 ```bash
 ✅ API key created for "paiperless-portal"

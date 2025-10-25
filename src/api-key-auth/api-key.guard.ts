@@ -25,7 +25,7 @@ export class ApiKeyGuard implements CanActivate {
     }
 
     const requiredGroups =
-      this.reflector.getAllAndOverride<string[]>('accessGroups', [
+      this.reflector.getAllAndMerge<string[]>('accessGroups', [
         context.getHandler(),
         context.getClass(),
       ]) ?? [];

@@ -271,7 +271,7 @@ export class TradeDocumentsController {
   }
 
   @Get(':accountId/')
-  @ClientAccess(ClientAccessGroup.PAIPERLESS_PORTAL)
+  @ClientAccess(ClientAccessGroup.SHARED)
   @ApiOperation({
     summary:
       'Retrieves summary information about existing trade document for an account based on a search criteria.',

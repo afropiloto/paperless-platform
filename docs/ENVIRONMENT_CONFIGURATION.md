@@ -43,109 +43,109 @@ Service validating configuration on startup and providing warnings for potential
 
 ### Core Configuration
 
-| Variable | Description | Default | Required |
-|----------|-------------|---------|----------|
-| `NODE_ENV` | Application environment | `development` | Yes |
-| `PORT` | API server port | `3001` | No |
+| Variable   | Description             | Default       | Required |
+|------------|-------------------------|---------------|----------|
+| `NODE_ENV` | Application environment | `development` | Yes      |
+| `PORT`     | API server port         | `3001`        | No       |
 
 ### Database Configuration
 
-| Variable | Description | Default | Required |
-|----------|-------------|---------|----------|
-| `MONGODB_URI` | MongoDB connection string | `mongodb://localhost:27017/tradedocs` | Yes |
-| `MONGO_ROOT_USERNAME` | MongoDB root username | `admin` | No |
-| `MONGO_ROOT_PASSWORD` | MongoDB root password | `password` | No |
-| `MONGO_DATABASE` | MongoDB database name | `tradedocs` | No |
+| Variable              | Description               | Default                               | Required |
+|-----------------------|---------------------------|---------------------------------------|----------|
+| `MONGODB_URI`         | MongoDB connection string | `mongodb://localhost:27017/tradedocs` | Yes      |
+| `MONGO_ROOT_USERNAME` | MongoDB root username     | `admin`                               | No       |
+| `MONGO_ROOT_PASSWORD` | MongoDB root password     | `password`                            | No       |
+| `MONGO_DATABASE`      | MongoDB database name     | `tradedocs`                           | No       |
 
 ### Redis Configuration
 
-| Variable | Description | Default | Required |
-|----------|-------------|---------|----------|
-| `REDIS_HOST` | Redis host | `localhost` | No |
-| `REDIS_PORT` | Redis port | `6379` | No |
-| `REDIS_PASSWORD` | Redis password | - | No |
+| Variable         | Description    | Default     | Required |
+|------------------|----------------|-------------|----------|
+| `REDIS_HOST`     | Redis host     | `localhost` | No       |
+| `REDIS_PORT`     | Redis port     | `6379`      | No       |
+| `REDIS_PASSWORD` | Redis password | -           | No       |
 
 ### Worker Configuration
 
-| Variable | Description | Default | Development | Production |
-|----------|-------------|---------|-------------|------------|
-| `ONBOARDING_CHECKS_CONCURRENCY` | Onboarding checks worker concurrency | `5` | `2` | `10` |
-| `EMAIL_PROCESSING_CONCURRENCY` | Email processing worker concurrency | `3` | `1` | `5` |
-| `DATA_EXTRACTION_CONCURRENCY` | Data extraction worker concurrency | `2` | `1` | `3` |
-| `DOCUMENT_SIGNING_CONCURRENCY` | Document signing worker concurrency | `3` | `1` | `5` |
-| `DEAL_DESK_CONCURRENCY` | Deal desk worker concurrency | `2` | `1` | `3` |
+| Variable                        | Description                          | Default | Development | Production |
+|---------------------------------|--------------------------------------|---------|-------------|------------|
+| `ONBOARDING_CHECKS_CONCURRENCY` | Onboarding checks worker concurrency | `5`     | `2`         | `10`       |
+| `EMAIL_PROCESSING_CONCURRENCY`  | Email processing worker concurrency  | `3`     | `1`         | `5`        |
+| `DATA_EXTRACTION_CONCURRENCY`   | Data extraction worker concurrency   | `2`     | `1`         | `3`        |
+| `DOCUMENT_SIGNING_CONCURRENCY`  | Document signing worker concurrency  | `3`     | `1`         | `5`        |
+| `DEAL_DESK_CONCURRENCY`         | Deal desk worker concurrency         | `2`     | `1`         | `3`        |
 
 ### API Configuration
 
-| Variable | Description | Default | Required |
-|----------|-------------|---------|----------|
-| `API_RATE_LIMIT_TTL` | Rate limit time window (seconds) | `60` | No |
-| `API_RATE_LIMIT_LIMIT` | Rate limit requests per window | `100` | No |
-| `API_TIMEOUT` | API request timeout (ms) | `30000` | No |
+| Variable               | Description                      | Default | Required |
+|------------------------|----------------------------------|---------|----------|
+| `API_RATE_LIMIT_TTL`   | Rate limit time window (seconds) | `60`    | No       |
+| `API_RATE_LIMIT_LIMIT` | Rate limit requests per window   | `100`   | No       |
+| `API_TIMEOUT`          | API request timeout (ms)         | `30000` | No       |
 
 ### Logging Configuration
 
-| Variable | Description | Default | Development | Production |
-|----------|-------------|---------|-------------|------------|
-| `LOG_LEVEL` | Log level | `info` | `debug` | `info` |
-| `LOG_FORMAT` | Log format | `json` | `pretty` | `json` |
-| `LOG_FILE_ENABLED` | Enable file logging | `false` | `false` | `true` |
-| `LOG_FILE_PATH` | Log file path | `./logs/app.log` | `./logs/app.log` | `/app/logs/app.log` |
+| Variable           | Description         | Default          | Development      | Production          |
+|--------------------|---------------------|------------------|------------------|---------------------|
+| `LOG_LEVEL`        | Log level           | `info`           | `debug`          | `info`              |
+| `LOG_FORMAT`       | Log format          | `json`           | `pretty`         | `json`              |
+| `LOG_FILE_ENABLED` | Enable file logging | `false`          | `false`          | `true`              |
+| `LOG_FILE_PATH`    | Log file path       | `./logs/app.log` | `./logs/app.log` | `/app/logs/app.log` |
 
 ### Security Configuration
 
-| Variable | Description | Default | Required |
-|----------|-------------|---------|----------|
-| `JWT_SECRET_KEY` | JWT secret key | `default-jwt-secret` | Yes (Production) |
-| `JWT_EXPIRES_IN` | JWT expiration time | `15m` | No |
-| `REFRESH_TOKEN_SECRET` | Refresh token secret | `default-refresh-secret` | Yes (Production) |
-| `REFRESH_TOKEN_EXPIRATION` | Refresh token expiration | `7d` | No |
-| `MFA_ENABLED` | Enable MFA | `true` | No |
-| `MFA_ISSUER` | MFA issuer name | `Trade Documents Platform` | No |
-| `PASSWORD_MIN_LENGTH` | Minimum password length | `8` | No |
-| `PASSWORD_REQUIRE_UPPERCASE` | Require uppercase in password | `true` | No |
-| `PASSWORD_REQUIRE_LOWERCASE` | Require lowercase in password | `true` | No |
-| `PASSWORD_REQUIRE_NUMBERS` | Require numbers in password | `true` | No |
-| `PASSWORD_REQUIRE_SPECIAL` | Require special chars in password | `true` | No |
-| `MAX_FAILED_LOGIN_ATTEMPTS` | Max failed login attempts | `5` | No |
-| `ACCOUNT_LOCKOUT_DURATION` | Account lockout duration (minutes) | `15` | No |
+| Variable                     | Description                        | Default                    | Required         |
+|------------------------------|------------------------------------|----------------------------|------------------|
+| `JWT_SECRET_KEY`             | JWT secret key                     | `default-jwt-secret`       | Yes (Production) |
+| `JWT_EXPIRES_IN`             | JWT expiration time                | `15m`                      | No               |
+| `REFRESH_TOKEN_SECRET`       | Refresh token secret               | `default-refresh-secret`   | Yes (Production) |
+| `REFRESH_TOKEN_EXPIRATION`   | Refresh token expiration           | `7d`                       | No               |
+| `MFA_ENABLED`                | Enable MFA                         | `true`                     | No               |
+| `MFA_ISSUER`                 | MFA issuer name                    | `Trade Documents Platform` | No               |
+| `PASSWORD_MIN_LENGTH`        | Minimum password length            | `8`                        | No               |
+| `PASSWORD_REQUIRE_UPPERCASE` | Require uppercase in password      | `true`                     | No               |
+| `PASSWORD_REQUIRE_LOWERCASE` | Require lowercase in password      | `true`                     | No               |
+| `PASSWORD_REQUIRE_NUMBERS`   | Require numbers in password        | `true`                     | No               |
+| `PASSWORD_REQUIRE_SPECIAL`   | Require special chars in password  | `true`                     | No               |
+| `MAX_FAILED_LOGIN_ATTEMPTS`  | Max failed login attempts          | `5`                        | No               |
+| `ACCOUNT_LOCKOUT_DURATION`   | Account lockout duration (minutes) | `15`                       | No               |
 
 ### External Services Configuration
 
-| Variable | Description | Default | Required |
-|----------|-------------|---------|----------|
-| `BREVO_API_KEY` | Brevo email service API key | - | No |
-| `BREVO_SENDER_EMAIL` | Default sender email | `noreply@yourdomain.com` | No |
-| `BREVO_SENDER_NAME` | Default sender name | `Trade Documents Platform` | No |
+| Variable             | Description                 | Default                    | Required |
+|----------------------|-----------------------------|----------------------------|----------|
+| `BREVO_API_KEY`      | Brevo email service API key | -                          | No       |
+| `BREVO_SENDER_EMAIL` | Default sender email        | `noreply@yourdomain.com`   | No       |
+| `BREVO_SENDER_NAME`  | Default sender name         | `Trade Documents Platform` | No       |
 
 ### File Storage Configuration
 
-| Variable | Description | Default | Required |
-|----------|-------------|---------|----------|
-| `FILE_STORAGE_PATH` | File storage directory | `./uploads` | No |
-| `MAX_FILE_SIZE` | Maximum file size (bytes) | `10485760` (10MB) | No |
-| `ALLOWED_FILE_TYPES` | Allowed file extensions | `pdf,doc,docx,jpg,jpeg,png` | No |
+| Variable             | Description               | Default                     | Required |
+|----------------------|---------------------------|-----------------------------|----------|
+| `FILE_STORAGE_PATH`  | File storage directory    | `./uploads`                 | No       |
+| `MAX_FILE_SIZE`      | Maximum file size (bytes) | `10485760` (10MB)           | No       |
+| `ALLOWED_FILE_TYPES` | Allowed file extensions   | `pdf,doc,docx,jpg,jpeg,png` | No       |
 
 ### Health Check Configuration
 
-| Variable | Description | Default | Required |
-|----------|-------------|---------|----------|
-| `HEALTH_CHECK_TIMEOUT` | Health check timeout (ms) | `5000` | No |
-| `HEALTH_CHECK_INTERVAL` | Health check interval (ms) | `30000` | No |
+| Variable                | Description                | Default | Required |
+|-------------------------|----------------------------|---------|----------|
+| `HEALTH_CHECK_TIMEOUT`  | Health check timeout (ms)  | `5000`  | No       |
+| `HEALTH_CHECK_INTERVAL` | Health check interval (ms) | `30000` | No       |
 
 ### Monitoring Configuration
 
-| Variable | Description | Default | Required |
-|----------|-------------|---------|----------|
-| `METRICS_ENABLED` | Enable metrics collection | `true` | No |
-| `METRICS_PORT` | Metrics server port | `9090` | No |
+| Variable          | Description               | Default | Required |
+|-------------------|---------------------------|---------|----------|
+| `METRICS_ENABLED` | Enable metrics collection | `true`  | No       |
+| `METRICS_PORT`    | Metrics server port       | `9090`  | No       |
 
 ### Development Configuration
 
-| Variable | Description | Default | Development | Production |
-|----------|-------------|---------|-------------|------------|
-| `DEBUG_MODE` | Enable debug mode | `false` | `true` | `false` |
-| `HOT_RELOAD` | Enable hot reload | `false` | `true` | `false` |
+| Variable     | Description       | Default | Development | Production |
+|--------------|-------------------|---------|-------------|------------|
+| `DEBUG_MODE` | Enable debug mode | `false` | `true`      | `false`    |
+| `HOT_RELOAD` | Enable hot reload | `false` | `true`      | `false`    |
 
 ## Environment-Specific Settings
 

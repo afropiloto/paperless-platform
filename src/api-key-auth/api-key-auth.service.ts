@@ -16,7 +16,6 @@ export class ApiKeyAuthService {
   ) {}
 
   async validateApiKey(keyId: string, rawKey: string): Promise<ClientInfoDetails | null> {
-    this.logger.debug({rawKey})
     const cacheKey = `api-client:${keyId}`;
     const cached = await this.cacheManager.get<ClientInfoDetails & { apiKeyHash: string }>(cacheKey);
 
