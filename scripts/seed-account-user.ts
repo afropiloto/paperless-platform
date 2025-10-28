@@ -47,7 +47,7 @@ if (!WALLET_ADDRESS.match(/^0x[a-fA-F0-9]{40}$/)) {
 
 // Default seed data for Account and AccountUser
 const DEFAULT_ACCOUNT_DATA = {
-  accountName: 'Paperles',
+  accountName: 'Paperless',
   walletAddress: WALLET_ADDRESS,
   company: {
     name: 'Paperless',
