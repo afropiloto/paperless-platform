@@ -179,7 +179,7 @@ export class DocumentSigningService {
   }
 
   /**
-   * Signs document on behalf of the Paiperless app.
+   * Signs document on behalf of the Paperless app.
    */
   async signDocumentOnBehalf(signingId: string) {
     // Check that signing details
@@ -209,7 +209,7 @@ export class DocumentSigningService {
     };
     const job = await this.signDocumentQueue.add(SIGN_DOCUMENT_EVENT, jobData);
     this.logger.log({
-      message: 'Signing Document document on behalf of Paiperless',
+      message: 'Signing Document document on behalf of Paperless',
       documentId: signingDetails.documentId,
       job: job,
     });

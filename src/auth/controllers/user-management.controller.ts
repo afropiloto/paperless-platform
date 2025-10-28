@@ -67,7 +67,7 @@ export class UserManagementController {
           walletAddress: '0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6',
           permissions: [
             { module: 'DealDesk', role: 'Supervisor' },
-            { module: 'Paiperless', role: 'Agent' }
+            { module: 'Paperless', role: 'Agent' }
           ],
           authMethod: 'email-password',
           enableMfa: true,
@@ -152,7 +152,7 @@ export class UserManagementController {
               name: 'Jane Smith',
               emailAddress: 'jane.smith@example.com',
               walletAddress: '0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b7',
-              permissions: [{ module: 'Paiperless', role: 'Agent' }],
+              permissions: [{ module: 'Paperless', role: 'Agent' }],
               authMethod: 'email-password',
               enableMfa: false,
               sendInvitation: true

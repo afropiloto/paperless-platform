@@ -7,6 +7,6 @@ export interface ClientInfoDetails {
 
 export enum ClientAccessGroup {
   SHARED = 'shared',
-  PAIPERLESS_PORTAL = 'paiperless-portal',
-  PAIPERLESS_APP =  'paiperless-app',
+  PAPERLESS_PORTAL = 'paperless-portal',
+  PAPERLESS_APP =  'paperless-app',
 }

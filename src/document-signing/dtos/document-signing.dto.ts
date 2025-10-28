@@ -12,7 +12,7 @@ export class SignerDetailsDto {
   @Expose()
   walletAddress: string;
 
-  @ApiProperty({description: "Name of the signer", example: "Paiperless Ltd"})
+  @ApiProperty({description: "Name of the signer", example: "Paperless Ltd"})
   @IsString()
   @IsOptional()
   @Expose()

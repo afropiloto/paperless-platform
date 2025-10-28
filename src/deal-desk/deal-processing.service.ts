@@ -121,7 +121,7 @@ export class DealProcessingService {
 
       if (dealProcessing.promissoryNote?.documentId) {
         const promNote = await this.tradeDocumentsService.getDocumentById(
-          this.configService.get<string>('PAIPERLESS_ACCOUNT_ID'),
+          this.configService.get<string>('PAPERLESS_ACCOUNT_ID'),
           dealProcessing.promissoryNote.documentId,
         );
 
@@ -237,7 +237,7 @@ export class DealProcessingService {
       // Make update to Promissory Note in tradedocuments collection
       const documentId = dealProcessingDetails.promissoryNote.documentId;
       const currentDocument = await this.tradeDocumentsService.getDocumentById(
-        this.configService.get<string>('PAIPERLESS_ACCOUNT_ID'),
+        this.configService.get<string>('PAPERLESS_ACCOUNT_ID'),
         documentId,
       );
       const updatedTradeDocument: UpsertTradeDocumentDto = {
@@ -245,7 +245,7 @@ export class DealProcessingService {
         documentContent: promissoryNoteContent,
       };
       await this.tradeDocumentsService.updateTradeDocumentById(
-        this.configService.get<string>('PAIPERLESS_ACCOUNT_ID'),
+        this.configService.get<string>('PAPERLESS_ACCOUNT_ID'),
         documentId,
         updatedTradeDocument,
       );
@@ -294,17 +294,17 @@ export class DealProcessingService {
       );
     }
 
-    const paiperlessAccountId = this.configService.get<string>(
-      'PAIPERLESS_ACCOUNT_ID',
+    const paperlessAccountId = this.configService.get<string>(
+      'PAPERLESS_ACCOUNT_ID',
     );
-    const [paiperlessAccount, borrowerAccount] = await Promise.all([
-      await this.accountsService.findByAccountId(paiperlessAccountId),
+    const [paperlessAccount, borrowerAccount] = await Promise.all([
+      await this.accountsService.findByAccountId(paperlessAccountId),
       await this.accountsService.findByAccountId(
         dealProcessingDetails.accountId,
       ),
     ]);
 
-    if (!borrowerAccount || !paiperlessAccount) {
+    if (!borrowerAccount || !paperlessAccount) {
       throw new NotFoundException(
         `Unable to find account details for deal id:  ${dealProcessingDetails.dealId}`,
       );
@@ -326,10 +326,10 @@ export class DealProcessingService {
       },
       specialConditions: '',
       lender: {
-        name: paiperlessAccount.accountName,
-        address: this.addressToString(paiperlessAccount.company.address),
-        country: paiperlessAccount.company.address.country,
-        contactEmail: paiperlessAccount.contact.emailAddress,
+        name: paperlessAccount.accountName,
+        address: this.addressToString(paperlessAccount.company.address),
+        country: paperlessAccount.company.address.country,
+        contactEmail: paperlessAccount.contact.emailAddress,
       },
       borrower: {
         name: borrowerAccount.accountName,
@@ -340,14 +340,14 @@ export class DealProcessingService {
     };
     const claimants: TradeDocumentClaimantsDto = {
       beneficiary: {
-        name: paiperlessAccount.accountName,
-        walletAddress: paiperlessAccount.walletAddress,
-        contactEmail: paiperlessAccount.contact.emailAddress,
+        name: paperlessAccount.accountName,
+        walletAddress: paperlessAccount.walletAddress,
+        contactEmail: paperlessAccount.contact.emailAddress,
       },
       owner: {
-        name: paiperlessAccount.accountName,
-        walletAddress: paiperlessAccount.walletAddress,
-        contactEmail: paiperlessAccount.contact.emailAddress,
+        name: paperlessAccount.accountName,
+        walletAddress: paperlessAccount.walletAddress,
+        contactEmail: paperlessAccount.contact.emailAddress,
       },
     };
     const tradeDocument: UpsertTradeDocumentDto = {
@@ -358,7 +358,7 @@ export class DealProcessingService {
     };
     const tradeDocumentDetails =
       await this.tradeDocumentsService.createTradeDocument(
-        paiperlessAccountId,
+        paperlessAccountId,
         tradeDocument,
       );
 
@@ -418,7 +418,7 @@ export class DealProcessingService {
    */
   async issuePromissoryNote(dealDeskId: string) {
     const promNoteAccountId = this.configService.get<string>(
-      'PAIPERLESS_ACCOUNT_ID',
+      'PAPERLESS_ACCOUNT_ID',
     );
     try {
       const dealProcessingDetails =
@@ -573,7 +573,7 @@ export class DealProcessingService {
   //
   //   const parties: SignerDetailsDto[] = [
   //     {
-  //       name: 'Paiperless',
+  //       name: 'Paperless',
   //       role: DocumentSigningRole.ISSUER,
   //       walletAddress: this.configService.get<string>('ISSUER_WALLET'),
   //     },
@@ -609,7 +609,7 @@ export class DealProcessingService {
   // }
 
   /**
-   * Signs the current Promissory Note on behalf of Paiperless
+   * Signs the current Promissory Note on behalf of Paperless
    * @param dealDeskId
    */
   // ToDo: This needs to have additional security checks to ensure the caller has the privileges to sign

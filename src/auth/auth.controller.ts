@@ -246,12 +246,12 @@ export class AuthController {
   @UseGuards(JwtGuard, UserPermissionGuard)
   @ApiBearerAuth()
   @UserAccess(
-    { module: 'Paiperless-Admin', roles: ['Manager'] },
+    { module: 'Paperless-Admin', roles: ['Manager'] },
     { module: 'Portal-Admin', roles: ['Manager'] }
   )
   @ApiOperation({ 
     summary: 'Force password reset for a user',
-    description: 'Force a user to reset their password on next login. Requires Manager role in Paiperless-Admin or Portal-Admin.'
+    description: 'Force a user to reset their password on next login. Requires Manager role in Paperless-Admin or Portal-Admin.'
   })
   @ApiBody({ 
     type: ForcePasswordResetDto,

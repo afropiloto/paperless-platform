@@ -70,7 +70,7 @@ export class CreateAccountUserDto {
     type: [UserPermissionDto],
     example: [
       { module: 'DealDesk', role: 'Supervisor' },
-      { module: 'Paiperless', role: 'Agent' }
+      { module: 'Paperless', role: 'Agent' }
     ]
   })
   @IsArray()
@@ -175,7 +175,7 @@ export class UpdateAccountUserDto {
     type: [UserPermissionDto],
     example: [
       { module: 'DealDesk', role: 'Supervisor' },
-      { module: 'Paiperless', role: 'Agent' }
+      { module: 'Paperless', role: 'Agent' }
     ]
   })
   @IsOptional()

@@ -40,8 +40,8 @@ async function bootstrap() {
   app.useGlobalFilters(new MongoExceptionFilter());
 
   const config = new DocumentBuilder()
-    .setTitle('Voy Finance Paiperless API')
-    .setDescription('API to manage trade documents via Paiperless')
+    .setTitle('Voy Finance Paperless API')
+    .setDescription('API to manage trade documents via Paperless')
     .setVersion('1.0')
     .addBearerAuth()
     .build();

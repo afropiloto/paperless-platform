@@ -161,7 +161,7 @@ export class DataExtractionExtendAiProcessor extends WorkerHost {
     // Create Shareable Link for original document
     const linkExpires = addMinutes(new Date(), 20)
     const shareableLink = await this.shareLinkService.createShareLink(accountId, documentId, {expiresAt: linkExpires}, "dataExtraction")
-    // ToDO: The Paiperless App needs to provide this endpoint
+    // ToDO: The Paperless App needs to provide this endpoint
     const documentLink = `${this.configService.get<string>('EXTENDAI_FILE_DOWNLOAD_URL')}files/ORIGINAL?linkId=${shareableLink.linkId}`;
 
     // Submit for processing

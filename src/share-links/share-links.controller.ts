@@ -43,7 +43,7 @@ export class ShareLinksController {
     description: 'The Client Application API Key',
     example: '47f19331:86382a9cbeaa603325628d29859b10fa6df94385ef792ea340cb1208ab9fdb6e'
   })
-  @ClientAccess(ClientAccessGroup.PAIPERLESS_APP)
+  @ClientAccess(ClientAccessGroup.PAPERLESS_APP)
   @ApiBearerAuth()
   @ApiOperation({
     summary: 'Creates a secure share link for a trade document',
@@ -171,7 +171,7 @@ export class ShareLinksController {
     description: 'The Client Application API Key',
     example: '47f19331:86382a9cbeaa603325628d29859b10fa6df94385ef792ea340cb1208ab9fdb6e'
   })
-  @ClientAccess(ClientAccessGroup.PAIPERLESS_APP)
+  @ClientAccess(ClientAccessGroup.PAPERLESS_APP)
   @ApiBearerAuth()
   @ApiOperation({
     summary: 'Delete a share link',
@@ -211,7 +211,7 @@ export class ShareLinksController {
     description: 'The Client Application API Key',
     example: '47f19331:86382a9cbeaa603325628d29859b10fa6df94385ef792ea340cb1208ab9fdb6e'
   })
-  @ClientAccess(ClientAccessGroup.PAIPERLESS_APP)
+  @ClientAccess(ClientAccessGroup.PAPERLESS_APP)
   @ApiBearerAuth()
   @ApiOperation({
     summary: 'Get all share links for a document',

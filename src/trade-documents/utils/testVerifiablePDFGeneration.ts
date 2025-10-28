@@ -76,7 +76,7 @@ async function main() {
   const accountName = process.argv[3] || 'Target Testing Ltd';
   const documentTrackingId = process.argv[4] || 'c029432d-1c07-4b4b-b609-7a7eabc90dda';
   const outputDir = process.argv[5] || 'test-output';
-  const qrCodeContent = process.argv[6] || 'https://ai.paiperless.com/verify/c029432d-1c07-4b4b-b609-7a7eabc90dda';
+  const qrCodeContent = process.argv[6] || 'https://ai.paperless.com/verify/c029432d-1c07-4b4b-b609-7a7eabc90dda';
 
   if (!sourceFilePath || !accountName || !documentTrackingId) {
     console.log('Usage: ts-node testVerifiablePDF.ts <sourceFilePath> <accountName> <documentTrackingId> [outputDir]');

@@ -74,7 +74,7 @@ export class AccountsController {
   }
 
   @Post()
-  @ClientAccess(ClientAccessGroup.PAIPERLESS_PORTAL)
+  @ClientAccess(ClientAccessGroup.PAPERLESS_PORTAL)
   @ApiResponse({ status: 201, description: 'Account created successfully' })
   @ApiResponse({
     status: 400,
@@ -110,7 +110,7 @@ export class AccountsController {
   }
 
   @Patch(':id/status')
-  @ClientAccess(ClientAccessGroup.PAIPERLESS_PORTAL)
+  @ClientAccess(ClientAccessGroup.PAPERLESS_PORTAL)
   @ApiResponse({
     status: 200,
     description: 'Account status updated successfully',

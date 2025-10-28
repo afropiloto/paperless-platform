@@ -53,7 +53,7 @@ import { ClientAccessGroup } from 'src/api-key-auth/types/api-key-auth.types';
   description: 'The Client Application API Key',
   example: '47f19331:86382a9cbeaa603325628d29859b10fa6df94385ef792ea340cb1208ab9fdb6e'
 })
-@ClientAccess(ClientAccessGroup.PAIPERLESS_APP)
+@ClientAccess(ClientAccessGroup.PAPERLESS_APP)
 @ApiBearerAuth()
 export class TradeDocumentsController {
   private readonly logger = new Logger(TradeDocumentsController.name);
@@ -65,7 +65,7 @@ export class TradeDocumentsController {
   // Trade Document File endpoints
   // *******************************************************************************************************************
   @Get('/:accountId/:documentId/file/:fileVariant')
-  @ClientAccess(ClientAccessGroup.PAIPERLESS_PORTAL)
+  @ClientAccess(ClientAccessGroup.PAPERLESS_PORTAL)
   @ApiOperation({
     summary:
       'Retrieves the trade document file content an account by document Id',
@@ -242,7 +242,7 @@ export class TradeDocumentsController {
   // Trade Document endpoints
   // *******************************************************************************************************************
   @Get(':accountId/:documentId')
-  @ClientAccess(ClientAccessGroup.PAIPERLESS_PORTAL)
+  @ClientAccess(ClientAccessGroup.PAPERLESS_PORTAL)
   @ApiOperation({
     summary: 'Retrieves a trade document for an account by document Id',
   })

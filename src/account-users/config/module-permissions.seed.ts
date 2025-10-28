@@ -22,12 +22,12 @@ export const MODULE_PERMISSIONS_SEED = [
     module: 'Portal-Admin',
     description: 'Portal administration and system management',
     allowableRoles: [
-      { role: 'Manager', description: 'Can manage Paiperless Portal Users. Can manage Customer Accounts.' },
+      { role: 'Manager', description: 'Can manage Paperless Portal Users. Can manage Customer Accounts.' },
     ],
     active: true,
   },
   {
-    module: 'Paiperless-Trade-Documents',
+    module: 'Paperless-Trade-Documents',
     description: 'Document management and processing',
     allowableRoles: [
       { role: 'Agent', description: 'Can view, create and edit Trade Documents' },
@@ -36,7 +36,7 @@ export const MODULE_PERMISSIONS_SEED = [
     active: true,
   },
   {
-    module: 'Paiperless-Trade-Finance',
+    module: 'Paperless-Trade-Finance',
     description: 'Trade finance processing',
     allowableRoles: [
       { role: 'Supervisor', description: 'Can create and submit trade finance requests.' },
@@ -45,7 +45,7 @@ export const MODULE_PERMISSIONS_SEED = [
     active: true,
   },
   {
-    module: 'Paiperless-Admin',
+    module: 'Paperless-Admin',
     description: 'Account administration and user management',
     allowableRoles: [
       { role: 'Manager', description: 'Can manage Account Users. Can manage Named Wallets for the Account.' },

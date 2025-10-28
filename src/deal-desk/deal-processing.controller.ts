@@ -50,7 +50,7 @@ import { ClientAccessGroup } from 'src/api-key-auth/types/api-key-auth.types';
   description: 'The Client Application API Key',
   example: '47f19331:86382a9cbeaa603325628d29859b10fa6df94385ef792ea340cb1208ab9fdb6e'
 })
-@ClientAccess(ClientAccessGroup.PAIPERLESS_PORTAL)
+@ClientAccess(ClientAccessGroup.PAPERLESS_PORTAL)
 @ApiBearerAuth()
 export class DealProcessingController {
   private readonly logger = new Logger(DealProcessingController.name);
@@ -266,7 +266,7 @@ export class DealProcessingController {
 
   @Patch(':id/promissory-note/sign')
   @ApiOperation({
-    description: 'Signs the issued promissory note on behalf of Paiperless',
+    description: 'Signs the issued promissory note on behalf of Paperless',
   })
   @ApiParam({
     name: 'id',

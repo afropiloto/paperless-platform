@@ -48,7 +48,7 @@ export async function generateVerifiablePDF(
     const contentHeight = height - headerHeight - footerHeight;
 
     // Load and embed the logo
-    const logoPath = path.join(process.cwd(), 'src', 'images', 'paiperless-logo-horizontal.png');
+    const logoPath = path.join(process.cwd(), 'src', 'images', 'paperless-logo-horizontal.png');
     const logoBytes = await fs.readFile(logoPath);
     const logo = await pdfDoc.embedPng(logoBytes);
 
@@ -233,7 +233,7 @@ async function addHeaderAndFooter(
     height: logoHeight,
   });
 
-  page.drawText('Verifiable on Paiperless', {
+  page.drawText('Verifiable on Paperless', {
     x: 50,
     y: startY - logoHeight - 15,
     size: 8,

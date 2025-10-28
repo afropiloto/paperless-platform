@@ -69,9 +69,9 @@ const DEFAULT_ACCOUNT_DATA = {
     ApplicationModule.PORTAL_DEAL_DESK,
     ApplicationModule.PORTAL_ONBOARDING_DESK,
     ApplicationModule.PORTAL_ADMIN,
-    ApplicationModule.PAIPERLESS_TRADE_DOCUMENTS,
-    ApplicationModule.PAIPERLESS_TRADE_FINANCE,
-    ApplicationModule.PAIPERLESS_ADMIN
+    ApplicationModule.PAPERLESS_TRADE_DOCUMENTS,
+    ApplicationModule.PAPERLESS_TRADE_FINANCE,
+    ApplicationModule.PAPERLESS_ADMIN
   ],
   status: AccountStatus.ACTIVE
 };
@@ -89,11 +89,11 @@ const DEFAULT_ACCOUNT_USERS_DATA = [
         { module: ApplicationModule.PORTAL_ONBOARDING_DESK, role: ApplicationRole.AGENT },
         { module: ApplicationModule.PORTAL_ONBOARDING_DESK, role: ApplicationRole.MANAGER },
         { module: ApplicationModule.PORTAL_ADMIN, role: ApplicationRole.MANAGER },
-        { module: ApplicationModule.PAIPERLESS_TRADE_DOCUMENTS, role: ApplicationRole.AGENT },
-        { module: ApplicationModule.PAIPERLESS_TRADE_DOCUMENTS, role: ApplicationRole.SUPERVISOR },
-        { module: ApplicationModule.PAIPERLESS_TRADE_FINANCE, role: ApplicationRole.SUPERVISOR },
-        { module: ApplicationModule.PAIPERLESS_TRADE_FINANCE, role: ApplicationRole.MANAGER },
-        { module: ApplicationModule.PAIPERLESS_ADMIN, role: ApplicationRole.MANAGER }
+        { module: ApplicationModule.PAPERLESS_TRADE_DOCUMENTS, role: ApplicationRole.AGENT },
+        { module: ApplicationModule.PAPERLESS_TRADE_DOCUMENTS, role: ApplicationRole.SUPERVISOR },
+        { module: ApplicationModule.PAPERLESS_TRADE_FINANCE, role: ApplicationRole.SUPERVISOR },
+        { module: ApplicationModule.PAPERLESS_TRADE_FINANCE, role: ApplicationRole.MANAGER },
+        { module: ApplicationModule.PAPERLESS_ADMIN, role: ApplicationRole.MANAGER }
     ],
     authMethod: AuthMethod.EMAIL_PASSWORD,
     mfaEnabled: false,
@@ -111,11 +111,11 @@ const DEFAULT_ACCOUNT_USERS_DATA = [
         { module: ApplicationModule.PORTAL_ONBOARDING_DESK, role: ApplicationRole.AGENT },
         { module: ApplicationModule.PORTAL_ONBOARDING_DESK, role: ApplicationRole.MANAGER },
         { module: ApplicationModule.PORTAL_ADMIN, role: ApplicationRole.MANAGER },
-        { module: ApplicationModule.PAIPERLESS_TRADE_DOCUMENTS, role: ApplicationRole.AGENT },
-        { module: ApplicationModule.PAIPERLESS_TRADE_DOCUMENTS, role: ApplicationRole.SUPERVISOR },
-        { module: ApplicationModule.PAIPERLESS_TRADE_FINANCE, role: ApplicationRole.SUPERVISOR },
-        { module: ApplicationModule.PAIPERLESS_TRADE_FINANCE, role: ApplicationRole.MANAGER },
-        { module: ApplicationModule.PAIPERLESS_ADMIN, role: ApplicationRole.MANAGER }
+        { module: ApplicationModule.PAPERLESS_TRADE_DOCUMENTS, role: ApplicationRole.AGENT },
+        { module: ApplicationModule.PAPERLESS_TRADE_DOCUMENTS, role: ApplicationRole.SUPERVISOR },
+        { module: ApplicationModule.PAPERLESS_TRADE_FINANCE, role: ApplicationRole.SUPERVISOR },
+        { module: ApplicationModule.PAPERLESS_TRADE_FINANCE, role: ApplicationRole.MANAGER },
+        { module: ApplicationModule.PAPERLESS_ADMIN, role: ApplicationRole.MANAGER }
     ],
     authMethod: AuthMethod.EMAIL_PASSWORD,
     mfaEnabled: false,

@@ -18,14 +18,14 @@ The current Application Modules are as follows:
 
 | Application Module        | Description                                                                                                                  |
 |---------------------------|------------------------------------------------------------------------------------------------------------------------------|
-| Portal-DealDesk           | This is the Deal Desk Module within the Paiperless Portal                                                                    |
-| Portal-OnboardingDesk     | This is the Onboarding Module within the the Paiperless Portal                                                               |
-| Portal-Admin              | This is the Administration Module within the  Paiperless Portal                                                              |
-| Paiperless-TradeDocuments | This is the Trade Documents module with the Paiperless application                                                           |
-| Paiperless-TradeFinance   | This is the Trade Finance module with the  the Paiperless application                                                        |
-| Paiperless-Admin          | This is the Admin module with the  the Paiperless application. Allows access to User Account and Account Management Features |
+| Portal-DealDesk           | This is the Deal Desk Module within the Paperless Portal                                                                    |
+| Portal-OnboardingDesk     | This is the Onboarding Module within the the Paperless Portal                                                               |
+| Portal-Admin              | This is the Administration Module within the  Paperless Portal                                                              |
+| Paperless-TradeDocuments | This is the Trade Documents module with the Paperless application                                                           |
+| Paperless-TradeFinance   | This is the Trade Finance module with the  the Paperless application                                                        |
+| Paperless-Admin          | This is the Admin module with the  the Paperless application. Allows access to User Account and Account Management Features |
  
-Note that for Customer Account Users, only the modules that start with `Paiperless-` can be added.
+Note that for Customer Account Users, only the modules that start with `Paperless-` can be added.
 
 
 For each application module, we have roles that control what a user with access to the module can do.
@@ -47,12 +47,12 @@ The meaning of a role is contextual within the module and not all roles are appl
 | Portal-DealDesk           | Manager    | Can sign Promissory Notes                                                                                                     |
 | Portal-OnboardingDesk     | Agent      | Can process Due Diligence tasks for an Onboarding request but cannot make onboarding decisions                                |
 | Portal-OnboardingDesk     | Manager    | Can make onboarding decisions                                                                                                 |
-| Portal-Admin              | Manager    | Can access administrative features of the Paiperless Portal. Enables user to manage Portal Users and manage Customer Accounts |
-| Paiperless-TradeDocuments | Agent      | Can view, create and edit Trade Documents                                                                                     |
-| Paiperless-TradeDocuments | Supervisor | Can delete Trade Documents, Can Issue Trade Documents                                                                         |
-| Paiperless-TradeFinance   | Supervisor | Can create and submit trade finance requests.                                                                                 |
-| Paiperless-TradeFinance   | Manager    | Can sign promissory notes for Trade Finance. Can withdraw Trade Finance Requests.                                             |
-| Paiperless-Admin          | Manager    | Can manage Account Users, Can manage Named Wallets for the Account                                                            |
+| Portal-Admin              | Manager    | Can access administrative features of the Paperless Portal. Enables user to manage Portal Users and manage Customer Accounts |
+| Paperless-TradeDocuments | Agent      | Can view, create and edit Trade Documents                                                                                     |
+| Paperless-TradeDocuments | Supervisor | Can delete Trade Documents, Can Issue Trade Documents                                                                         |
+| Paperless-TradeFinance   | Supervisor | Can create and submit trade finance requests.                                                                                 |
+| Paperless-TradeFinance   | Manager    | Can sign promissory notes for Trade Finance. Can withdraw Trade Finance Requests.                                             |
+| Paperless-Admin          | Manager    | Can manage Account Users, Can manage Named Wallets for the Account                                                            |
 
 
 ## JWT Authentication

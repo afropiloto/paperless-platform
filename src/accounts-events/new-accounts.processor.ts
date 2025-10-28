@@ -74,9 +74,9 @@ export class NewAccountsProcessor extends WorkerHost {
           position: registrationDetails.contact.position,
         },
         applicationModules: [
-          ApplicationModule.PAIPERLESS_TRADE_DOCUMENTS,
-          ApplicationModule.PAIPERLESS_ADMIN,
-          ApplicationModule.PAIPERLESS_TRADE_FINANCE,
+          ApplicationModule.PAPERLESS_TRADE_DOCUMENTS,
+          ApplicationModule.PAPERLESS_ADMIN,
+          ApplicationModule.PAPERLESS_TRADE_FINANCE,
         ],
       };
       const newAccountDetails =
@@ -90,15 +90,15 @@ export class NewAccountsProcessor extends WorkerHost {
         walletAddress: registrationDetails.company.accountWalletAddress,
         permissions: [
           {
-            module: ApplicationModule.PAIPERLESS_ADMIN,
+            module: ApplicationModule.PAPERLESS_ADMIN,
             role: ApplicationRole.MANAGER,
           },
           {
-            module: ApplicationModule.PAIPERLESS_ADMIN,
+            module: ApplicationModule.PAPERLESS_ADMIN,
             role: ApplicationRole.AGENT,
           },
           {
-            module: ApplicationModule.PAIPERLESS_ADMIN,
+            module: ApplicationModule.PAPERLESS_ADMIN,
             role: ApplicationRole.SUPERVISOR,
           },
         ],

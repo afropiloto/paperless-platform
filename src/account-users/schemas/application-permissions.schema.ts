@@ -4,9 +4,9 @@ export enum ApplicationModule {
   PORTAL_DEAL_DESK = 'Portal-DealDesk',
   PORTAL_ONBOARDING_DESK = 'Portal-OnboardingDesk',
   PORTAL_ADMIN = 'Portal-Admin',
-  PAIPERLESS_TRADE_DOCUMENTS = 'Paiperless-Trade-Documents',
-  PAIPERLESS_TRADE_FINANCE = 'Paiperless-Trade-Finance',
-  PAIPERLESS_ADMIN = 'Paiperless-Admin',
+  PAPERLESS_TRADE_DOCUMENTS = 'Paperless-Trade-Documents',
+  PAPERLESS_TRADE_FINANCE = 'Paperless-Trade-Finance',
+  PAPERLESS_ADMIN = 'Paperless-Admin',
 }
 
 

@@ -30,7 +30,7 @@ import { ClientAccessGroup } from 'src/api-key-auth/types/api-key-auth.types';
   description: 'The Client Application API Key',
   example: '47f19331:86382a9cbeaa603325628d29859b10fa6df94385ef792ea340cb1208ab9fdb6e'
 })
-@ClientAccess(ClientAccessGroup.PAIPERLESS_APP)
+@ClientAccess(ClientAccessGroup.PAPERLESS_APP)
 @ApiBearerAuth()
 export class TradeFinanceController {
   private readonly logger = new Logger(TradeFinanceController.name);
@@ -97,7 +97,7 @@ export class TradeFinanceController {
   }
 
   @Get('/:accountId/deals/:dealId')
-  @ClientAccess(ClientAccessGroup.PAIPERLESS_PORTAL)
+  @ClientAccess(ClientAccessGroup.PAPERLESS_PORTAL)
   @ApiOperation({
     summary: 'Retrieve a specific trade finance deal',
   })

@@ -37,7 +37,7 @@ export class CreateUserDto {
     type: [UserPermissionDto],
     example: [
       { module: 'DealDesk', role: 'Supervisor' },
-      { module: 'Paiperless', role: 'Agent' }
+      { module: 'Paperless', role: 'Agent' }
     ]
   })
   @IsArray()

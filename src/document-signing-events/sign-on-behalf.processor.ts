@@ -7,15 +7,15 @@ import { AuditEventType, AuditSubject } from '../audit/audit-event-type.enum';
 import { DocumentSigningContractService } from '../document-signing/document-signing-contract.service';
 import { TradeDocumentsService } from '../trade-documents/trade-documents.service';
 import { TradeDocumentFileVariant } from '../trade-documents/trade-document-file.types';
-import { getPaiperlessSigner } from '../utils/web3-utils';
+import { getPaperlessSigner } from '../utils/web3-utils';
 import { SignDocumentOnBehalfJobData } from '../document-signing/types/signing-events.types';
 import { SIGN_DOCUMENT_ON_BEHALF_QUEUE } from '../constants/app.constants';
 
 
 @Processor(SIGN_DOCUMENT_ON_BEHALF_QUEUE)
-export class SignOnBehalfOfPaiperless extends WorkerHost {
+export class SignOnBehalfOfPaperless extends WorkerHost {
   private readonly logger = new Logger(
-    SignOnBehalfOfPaiperless.name,
+    SignOnBehalfOfPaperless.name,
   );
 
   constructor(
@@ -28,7 +28,7 @@ export class SignOnBehalfOfPaiperless extends WorkerHost {
   }
 
   /**
-   * Signs a Document on behalf of Paiperless
+   * Signs a Document on behalf of Paperless
    * @param job
    */
   async process(job: Job<SignDocumentOnBehalfJobData>): Promise<void> {
@@ -44,7 +44,7 @@ export class SignOnBehalfOfPaiperless extends WorkerHost {
     // Get the document to be signed
     const fileDetails = await this.tradeDocumentService.getTradeDocumentFile(accountId, tradeDocumentId, TradeDocumentFileVariant.ISSUED)
 
-    const signer = getPaiperlessSigner(this.documentSigningContractService.getProvider());
+    const signer = getPaperlessSigner(this.documentSigningContractService.getProvider());
 
     const receipt = await this.documentSigningContractService.signDocument(
       documentSigningId,

@@ -1,10 +1,10 @@
 {
-  "id": "did:web:paiperless.voy.finance",
+  "id": "did:web:paperless.voy.finance",
   "verificationMethod": [
     {
       "type": "Bls12381G2Key2020",
-      "id": "did:web:paiperless.voy.finance#keys-1",
-      "controller": "did:web:paiperless.voy.finance",
+      "id": "did:web:paperless.voy.finance#keys-1",
+      "controller": "did:web:paperless.voy.finance",
       "publicKeyBase58": "tPgcuqCfeggKQLKjNrfEhpR9RuYUhvu6eXfXi6ZbD4DCfevps6jAPUYwTRqs3aRwTCcvUCUyHvNnA4K7TFPvGGvXTEeh5EmWccPUrejq8XSywg66s6mLTp7VpHNaiHk2eFt"
     }
   ],
@@ -13,15 +13,15 @@
     "https://w3id.org/security/suites/bls12381-2020/v1"
   ],
   "authentication": [
-    "did:web:paiperless.voy.finance#keys-1"
+    "did:web:paperless.voy.finance#keys-1"
   ],
   "assertionMethod": [
-    "did:web:paiperless.voy.finance#keys-1"
+    "did:web:paperless.voy.finance#keys-1"
   ],
   "capabilityInvocation": [
-    "did:web:paiperless.voy.finance#keys-1"
+    "did:web:paperless.voy.finance#keys-1"
   ],
   "capabilityDelegation": [
-    "did:web:paiperless.voy.finance#keys-1"
+    "did:web:paperless.voy.finance#keys-1"
   ]
 }

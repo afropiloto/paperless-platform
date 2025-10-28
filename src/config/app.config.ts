@@ -1,9 +1,9 @@
 
 export default () => ({
   app: {
-    name: process.env.APP_NAME || 'Paiperless Trade Documents Platform',
-    url: process.env.APP_DOMAIN || 'https://ai.paiperless.com',
-    supportEmail: process.env.APP_SUPPORT_EMAIL || 'support@paiperless.com',
+    name: process.env.APP_NAME || 'Paperless Trade Documents Platform',
+    url: process.env.APP_DOMAIN || 'https://ai.paperless.com',
+    supportEmail: process.env.APP_SUPPORT_EMAIL || 'support@paperless.com',
   },
   server: {
     port: process.env.MONGODB_URI || 3002,
