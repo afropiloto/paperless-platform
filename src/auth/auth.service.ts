@@ -93,10 +93,10 @@ export class AuthService {
       };
       // Generate JWT tokens
       const accessToken = this.jwtService.sign(jwtPayload, {
-        expiresIn: this.configService.get<string>('jwt.expiresIn'),
+        expiresIn: (this.configService.get<string>('jwt.expiresIn') || '15m') as any,
       });
       const refreshToken = this.jwtService.sign(jwtPayload, {
-        expiresIn: this.configService.get<string>('refreshToken.expiresIn'),
+        expiresIn: (this.configService.get<string>('refreshToken.expiresIn') || '7d') as any,
       });
 
       this.logger.debug(accountUser)
@@ -223,10 +223,10 @@ export class AuthService {
 
     // Generate tokens
     const accessToken = this.jwtService.sign(jwtPayload, {
-      expiresIn: this.configService.get<string>('jwt.expiresIn'),
+      expiresIn: (this.configService.get<string>('jwt.expiresIn') || '15m') as any,
     });
     const refreshToken = this.jwtService.sign(jwtPayload, {
-      expiresIn: this.configService.get<string>('refreshToken.expiresIn'),
+      expiresIn: (this.configService.get<string>('refreshToken.expiresIn') || '7d') as any,
     });
 
     // Check if MFA is required for login
@@ -307,7 +307,7 @@ export class AuthService {
       };
 
       const newAccessToken = this.jwtService.sign(updatedPayload, {
-        expiresIn: this.configService.get<string>('jwt.expiresIn'),
+        expiresIn: (this.configService.get<string>('jwt.expiresIn') || '15m') as any,
       });
 
       const responsePayload: TokenRefreshResponseDto = { success: true, accessToken: newAccessToken };
@@ -693,10 +693,10 @@ export class AuthService {
     };
 
     const accessToken = this.jwtService.sign(jwtPayload, {
-      expiresIn: this.configService.get<string>('jwt.expiresIn'),
+      expiresIn: (this.configService.get<string>('jwt.expiresIn') || '15m') as any,
     });
     const refreshToken = this.jwtService.sign(jwtPayload, {
-      expiresIn: this.configService.get<string>('refreshToken.expiresIn'),
+      expiresIn: (this.configService.get<string>('refreshToken.expiresIn') || '7d') as any,
     });
 
     // Get account details
