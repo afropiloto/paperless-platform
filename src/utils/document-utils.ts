@@ -1,6 +1,5 @@
 import * as crypto from 'crypto';
-//import * as pdfParse from 'pdf-parse';
-import pdfParse from 'pdf-parse';
+import pdfParse = require('pdf-parse');
 import { FileData } from '../types/trade-documents.types';
 
 export function isValidDataUrl(dataUrl: string): boolean {
@@ -80,7 +79,7 @@ export async function extractDocumentTrackingId(dataUrl: string): Promise<string
       max: 1, // Only parse the first page
       pagerender: null // Default render callback
     };
-    const data = await pdfParse(buffer, options);
+    const data = await (pdfParse as any)(buffer, options);
 
     const pdfText = data.text;
 

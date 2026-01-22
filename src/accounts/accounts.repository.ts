@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Account } from './schemas/account.schema';
-import { isValidObjectId, Model, PipelineStage } from 'mongoose';
+import { isValidObjectId, Model, PipelineStage, HydratedDocument } from 'mongoose';
 import { AccountCreationDto, AccountDetailsDto, AccountStatusUpdateDto, AccountUpdateDto } from './dtos/accounts.dto';
 import { plainToInstance } from 'class-transformer';
 import { AccountsSearchResultsDto } from './dtos/search-accounts.dto';
@@ -30,8 +30,14 @@ export class AccountsRepository {
   }
 
   async createAccount(accountDetails: AccountCreationDto): Promise<AccountDetailsDto> {
-    const newAccountDetails = await this.accountModel.create(accountDetails);
-    return plainToInstance(AccountDetailsDto, {id: newAccountDetails._id, ...newAccountDetails.toObject()});
+    const newAccountDetails = await this.accountModel.create(accountDetails as any) as HydratedDocument<Account>;
+    if (!newAccountDetails) {
+      throw new BadRequestException('Failed to create account');
+    }
+    return plainToInstance(AccountDetailsDto, {
+      id: newAccountDetails._id.toString(), 
+      ...newAccountDetails.toObject()
+    });
   }
 
   async accountExists(accountId: string): Promise<boolean> {

@@ -2,7 +2,9 @@ import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 //import * as speakeasy from 'speakeasy';
 import * as QRCode from 'qrcode';
-import { authenticator } from 'otplib';
+import * as otplib from 'otplib';
+
+const authenticator = (otplib as any).authenticator;
 
 export interface MfaSetupResponse {
   secret: string;
