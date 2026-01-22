@@ -26,10 +26,13 @@ export class JwtGuard implements CanActivate {
       this.logger.error({message: "JWT verification failed", error});
       
       if (error.name === 'TokenExpiredError') {
+        this.logger.warn('Token expired');
         throw new UnauthorizedException('Token has expired.');
       } else if (error.name === 'JsonWebTokenError') {
+        this.logger.error('Invalid token format')
         throw new UnauthorizedException('Invalid token format.');
       } else {
+        this.logger.error('Invalid token')
         throw new UnauthorizedException('Invalid token.');
       }
     }
