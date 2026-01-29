@@ -23,14 +23,14 @@ export class MfaService {
   
   constructor(private readonly configService: ConfigService) {
     const window = this.configService.get<number>('auth.mfa.window');
-    const algorithm = this.configService.get<string>('auth.mfa.algorithm');
+    const algorithm = this.configService.get<string>('auth.mfa.algorithm') ?? 'sha1';
     const digits = this.configService.get<number>('auth.mfa.digits');
     const period = this.configService.get<number>('auth.mfa.period');
 
     authenticator.options = {
       digits,
       step: period,
-      algorithm: algorithm.toLowerCase() as never,
+      algorithm: (typeof algorithm === 'string' ? algorithm : 'sha1').toLowerCase() as never,
       window
     }
 

@@ -65,7 +65,7 @@ export class TradeDocumentFile {
   @Prop({required: true})
   size: number;
 
-  @Prop({required: true, enum: TradeDocumentFileStatus})
+  @Prop({ required: true, enum: TradeDocumentFileStatus, type: String })
   status: TradeDocumentFileStatus;
 }
 
@@ -78,10 +78,10 @@ export class TradeDocument {
   @Prop({required: true})
   documentReference: string;
 
-  @Prop({ required: true, enum: TradeDocumentType })
+  @Prop({ required: true, enum: TradeDocumentType, type: String })
   documentType: TradeDocumentType;
 
-  @Prop({required: true, enum: TradeDocumentStatus, default: TradeDocumentStatus.IN_PROGRESS})
+  @Prop({ required: true, enum: TradeDocumentStatus, type: String, default: TradeDocumentStatus.IN_PROGRESS })
   status: TradeDocumentStatus;
 
   @Prop({required: false})

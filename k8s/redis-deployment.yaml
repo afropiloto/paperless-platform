@@ -20,7 +20,17 @@ spec:
         image: redis:7-alpine
         ports:
         - containerPort: 6379
-        command: ["redis-server", "--appendonly", "yes", "--requirepass", "$(REDIS_PASSWORD)"]
+        # Use a shell so that $REDIS_PASSWORD is expanded correctly
+        # If REDIS_PASSWORD is empty, Redis will start without authentication (development only)
+        command:
+        - sh
+        - -c
+        - >
+          if [ -n "$REDIS_PASSWORD" ]; then
+            redis-server --appendonly yes --requirepass "$REDIS_PASSWORD";
+          else
+            redis-server --appendonly yes;
+          fi
         env:
         - name: REDIS_PASSWORD
           valueFrom:
@@ -40,19 +50,27 @@ spec:
         livenessProbe:
           exec:
             command:
-            - redis-cli
-            - -a
-            - $(REDIS_PASSWORD)
-            - ping
+            - sh
+            - -c
+            - >
+              if [ -n "$REDIS_PASSWORD" ]; then
+                redis-cli -a "$REDIS_PASSWORD" ping;
+              else
+                redis-cli ping;
+              fi
           initialDelaySeconds: 30
           periodSeconds: 10
         readinessProbe:
           exec:
             command:
-            - redis-cli
-            - -a
-            - $(REDIS_PASSWORD)
-            - ping
+            - sh
+            - -c
+            - >
+              if [ -n "$REDIS_PASSWORD" ]; then
+                redis-cli -a "$REDIS_PASSWORD" ping;
+              else
+                redis-cli ping;
+              fi
           initialDelaySeconds: 5
           periodSeconds: 5
       volumes:

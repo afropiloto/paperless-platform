@@ -1,3 +1,12 @@
+jest.mock('otplib', () => ({
+  authenticator: {
+    generate: jest.fn(),
+    check: jest.fn(),
+    generateSecret: jest.fn(),
+    keyuri: jest.fn(),
+  },
+}));
+
 import { Test, TestingModule } from '@nestjs/testing';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
@@ -72,6 +81,7 @@ describe('AuthService', () => {
     findAccountUserByEmailForAuth: jest.fn(),
     findAccountUserByWalletAddress: jest.fn(),
     getAccountUserById: jest.fn(),
+    getAccountUserSecurityDetailsById: jest.fn().mockResolvedValue(mockUser),
     updateAccountUser: jest.fn(),
     updateAccountUserSecurity: jest.fn(),
   };
@@ -201,6 +211,7 @@ describe('AuthService', () => {
       email: 'test@example.com',
       password: 'ValidPassword123!',
     };
+    const clientName = 'test-client';
 
     it('should successfully authenticate with valid credentials', async () => {
       jest.spyOn(accountUsersService, 'findAccountUserByEmailForAuth').mockResolvedValue(mockUser as any);
@@ -209,7 +220,7 @@ describe('AuthService', () => {
       jest.spyOn(jwtService, 'sign').mockReturnValue('mock.jwt.token');
       jest.spyOn(mfaService, 'isMfaRequired').mockResolvedValue(false);
 
-      const result = await service.loginWithEmailPassword(loginDto);
+      const result = await service.loginWithEmailPassword(loginDto, clientName);
 
       expect(result.success).toBe(true);
       expect(result.accessToken).toBe('mock.jwt.token');
@@ -226,7 +237,7 @@ describe('AuthService', () => {
     it('should throw UnauthorizedException for non-existent user', async () => {
       jest.spyOn(accountUsersService, 'findAccountUserByEmailForAuth').mockResolvedValue(null);
 
-      await expect(service.loginWithEmailPassword(loginDto)).rejects.toThrow(
+      await expect(service.loginWithEmailPassword(loginDto, clientName)).rejects.toThrow(
         UnauthorizedException,
       );
       expect(auditService.log).not.toHaveBeenCalled();
@@ -236,7 +247,7 @@ describe('AuthService', () => {
       const lockedUser = { ...mockUser, accountLockedUntil: new Date(Date.now() + 60000) };
       jest.spyOn(accountUsersService, 'findAccountUserByEmailForAuth').mockResolvedValue(lockedUser as any);
 
-      await expect(service.loginWithEmailPassword(loginDto)).rejects.toThrow(
+      await expect(service.loginWithEmailPassword(loginDto, clientName)).rejects.toThrow(
         'Account is locked. Please try again later.',
       );
     });
@@ -247,11 +258,11 @@ describe('AuthService', () => {
       jest.spyOn(passwordService, 'comparePassword').mockResolvedValue(false);
       jest.spyOn(accountUsersService, 'updateAccountUser').mockResolvedValue(mockUser as any);
 
-      await expect(service.loginWithEmailPassword(loginDto)).rejects.toThrow(
+      await expect(service.loginWithEmailPassword(loginDto, clientName)).rejects.toThrow(
         UnauthorizedException,
       );
 
-      expect(accountUsersService.updateAccountUser).toHaveBeenCalledWith('user123', {
+      expect(accountUsersService.updateAccountUserSecurity).toHaveBeenCalledWith('user123', {
         failedLoginAttempts: 5,
         accountLockedUntil: expect.any(Date),
       });
@@ -271,9 +282,9 @@ describe('AuthService', () => {
       jest.spyOn(jwtService, 'sign').mockReturnValue('mock.jwt.token');
       jest.spyOn(mfaService, 'isMfaRequired').mockResolvedValue(false);
 
-      await service.loginWithEmailPassword(loginDto);
+      await service.loginWithEmailPassword(loginDto, clientName);
 
-      expect(accountUsersService.updateAccountUser).toHaveBeenCalledWith('user123', {
+      expect(accountUsersService.updateAccountUserSecurity).toHaveBeenCalledWith('user123', {
         failedLoginAttempts: 0,
         accountLockedUntil: undefined,
       });
@@ -287,7 +298,7 @@ describe('AuthService', () => {
     };
 
     it('should successfully change password with valid credentials', async () => {
-      jest.spyOn(accountUsersService, 'getAccountUserById').mockResolvedValue(mockUser as any);
+      jest.spyOn(accountUsersService, 'getAccountUserSecurityDetailsById').mockResolvedValue(mockUser as any);
       jest.spyOn(passwordService, 'comparePassword').mockResolvedValue(true);
       jest.spyOn(passwordService, 'validatePassword').mockReturnValue({ isValid: true, errors: [] });
       jest.spyOn(passwordService, 'hashPassword').mockResolvedValue('new.hash.here');
@@ -297,7 +308,7 @@ describe('AuthService', () => {
 
       expect(result.success).toBe(true);
       expect(result.message).toBe('Password changed successfully');
-      expect(accountUsersService.updateAccountUser).toHaveBeenCalledWith('user123', {
+      expect(accountUsersService.updateAccountUserSecurity).toHaveBeenCalledWith('user123', {
         passwordHash: 'new.hash.here',
         passwordChanged: true,
       });
@@ -316,7 +327,7 @@ describe('AuthService', () => {
     });
 
     it('should throw UnauthorizedException for incorrect current password', async () => {
-      jest.spyOn(accountUsersService, 'getAccountUserById').mockResolvedValue(mockUser as any);
+      jest.spyOn(accountUsersService, 'getAccountUserSecurityDetailsById').mockResolvedValue(mockUser as any);
       jest.spyOn(passwordService, 'comparePassword').mockResolvedValue(false);
 
       await expect(service.changePassword('user123', changePasswordDto)).rejects.toThrow(
@@ -325,7 +336,7 @@ describe('AuthService', () => {
     });
 
     it('should throw UnauthorizedException for invalid new password', async () => {
-      jest.spyOn(accountUsersService, 'getAccountUserById').mockResolvedValue(mockUser as any);
+      jest.spyOn(accountUsersService, 'getAccountUserSecurityDetailsById').mockResolvedValue(mockUser as any);
       jest.spyOn(passwordService, 'comparePassword').mockResolvedValue(true);
       jest.spyOn(passwordService, 'validatePassword').mockReturnValue({
         isValid: false,
@@ -386,12 +397,10 @@ describe('AuthService', () => {
     };
 
     it('should successfully reset password with valid token', async () => {
-      // Set up the token in the service's in-memory map
-      (service as any).passwordResetTokens.set('valid-token-123', {
+      jest.spyOn(passwordResetTokenRepository, 'findByToken').mockResolvedValue({
         userId: 'user123',
         expiresAt: new Date(Date.now() + 60000), // 1 minute from now
-      });
-
+      } as any);
       jest.spyOn(passwordService, 'validatePassword').mockReturnValue({ isValid: true, errors: [] });
       jest.spyOn(passwordService, 'hashPassword').mockResolvedValue('new.hash.here');
       jest.spyOn(accountUsersService, 'updateAccountUser').mockResolvedValue(mockUser as any);
@@ -401,9 +410,10 @@ describe('AuthService', () => {
 
       expect(result.success).toBe(true);
       expect(result.message).toBe('Password has been reset successfully');
-      expect(accountUsersService.updateAccountUser).toHaveBeenCalledWith('user123', {
+      expect(accountUsersService.updateAccountUserSecurity).toHaveBeenCalledWith('user123', {
         passwordHash: 'new.hash.here',
         passwordChanged: true,
+        passwordResetRequired: false,
         failedLoginAttempts: 0,
         accountLockedUntil: undefined,
       });
@@ -416,28 +426,25 @@ describe('AuthService', () => {
     });
 
     it('should throw UnauthorizedException for invalid token', async () => {
+      jest.spyOn(passwordResetTokenRepository, 'findByToken').mockResolvedValue(null);
       await expect(service.resetPassword(resetPasswordDto)).rejects.toThrow(
         'Invalid or expired reset token',
       );
     });
 
     it('should throw UnauthorizedException for expired token', async () => {
-      (service as any).passwordResetTokens.set('expired-token', {
-        userId: 'user123',
-        expiresAt: new Date(Date.now() - 60000), // 1 minute ago
-      });
-
+      // Repository returns null for expired tokens (expiry is enforced at lookup)
+      jest.spyOn(passwordResetTokenRepository, 'findByToken').mockResolvedValue(null);
       await expect(service.resetPassword({ ...resetPasswordDto, token: 'expired-token' })).rejects.toThrow(
         'Invalid or expired reset token',
       );
     });
 
     it('should throw UnauthorizedException for invalid new password', async () => {
-      (service as any).passwordResetTokens.set('valid-token-123', {
+      jest.spyOn(passwordResetTokenRepository, 'findByToken').mockResolvedValue({
         userId: 'user123',
         expiresAt: new Date(Date.now() + 60000),
-      });
-
+      } as any);
       jest.spyOn(passwordService, 'validatePassword').mockReturnValue({
         isValid: false,
         errors: ['Password must contain at least one uppercase letter'],
@@ -457,7 +464,7 @@ describe('AuthService', () => {
           qrCodeUrl: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA...',
           backupCodes: ['ABC123', 'DEF456', 'GHI789'],
         };
-        jest.spyOn(accountUsersService, 'getAccountUserById').mockResolvedValue(mockUser as any);
+        jest.spyOn(accountUsersService, 'getAccountUserSecurityDetailsById').mockResolvedValue(mockUser as any);
         jest.spyOn(mfaService, 'setupMfa').mockResolvedValue(mfaSetupResponse);
         jest.spyOn(accountUsersService, 'updateAccountUser').mockResolvedValue(mockUser as any);
 
@@ -468,7 +475,7 @@ describe('AuthService', () => {
         expect(result.secret).toBe(mfaSetupResponse.secret);
         expect(result.backupCodes).toEqual(mfaSetupResponse.backupCodes);
         expect(result.requiresVerification).toBe(true);
-        expect(accountUsersService.updateAccountUser).toHaveBeenCalledWith('user123', {
+        expect(accountUsersService.updateAccountUserSecurity).toHaveBeenCalledWith('user123', {
           mfaSecret: mfaSetupResponse.secret,
           mfaBackupCodes: mfaSetupResponse.backupCodes,
           mfaEnabled: false,
@@ -488,14 +495,14 @@ describe('AuthService', () => {
       });
 
       it('should throw error if user not found', async () => {
-        jest.spyOn(accountUsersService, 'getAccountUserById').mockResolvedValue(null);
+        jest.spyOn(accountUsersService, 'getAccountUserSecurityDetailsById').mockResolvedValue(null);
 
         await expect(service.setupMfa('nonexistent')).rejects.toThrow('User not found');
       });
 
       it('should throw error if MFA already enabled', async () => {
         const userWithMfa = { ...mockUser, mfaEnabled: true };
-        jest.spyOn(accountUsersService, 'getAccountUserById').mockResolvedValue(userWithMfa as any);
+        jest.spyOn(accountUsersService, 'getAccountUserSecurityDetailsById').mockResolvedValue(userWithMfa as any);
 
         await expect(service.setupMfa('user123')).rejects.toThrow('MFA is already enabled for this user');
       });
@@ -504,7 +511,7 @@ describe('AuthService', () => {
     describe('verifyMfaSetup', () => {
       it('should verify MFA setup and enable MFA', async () => {
         const userWithMfaSecret = { ...mockUser, mfaSecret: 'JBSWY3DPEHPK3PXP', mfaBackupCodes: ['ABC123'] };
-        jest.spyOn(accountUsersService, 'getAccountUserById').mockResolvedValue(userWithMfaSecret as any);
+        jest.spyOn(accountUsersService, 'getAccountUserSecurityDetailsById').mockResolvedValue(userWithMfaSecret as any);
         jest.spyOn(mfaService, 'verifyMfa').mockReturnValue({ isValid: true, isBackupCode: false });
         jest.spyOn(accountUsersService, 'updateAccountUser').mockResolvedValue(mockUser as any);
 
@@ -512,7 +519,7 @@ describe('AuthService', () => {
 
         expect(result.success).toBe(true);
         expect(result.message).toBe('MFA setup completed successfully');
-        expect(accountUsersService.updateAccountUser).toHaveBeenCalledWith('user123', {
+        expect(accountUsersService.updateAccountUserSecurity).toHaveBeenCalledWith('user123', {
           mfaEnabled: true,
           mfaSetupCompleted: expect.any(Date),
         });
@@ -525,14 +532,14 @@ describe('AuthService', () => {
       });
 
       it('should throw error if MFA setup not initiated', async () => {
-        jest.spyOn(accountUsersService, 'getAccountUserById').mockResolvedValue(mockUser as any);
+        jest.spyOn(accountUsersService, 'getAccountUserSecurityDetailsById').mockResolvedValue(mockUser as any);
 
         await expect(service.verifyMfaSetup('user123', '123456')).rejects.toThrow('MFA setup not initiated');
       });
 
       it('should throw error if invalid TOTP code', async () => {
         const userWithMfaSecret = { ...mockUser, mfaSecret: 'JBSWY3DPEHPK3PXP', mfaBackupCodes: ['ABC123'] };
-        jest.spyOn(accountUsersService, 'getAccountUserById').mockResolvedValue(userWithMfaSecret as any);
+        jest.spyOn(accountUsersService, 'getAccountUserSecurityDetailsById').mockResolvedValue(userWithMfaSecret as any);
         jest.spyOn(mfaService, 'verifyMfa').mockReturnValue({ isValid: false, isBackupCode: false });
 
         await expect(service.verifyMfaSetup('user123', '123456')).rejects.toThrow('Invalid TOTP code');
@@ -542,7 +549,7 @@ describe('AuthService', () => {
     describe('verifyMfa', () => {
       it('should verify MFA and return tokens', async () => {
         const userWithMfa = { ...mockUser, mfaEnabled: true, mfaSecret: 'JBSWY3DPEHPK3PXP', mfaBackupCodes: ['ABC123'] };
-        jest.spyOn(accountUsersService, 'getAccountUserById').mockResolvedValue(userWithMfa as any);
+        jest.spyOn(accountUsersService, 'getAccountUserSecurityDetailsById').mockResolvedValue(userWithMfa as any);
         jest.spyOn(mfaService, 'verifyMfa').mockReturnValue({ isValid: true, isBackupCode: false });
         jest.spyOn(jwtService, 'sign').mockReturnValue('mock.jwt.token');
 
@@ -560,14 +567,14 @@ describe('AuthService', () => {
       });
 
       it('should throw error if MFA not enabled', async () => {
-        jest.spyOn(accountUsersService, 'getAccountUserById').mockResolvedValue(mockUser as any);
+        jest.spyOn(accountUsersService, 'getAccountUserSecurityDetailsById').mockResolvedValue(mockUser as any);
 
         await expect(service.verifyMfa('user123', '123456')).rejects.toThrow('MFA is not enabled for this user');
       });
 
       it('should throw error if invalid MFA code', async () => {
         const userWithMfa = { ...mockUser, mfaEnabled: true, mfaSecret: 'JBSWY3DPEHPK3PXP', mfaBackupCodes: ['ABC123'] };
-        jest.spyOn(accountUsersService, 'getAccountUserById').mockResolvedValue(userWithMfa as any);
+        jest.spyOn(accountUsersService, 'getAccountUserSecurityDetailsById').mockResolvedValue(userWithMfa as any);
         jest.spyOn(mfaService, 'verifyMfa').mockReturnValue({ isValid: false, isBackupCode: false });
 
         await expect(service.verifyMfa('user123', '123456')).rejects.toThrow('Invalid MFA code');
@@ -583,7 +590,7 @@ describe('AuthService', () => {
     describe('disableMfa', () => {
       it('should disable MFA for user', async () => {
         const userWithMfa = { ...mockUser, mfaEnabled: true, mfaSecret: 'JBSWY3DPEHPK3PXP', mfaBackupCodes: ['ABC123'] };
-        jest.spyOn(accountUsersService, 'getAccountUserById').mockResolvedValue(userWithMfa as any);
+        jest.spyOn(accountUsersService, 'getAccountUserSecurityDetailsById').mockResolvedValue(userWithMfa as any);
         jest.spyOn(passwordService, 'comparePassword').mockResolvedValue(true);
         jest.spyOn(mfaService, 'verifyMfa').mockReturnValue({ isValid: true, isBackupCode: false });
         jest.spyOn(accountUsersService, 'updateAccountUser').mockResolvedValue(mockUser as any);
@@ -592,7 +599,7 @@ describe('AuthService', () => {
 
         expect(result.success).toBe(true);
         expect(result.message).toBe('MFA has been disabled successfully');
-        expect(accountUsersService.updateAccountUser).toHaveBeenCalledWith('user123', {
+        expect(accountUsersService.updateAccountUserSecurity).toHaveBeenCalledWith('user123', {
           mfaEnabled: false,
           mfaSecret: undefined,
           mfaBackupCodes: undefined,
@@ -614,7 +621,7 @@ describe('AuthService', () => {
 
       it('should throw error if current password incorrect', async () => {
         const userWithMfa = { ...mockUser, mfaEnabled: true, mfaSecret: 'JBSWY3DPEHPK3PXP', mfaBackupCodes: ['ABC123'] };
-        jest.spyOn(accountUsersService, 'getAccountUserById').mockResolvedValue(userWithMfa as any);
+        jest.spyOn(accountUsersService, 'getAccountUserSecurityDetailsById').mockResolvedValue(userWithMfa as any);
         jest.spyOn(passwordService, 'comparePassword').mockResolvedValue(false);
 
         await expect(service.disableMfa('user123', 'WrongPassword123!', '123456')).rejects.toThrow('Current password is incorrect');
@@ -625,7 +632,7 @@ describe('AuthService', () => {
       it('should regenerate backup codes', async () => {
         const userWithMfa = { ...mockUser, mfaEnabled: true, mfaSecret: 'JBSWY3DPEHPK3PXP', mfaBackupCodes: ['ABC123'] };
         const newBackupCodes = ['XYZ789', 'DEF456', 'GHI123'];
-        jest.spyOn(accountUsersService, 'getAccountUserById').mockResolvedValue(userWithMfa as any);
+        jest.spyOn(accountUsersService, 'getAccountUserSecurityDetailsById').mockResolvedValue(userWithMfa as any);
         jest.spyOn(passwordService, 'comparePassword').mockResolvedValue(true);
         jest.spyOn(mfaService, 'verifyMfa').mockReturnValue({ isValid: true, isBackupCode: false });
         jest.spyOn(mfaService, 'generateBackupCodes').mockReturnValue(newBackupCodes);
@@ -636,7 +643,7 @@ describe('AuthService', () => {
         expect(result.success).toBe(true);
         expect(result.backupCodes).toEqual(newBackupCodes);
         expect(result.warning).toBe('Previous backup codes are no longer valid');
-        expect(accountUsersService.updateAccountUser).toHaveBeenCalledWith('user123', {
+        expect(accountUsersService.updateAccountUserSecurity).toHaveBeenCalledWith('user123', {
           mfaBackupCodes: newBackupCodes,
         });
         expect(auditService.log).toHaveBeenCalledWith({
@@ -656,7 +663,7 @@ describe('AuthService', () => {
     describe('getMfaStatus', () => {
       it('should return MFA status for user', async () => {
         const userWithMfa = { ...mockUser, mfaEnabled: true };
-        jest.spyOn(accountUsersService, 'getAccountUserById').mockResolvedValue(userWithMfa as any);
+        jest.spyOn(accountUsersService, 'getAccountUserSecurityDetailsById').mockResolvedValue(userWithMfa as any);
         jest.spyOn(mfaService, 'isMfaGloballyEnabled').mockReturnValue(true);
         jest.spyOn(mfaService, 'isMfaRequired').mockResolvedValue(true);
 

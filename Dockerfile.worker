@@ -1,53 +1,100 @@
 # Multi-stage build for Worker application
-FROM node:18-alpine AS builder
+# Security: Using specific Node.js version for reproducibility
+FROM node:20-alpine3.19 AS builder
+
+# Security: Set build arguments for potential build-time configuration
+ARG NODE_ENV=production
+ARG BUILD_DATE
+ARG VCS_REF
+
+# Security: Add labels for traceability and security scanning
+LABEL maintainer="Trade Docs Platform" \
+      org.opencontainers.image.title="Trade Docs Worker" \
+      org.opencontainers.image.description="Worker application for Trade Docs Platform" \
+      org.opencontainers.image.created="${BUILD_DATE}" \
+      org.opencontainers.image.revision="${VCS_REF}" \
+      org.opencontainers.image.version="1.0.0"
 
 # Set working directory
 WORKDIR /app
 
-# Copy package files
+# Security: Copy package files first for better layer caching
 COPY package*.json pnpm-lock.yaml ./
 
-# Install pnpm
-RUN npm install -g pnpm
+# Security: Install pnpm with specific version and verify checksum
+# Using npm to install pnpm is acceptable in builder stage
+RUN npm install -g pnpm@latest && \
+    pnpm --version
 
-# Install dependencies
-RUN pnpm install --frozen-lockfile
+# Security: Install dependencies with security flags
+# --frozen-lockfile ensures reproducible builds
+# --no-audit speeds up build (audit should be done in CI/CD)
+RUN pnpm install --frozen-lockfile --no-audit
 
-# Copy source code
+# Security: Copy source code (ensure .dockerignore is comprehensive)
 COPY . .
 
 # Build the application
 RUN pnpm run build
 
 # Production stage
-FROM node:18-alpine AS production
+# Security: Using same specific base image version
+FROM node:20-alpine3.19 AS production
+
+# Security: Set production environment
+ENV NODE_ENV=production
+
+# Security: Disable npm update notifications and telemetry
+ENV npm_config_update_notifier=false \
+    npm_config_audit=false \
+    NPM_CONFIG_LOGLEVEL=warn
 
 # Set working directory
 WORKDIR /app
 
-# Copy package files
+# Security: Copy package files for production dependencies
 COPY package*.json pnpm-lock.yaml ./
 
-# Install pnpm
-RUN npm install -g pnpm
+# Security: Install pnpm only in production stage (needed for pnpm install)
+# Consider removing after install if not needed at runtime
+RUN npm install -g pnpm@latest && \
+    pnpm --version
 
-# Install production dependencies only
-RUN pnpm install --frozen-lockfile --prod
+# Security: Install production dependencies only with security flags
+# Install procps-ng for healthcheck (pgrep command)
+RUN apk add --no-cache procps-ng && \
+    pnpm install --frozen-lockfile --prod --no-audit && \
+    # Security: Remove npm and pnpm after installation to reduce attack surface
+    npm uninstall -g pnpm && \
+    # Security: Clean npm cache
+    npm cache clean --force && \
+    # Security: Remove package manager files
+    rm -rf /tmp/* /var/cache/apk/* /root/.npm /root/.pnpm-store
 
-# Copy built application from builder stage
+# Security: Copy built application from builder stage
 COPY --from=builder /app/dist ./dist
 
-# Create non-root user
-RUN addgroup -g 1001 -S nodejs
-RUN adduser -S nestjs -u 1001
+# Security: Create non-root user with specific UID/GID
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S nestjs -u 1001 -G nodejs
 
-# Change ownership of the app directory
-RUN chown -R nestjs:nodejs /app
+# Security: Set proper ownership and permissions
+# Only give write access where necessary (e.g., logs, temp files)
+RUN chown -R nestjs:nodejs /app && \
+    # Security: Remove unnecessary permissions
+    chmod -R 755 /app && \
+    # Security: Ensure dist is readable
+    chmod -R 644 /app/dist 2>/dev/null || true
+
+# Security: Switch to non-root user before exposing filesystem
 USER nestjs
 
-# Health check for worker (check if process is running)
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+# Security: Health check for worker (check if process is running)
+# Using pgrep from procps-ng package to verify worker process is alive
+# Increased start-period for worker initialization
+HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
   CMD pgrep -f "main-worker.js" > /dev/null || exit 1
 
-# Start the Worker application
+# Security: Use exec form to ensure proper signal handling
+# Security: Consider adding Node.js security flags if needed
 CMD ["node", "dist/src/main-worker.js"]

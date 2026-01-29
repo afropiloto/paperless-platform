@@ -12,7 +12,10 @@ Welcome to the Trade Documents Platform documentation. This comprehensive guide 
 ### Configuration & Environment
 - **[Environment Configuration](ENVIRONMENT_CONFIGURATION.md)** - Environment-based configuration management
 - **[Deployment Guide](DEPLOYMENT.md)** - Docker and Kubernetes deployment instructions
+- **[Kubernetes Deployment Strategy](KUBERNETES_DEPLOYMENT_STRATEGY.md)** - Multi-repo deployment strategy and GitOps approach
+- **[Docker Compose Secrets Guide](DOCKER_COMPOSE_SECRETS_GUIDE.md)** - Runtime configuration of MongoDB and Redis passwords
 - **[Production Deployment](PRODUCTION_DEPLOYMENT.md)** - Production deployment best practices
+- **[Dockerfile Security Review](DOCKERFILE_SECURITY_REVIEW.md)** - Docker image security best practices
 
 ### System Features
 - **[Onboarding Checks System](ONBOARDING_CHECKS_SYSTEM.md)** - Automated checks and verification system
@@ -56,6 +59,9 @@ docs/
 ├── ONBOARDING_CHECKS_SYSTEM.md         # Automated checks system
 ├── API_INTEGRATION_GUIDE.md            # API usage and integration
 ├── MFA_CONFIGURATION.md                # Multi-factor authentication
+├── DOCKER_COMPOSE_SECRETS_GUIDE.md     # Runtime secrets for Docker Compose
+├── DOCKERFILE_SECURITY_REVIEW.md       # Docker image security practices
+├── KUBERNETES_DEPLOYMENT_STRATEGY.md   # Multi-repo deployment strategy
 └── TROUBLESHOOTING.md                  # Troubleshooting guide
 ```
 
@@ -65,7 +71,9 @@ docs/
 - **Setting up development environment**: [Development Setup](DEVELOPMENT_SETUP.md)
 - **Understanding the system**: [Architecture Overview](ARCHITECTURE_OVERVIEW.md)
 - **Configuring the application**: [Environment Configuration](ENVIRONMENT_CONFIGURATION.md)
+- **Configuring Docker Compose passwords**: [Docker Compose Secrets Guide](DOCKER_COMPOSE_SECRETS_GUIDE.md)
 - **Deploying to production**: [Production Deployment](PRODUCTION_DEPLOYMENT.md)
+- **Deploying multiple applications**: [Kubernetes Deployment Strategy](KUBERNETES_DEPLOYMENT_STRATEGY.md)
 - **Troubleshooting issues**: [Troubleshooting Guide](TROUBLESHOOTING.md)
 
 ### By Role
@@ -75,8 +83,8 @@ docs/
 - **System Administrator**: [Architecture Overview](ARCHITECTURE_OVERVIEW.md), [Troubleshooting Guide](TROUBLESHOOTING.md)
 
 ### By Technology
-- **Docker**: [Deployment Guide](DEPLOYMENT.md)
-- **Kubernetes**: [Deployment Guide](DEPLOYMENT.md), [Production Deployment](PRODUCTION_DEPLOYMENT.md)
+- **Docker**: [Deployment Guide](DEPLOYMENT.md), [Docker Compose Secrets Guide](DOCKER_COMPOSE_SECRETS_GUIDE.md), [Dockerfile Security Review](DOCKERFILE_SECURITY_REVIEW.md)
+- **Kubernetes**: [Deployment Guide](DEPLOYMENT.md), [Kubernetes Deployment Strategy](KUBERNETES_DEPLOYMENT_STRATEGY.md), [Production Deployment](PRODUCTION_DEPLOYMENT.md)
 - **MongoDB**: [Architecture Overview](ARCHITECTURE_OVERVIEW.md), [Troubleshooting Guide](TROUBLESHOOTING.md)
 - **Redis**: [Architecture Overview](ARCHITECTURE_OVERVIEW.md), [Troubleshooting Guide](TROUBLESHOOTING.md)
 - **NestJS**: [Development Setup](DEVELOPMENT_SETUP.md), [Architecture Overview](ARCHITECTURE_OVERVIEW.md)
@@ -153,6 +161,27 @@ Multi-factor authentication setup guide:
 - User setup process
 - Security considerations
 - Troubleshooting
+
+### [Docker Compose Secrets Guide](DOCKER_COMPOSE_SECRETS_GUIDE.md)
+Runtime configuration of MongoDB and Redis credentials:
+- Using `.env` files and command-line variables
+- Environment variable reference
+- Security best practices
+- Troubleshooting
+
+### [Dockerfile Security Review](DOCKERFILE_SECURITY_REVIEW.md)
+Docker image security practices for API and worker:
+- Base image pinning and hardening
+- Non-root execution and permissions
+- Additional security recommendations
+
+### [Kubernetes Deployment Strategy](KUBERNETES_DEPLOYMENT_STRATEGY.md)
+Multi-repository deployment strategy and GitOps approach:
+- Separate deployment repository structure
+- Frontend application configuration
+- Coordinated deployments
+- Environment management with Kustomize
+- CI/CD integration
 
 ### [Troubleshooting Guide](TROUBLESHOOTING.md)
 Comprehensive troubleshooting reference:
@@ -243,6 +272,9 @@ If you can't find the information you need:
 - ✅ **Onboarding Checks System** - Complete with examples
 - ✅ **API Integration Guide** - Complete with examples
 - ✅ **MFA Configuration** - Complete and tested
+- ✅ **Docker Compose Secrets Guide** - Complete with examples
+- ✅ **Dockerfile Security Review** - Complete with recommendations
+- ✅ **Kubernetes Deployment Strategy** - Complete with GitOps approach
 - ✅ **Troubleshooting Guide** - Complete with common issues
 
 ---

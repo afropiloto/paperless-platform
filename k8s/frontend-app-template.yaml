@@ -1,0 +1,107 @@
+# Template for Frontend Application Deployment
+# Copy this file and customize for each frontend application
+# Replace FRONTEND_APP_NAME with your actual app name (e.g., frontend-app1, frontend-app2)
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: FRONTEND_APP_NAME
+  namespace: trade-docs-platform
+  labels:
+    app: FRONTEND_APP_NAME
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: FRONTEND_APP_NAME
+  template:
+    metadata:
+      labels:
+        app: FRONTEND_APP_NAME
+    spec:
+      containers:
+      - name: frontend
+        image: your-registry/FRONTEND_APP_NAME:latest  # Update with your image registry
+        ports:
+        - containerPort: 80
+        env:
+        # Option 1: Use Kubernetes internal DNS (recommended for same namespace)
+        # This uses the service name directly
+        - name: REACT_APP_API_URL
+          value: "http://trade-docs-api-service:80"
+        # Option 2: Use full DNS name (works across namespaces)
+        # - name: REACT_APP_API_URL
+        #   value: "http://trade-docs-api-service.trade-docs-platform.svc.cluster.local"
+        # Option 3: Use external URL (if using LoadBalancer/Ingress)
+        # - name: REACT_APP_API_URL
+        #   value: "https://api.yourdomain.com"
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+        startupProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: FRONTEND_APP_NAME-service
+  namespace: trade-docs-platform
+spec:
+  selector:
+    app: FRONTEND_APP_NAME
+  ports:
+  - port: 80
+    targetPort: 80
+  type: ClusterIP  # Change to LoadBalancer for external access, or use Ingress
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: FRONTEND_APP_NAME-hpa
+  namespace: trade-docs-platform
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: FRONTEND_APP_NAME
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80

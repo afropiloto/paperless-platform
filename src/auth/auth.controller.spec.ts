@@ -1,20 +1,33 @@
+jest.mock('otplib', () => ({
+  authenticator: {
+    generate: jest.fn(),
+    check: jest.fn(),
+    generateSecret: jest.fn(),
+    keyuri: jest.fn(),
+  },
+}));
+
 import { Test, TestingModule } from '@nestjs/testing';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { SiweService } from '../siwe/siwe.service';
+import { JwtGuard } from './guards/jwt-guard';
+import { UserPermissionGuard } from './guards/user-permission.guard';
+import { ApiKeyGuard } from '../api-key-auth/api-key.guard';
 import { EmailPasswordLoginDto } from './dtos/email-password-login.dto';
 import { ChangePasswordDto } from './dtos/change-password.dto';
 import { ForgotPasswordDto } from './dtos';
 import { ResetPasswordDto } from './dtos';
 import { LoginDto } from './dtos';
 import { RefreshTokenDto } from './dtos';
+import { AuthResponseDto } from './dtos';
 
 describe('AuthController', () => {
   let controller: AuthController;
   let authService: AuthService;
   let siweService: SiweService;
 
-  const mockAuthResponse = {
+  const mockAuthResponse: AuthResponseDto = {
     success: true,
     accessToken: 'mock.access.token',
     refreshToken: 'mock.refresh.token',
@@ -50,7 +63,14 @@ describe('AuthController', () => {
           },
         },
       ],
-    }).compile();
+    })
+      .overrideGuard(JwtGuard)
+      .useValue({ canActivate: () => true })
+      .overrideGuard(UserPermissionGuard)
+      .useValue({ canActivate: () => true })
+      .overrideGuard(ApiKeyGuard)
+      .useValue({ canActivate: () => true })
+      .compile();
 
     controller = module.get<AuthController>(AuthController);
     authService = module.get<AuthService>(AuthService);
@@ -91,16 +111,17 @@ describe('AuthController', () => {
 
   describe('loginWithEmailPassword', () => {
     it('should authenticate with email and password', async () => {
+      const mockClient = { name: 'test-client', keyId: 'test-key', accessGroups: [] };
       const loginDto: EmailPasswordLoginDto = {
         email: 'test@example.com',
         password: 'ValidPassword123!',
       };
       jest.spyOn(authService, 'loginWithEmailPassword').mockResolvedValue(mockAuthResponse);
 
-      const result = await controller.loginWithEmailPassword(loginDto);
+      const result = await controller.loginWithEmailPassword(mockClient as any, loginDto);
 
       expect(result).toEqual(mockAuthResponse);
-      expect(authService.loginWithEmailPassword).toHaveBeenCalledWith(loginDto);
+      expect(authService.loginWithEmailPassword).toHaveBeenCalledWith(loginDto, mockClient.name);
     });
   });
 
@@ -142,11 +163,12 @@ describe('AuthController', () => {
     });
 
     it('should throw error when userId is missing', async () => {
-      const userId: string = 'user123';
+      const userId = undefined as unknown as string;
       const changePasswordDto: ChangePasswordDto = {
         currentPassword: 'OldPassword123!',
         newPassword: 'NewPassword456!',
       };
+      jest.spyOn(authService, 'changePassword').mockRejectedValue(new Error('userId is required'));
 
       await expect(controller.changePassword(userId, changePasswordDto)).rejects.toThrow('userId is required');
     });

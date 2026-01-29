@@ -9,9 +9,26 @@ services:
       - "6379:6379"
     volumes:
       - redis_data:/data
-    command: redis-server --appendonly yes
+    # Security: Redis password from environment variable (set via .env or command line)
+    command: >
+      sh -c "
+      if [ -n \"$${REDIS_PASSWORD}\" ]; then
+        redis-server --appendonly yes --requirepass $${REDIS_PASSWORD}
+      else
+        redis-server --appendonly yes
+      fi
+      "
+    environment:
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-}
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: >
+        sh -c "
+        if [ -n \"$${REDIS_PASSWORD}\" ]; then
+          redis-cli -a $${REDIS_PASSWORD} ping
+        else
+          redis-cli ping
+        fi
+        "
       interval: 10s
       timeout: 3s
       retries: 3
@@ -23,9 +40,11 @@ services:
     ports:
       - "27017:27017"
     environment:
-      MONGO_INITDB_ROOT_USERNAME: admin
-      MONGO_INITDB_ROOT_PASSWORD: password
-      MONGO_INITDB_DATABASE: tradedocs
+      # Security: MongoDB credentials from environment variables (set via .env or command line)
+      # Defaults provided for development convenience, but should be overridden in production
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USERNAME:-admin}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD:-password}
+      MONGO_INITDB_DATABASE: ${MONGO_DATABASE:-tradedocs}
     volumes:
       - mongodb_data:/data/db
       - ./mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
@@ -46,10 +65,11 @@ services:
     env_file:
       - env.development
     environment:
-      - MONGODB_URI=mongodb://admin:password@mongodb:27017/tradedocs?authSource=admin
+      # Security: Build MongoDB URI from environment variables
+      - MONGODB_URI=mongodb://${MONGO_ROOT_USERNAME:-admin}:${MONGO_ROOT_PASSWORD:-password}@mongodb:27017/${MONGO_DATABASE:-tradedocs}?authSource=admin
       - REDIS_HOST=redis
       - REDIS_PORT=6379
-      - REDIS_PASSWORD=
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-}
     depends_on:
       mongodb:
         condition: service_healthy
@@ -72,10 +92,11 @@ services:
     env_file:
       - env.development
     environment:
-      - MONGODB_URI=mongodb://admin:password@mongodb:27017/tradedocs?authSource=admin
+      # Security: Build MongoDB URI from environment variables
+      - MONGODB_URI=mongodb://${MONGO_ROOT_USERNAME:-admin}:${MONGO_ROOT_PASSWORD:-password}@mongodb:27017/${MONGO_DATABASE:-tradedocs}?authSource=admin
       - REDIS_HOST=redis
       - REDIS_PORT=6379
-      - REDIS_PASSWORD=
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-}
     depends_on:
       mongodb:
         condition: service_healthy
@@ -96,7 +117,13 @@ services:
     ports:
       - "8081:8081"
     environment:
+      # Security: Redis connection - password included in REDIS_HOSTS if set
+      # Format: name:host:port:passwordIndex:dbIndex:password
+      # If REDIS_PASSWORD is empty, password part is omitted
       - REDIS_HOSTS=local:redis:6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-}
+      - HTTP_USER=${REDIS_COMMANDER_USER:-admin}
+      - HTTP_PASSWORD=${REDIS_COMMANDER_PASSWORD:-password}
     depends_on:
       - redis
     profiles:
@@ -109,11 +136,12 @@ services:
     ports:
       - "8082:8081"
     environment:
-      - ME_CONFIG_MONGODB_ADMINUSERNAME=admin
-      - ME_CONFIG_MONGODB_ADMINPASSWORD=password
-      - ME_CONFIG_MONGODB_URL=mongodb://admin:password@mongodb:27017/
-      - ME_CONFIG_BASICAUTH_USERNAME=admin
-      - ME_CONFIG_BASICAUTH_PASSWORD=password
+      # Security: Mongo Express credentials from environment variables
+      - ME_CONFIG_MONGODB_ADMINUSERNAME=${MONGO_ROOT_USERNAME:-admin}
+      - ME_CONFIG_MONGODB_ADMINPASSWORD=${MONGO_ROOT_PASSWORD:-password}
+      - ME_CONFIG_MONGODB_URL=mongodb://${MONGO_ROOT_USERNAME:-admin}:${MONGO_ROOT_PASSWORD:-password}@mongodb:27017/
+      - ME_CONFIG_BASICAUTH_USERNAME=${MONGO_EXPRESS_USERNAME:-admin}
+      - ME_CONFIG_BASICAUTH_PASSWORD=${MONGO_EXPRESS_PASSWORD:-password}
     depends_on:
       - mongodb
     profiles:

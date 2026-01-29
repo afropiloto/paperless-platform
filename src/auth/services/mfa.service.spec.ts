@@ -3,6 +3,39 @@ import { ConfigService } from '@nestjs/config';
 import { MfaService } from './mfa.service';
 import * as speakeasy from 'speakeasy';
 
+// Mock otplib to avoid ESM issues
+jest.mock('otplib', () => {
+  const mockAuthenticator = {
+    generate: jest.fn((secret: string) => {
+      // Return a mock 6-digit token
+      return '123456';
+    }),
+    check: jest.fn((token: string, secret: string) => {
+      // Mock validation - accept '123456' as valid
+      return token === '123456';
+    }),
+    generateSecret: jest.fn((length?: number) => {
+      // Return a mock base32 secret string
+      return 'JBSWY3DPEHPK3PXP';
+    }),
+    keyuri: jest.fn((email: string, issuer: string, secret: string) => {
+      return `otpauth://totp/${encodeURIComponent(issuer)}:${encodeURIComponent(email)}?secret=${secret}&issuer=${encodeURIComponent(issuer)}`;
+    }),
+    // MfaService.verifyTotp calls authenticator.verify({ token, secret })
+    verify: jest.fn((options: { token: string; secret: string }) => {
+      // Reject obviously invalid token '000000'; accept other 6-digit tokens (speakeasy.totp() generates real tokens)
+      return options.token !== '000000' && /^\d{6}$/.test(options.token) && /^[A-Z2-7]+$/.test(options.secret);
+    }),
+    options: {
+      step: 30,
+      window: 1,
+    },
+  };
+  return {
+    authenticator: mockAuthenticator,
+  };
+});
+
 describe('MfaService', () => {
   let service: MfaService;
   let configService: ConfigService;
@@ -24,9 +57,9 @@ describe('MfaService', () => {
   };
 
   beforeEach(async () => {
-    // Reset mock configuration to defaults
+    // Reset mock configuration to defaults (algorithm must be string for authenticator.options)
     mockConfigService.get.mockImplementation((key: string) => {
-      const config = {
+      const config: Record<string, string | number | boolean> = {
         'auth.mfa.enabled': true,
         'auth.mfa.issuer': 'Test Platform',
         'auth.mfa.window': 1,
@@ -36,7 +69,8 @@ describe('MfaService', () => {
         'auth.mfa.period': 30,
         'auth.mfa.secretLength': 20,
       };
-      return config[key];
+      const value = config[key];
+      return key === 'auth.mfa.algorithm' ? (typeof value === 'string' ? value : 'sha1') : value;
     });
 
     const module: TestingModule = await Test.createTestingModule({

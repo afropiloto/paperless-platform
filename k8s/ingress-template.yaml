@@ -1,0 +1,74 @@
+# Ingress Configuration Template
+# Use this if you want to route both frontend and API through the same domain
+# Requires an Ingress Controller (e.g., NGINX, Traefik) to be installed
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: trade-docs-ingress
+  namespace: trade-docs-platform
+  annotations:
+    # NGINX Ingress Controller annotations
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    # Cert-Manager for TLS (if using)
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+spec:
+  ingressClassName: nginx  # Update based on your ingress controller
+  tls:
+  - hosts:
+    - yourdomain.com
+    - api.yourdomain.com
+    secretName: trade-docs-tls
+  rules:
+  # Frontend application 1
+  - host: yourdomain.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: frontend-app1-service
+            port:
+              number: 80
+  # Frontend application 2 (if different domain or path)
+  - host: app2.yourdomain.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: frontend-app2-service
+            port:
+              number: 80
+  # API service
+  - host: api.yourdomain.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: trade-docs-api-service
+            port:
+              number: 80
+  # Alternative: Path-based routing (API under /api path)
+  # - host: yourdomain.com
+  #   http:
+  #     paths:
+  #     - path: /
+  #       pathType: Prefix
+  #       backend:
+  #         service:
+  #           name: frontend-app1-service
+  #           port:
+  #             number: 80
+  #     - path: /api
+  #       pathType: Prefix
+  #       backend:
+  #         service:
+  #           name: trade-docs-api-service
+  #           port:
+  #             number: 80

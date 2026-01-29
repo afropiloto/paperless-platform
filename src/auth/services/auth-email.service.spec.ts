@@ -4,12 +4,14 @@ import { EMAIL_CLIENT_SERVICE } from '../../email-client/email-client.constants'
 import { EmailClientInterface } from '../../email-client/types';
 import { EmailTemplatesService } from './email-templates.service';
 import { AuthEmailService } from './auth-email.service';
+import { EmailQueueService } from '../../email-events/email-queue.service';
 
 describe('AuthEmailService', () => {
   let service: AuthEmailService;
   let emailClient: EmailClientInterface;
   let emailTemplates: EmailTemplatesService;
   let configService: ConfigService;
+  let emailQueueService: EmailQueueService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -43,6 +45,16 @@ describe('AuthEmailService', () => {
             }),
           },
         },
+        {
+          provide: EmailQueueService,
+          useValue: {
+            addPasswordResetEmailJob: jest.fn(),
+            addMfaSetupEmailJob: jest.fn(),
+            addMfaBackupCodesEmailJob: jest.fn(),
+            addUserInvitationEmailJob: jest.fn(),
+            addWelcomeEmailJob: jest.fn(),
+          },
+        },
       ],
     }).compile();
 
@@ -50,6 +62,7 @@ describe('AuthEmailService', () => {
     emailClient = module.get<EmailClientInterface>(EMAIL_CLIENT_SERVICE);
     emailTemplates = module.get<EmailTemplatesService>(EmailTemplatesService);
     configService = module.get<ConfigService>(ConfigService);
+    emailQueueService = module.get<EmailQueueService>(EmailQueueService);
   });
 
   it('should be defined', () => {
@@ -62,75 +75,27 @@ describe('AuthEmailService', () => {
       const userName = 'John Doe';
       const resetToken = 'abc123';
 
-      const emailContent = {
-        subject: 'Reset Your Test App Password',
-        htmlContent: '<html>Reset password</html>',
-        textContent: 'Reset password',
-      };
-
-      jest.spyOn(emailTemplates, 'generatePasswordResetEmail').mockReturnValue(emailContent);
-      jest.spyOn(emailClient, 'sendEmail').mockResolvedValue({
-        messageId: 'test-message-id',
-        provider: 'brevo',
-        sentAt: new Date(),
-        status: 'sent',
-      });
+      jest.spyOn(emailQueueService, 'addPasswordResetEmailJob').mockResolvedValue(undefined);
 
       await service.sendPasswordResetEmail(userEmail, userName, resetToken);
 
-      expect(emailTemplates.generatePasswordResetEmail).toHaveBeenCalledWith({
+      expect(emailQueueService.addPasswordResetEmailJob).toHaveBeenCalledWith(
+        userEmail,
         userName,
-        resetUrl: 'https://test.example.com/reset-password?token=abc123',
-        expiryMinutes: 30,
-      });
-      expect(emailClient.sendEmail).toHaveBeenCalledWith({
-        to: userEmail,
-        subject: emailContent.subject,
-        htmlContent: emailContent.htmlContent,
-        textContent: emailContent.textContent,
-      });
-    });
-
-    it('should throw error when email sending fails', async () => {
-      const userEmail = 'test@example.com';
-      const userName = 'John Doe';
-      const resetToken = 'abc123';
-
-      const emailContent = {
-        subject: 'Reset Your Test App Password',
-        htmlContent: '<html>Reset password</html>',
-        textContent: 'Reset password',
-      };
-
-      jest.spyOn(emailTemplates, 'generatePasswordResetEmail').mockReturnValue(emailContent);
-      jest.spyOn(emailClient, 'sendEmail').mockRejectedValue(new Error('Email service error'));
-
-      await expect(service.sendPasswordResetEmail(userEmail, userName, resetToken)).rejects.toThrow(
-        'Failed to send password reset email: Email service error',
+        resetToken,
+        30,
       );
     });
 
-    it('should throw error when email provider returns failed status', async () => {
+    it('should throw error when email queueing fails', async () => {
       const userEmail = 'test@example.com';
       const userName = 'John Doe';
       const resetToken = 'abc123';
 
-      const emailContent = {
-        subject: 'Reset Your Test App Password',
-        htmlContent: '<html>Reset password</html>',
-        textContent: 'Reset password',
-      };
-
-      jest.spyOn(emailTemplates, 'generatePasswordResetEmail').mockReturnValue(emailContent);
-      jest.spyOn(emailClient, 'sendEmail').mockResolvedValue({
-        provider: 'brevo',
-        sentAt: new Date(),
-        status: 'failed',
-        error: 'Provider error',
-      });
+      jest.spyOn(emailQueueService, 'addPasswordResetEmailJob').mockRejectedValue(new Error('Queue error'));
 
       await expect(service.sendPasswordResetEmail(userEmail, userName, resetToken)).rejects.toThrow(
-        'Failed to send password reset email: Provider error',
+        'Failed to queue password reset email: Queue error',
       );
     });
   });
@@ -141,32 +106,16 @@ describe('AuthEmailService', () => {
       const userName = 'John Doe';
       const backupCodes = ['ABC123', 'DEF456'];
 
-      const emailContent = {
-        subject: 'Your Test App Backup Codes',
-        htmlContent: '<html>Backup codes</html>',
-        textContent: 'Backup codes',
-      };
-
-      jest.spyOn(emailTemplates, 'generateMfaSetupEmail').mockReturnValue(emailContent);
-      jest.spyOn(emailClient, 'sendEmail').mockResolvedValue({
-        messageId: 'test-message-id',
-        provider: 'brevo',
-        sentAt: new Date(),
-        status: 'sent',
-      });
+      jest.spyOn(emailQueueService, 'addMfaSetupEmailJob').mockResolvedValue(undefined);
 
       await service.sendMfaSetupEmail(userEmail, userName, backupCodes);
 
-      expect(emailTemplates.generateMfaSetupEmail).toHaveBeenCalledWith({
+      expect(emailQueueService.addMfaSetupEmailJob).toHaveBeenCalledWith(
+        userEmail,
         userName,
         backupCodes,
-      });
-      expect(emailClient.sendEmail).toHaveBeenCalledWith({
-        to: userEmail,
-        subject: emailContent.subject,
-        htmlContent: emailContent.htmlContent,
-        textContent: emailContent.textContent,
-      });
+        undefined,
+      );
     });
 
     it('should send MFA setup email with QR code successfully', async () => {
@@ -175,33 +124,16 @@ describe('AuthEmailService', () => {
       const backupCodes = ['ABC123', 'DEF456'];
       const qrCodeUrl = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA...';
 
-      const emailContent = {
-        subject: 'Your Test App Two-Factor Authentication Setup',
-        htmlContent: '<html>MFA setup with QR code</html>',
-        textContent: 'MFA setup with QR code',
-      };
-
-      jest.spyOn(emailTemplates, 'generateMfaSetupEmail').mockReturnValue(emailContent);
-      jest.spyOn(emailClient, 'sendEmail').mockResolvedValue({
-        messageId: 'test-message-id',
-        provider: 'brevo',
-        sentAt: new Date(),
-        status: 'sent',
-      });
+      jest.spyOn(emailQueueService, 'addMfaSetupEmailJob').mockResolvedValue(undefined);
 
       await service.sendMfaSetupEmail(userEmail, userName, backupCodes, qrCodeUrl);
 
-      expect(emailTemplates.generateMfaSetupEmail).toHaveBeenCalledWith({
+      expect(emailQueueService.addMfaSetupEmailJob).toHaveBeenCalledWith(
+        userEmail,
         userName,
         backupCodes,
         qrCodeUrl,
-      });
-      expect(emailClient.sendEmail).toHaveBeenCalledWith({
-        to: userEmail,
-        subject: emailContent.subject,
-        htmlContent: emailContent.htmlContent,
-        textContent: emailContent.textContent,
-      });
+      );
     });
   });
 
@@ -211,32 +143,15 @@ describe('AuthEmailService', () => {
       const userName = 'John Doe';
       const backupCodes = ['XYZ789', 'DEF456'];
 
-      const emailContent = {
-        subject: 'Your Test App Backup Codes Have Been Regenerated',
-        htmlContent: '<html>New backup codes</html>',
-        textContent: 'New backup codes',
-      };
-
-      jest.spyOn(emailTemplates, 'generateMfaBackupCodesEmail').mockReturnValue(emailContent);
-      jest.spyOn(emailClient, 'sendEmail').mockResolvedValue({
-        messageId: 'test-message-id',
-        provider: 'brevo',
-        sentAt: new Date(),
-        status: 'sent',
-      });
+      jest.spyOn(emailQueueService, 'addMfaBackupCodesEmailJob').mockResolvedValue(undefined);
 
       await service.sendMfaBackupCodesEmail(userEmail, userName, backupCodes);
 
-      expect(emailTemplates.generateMfaBackupCodesEmail).toHaveBeenCalledWith({
+      expect(emailQueueService.addMfaBackupCodesEmailJob).toHaveBeenCalledWith(
+        userEmail,
         userName,
         backupCodes,
-      });
-      expect(emailClient.sendEmail).toHaveBeenCalledWith({
-        to: userEmail,
-        subject: emailContent.subject,
-        htmlContent: emailContent.htmlContent,
-        textContent: emailContent.textContent,
-      });
+      );
     });
   });
 

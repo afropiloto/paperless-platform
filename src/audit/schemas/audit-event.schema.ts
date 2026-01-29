@@ -4,10 +4,10 @@ import { AuditEventType, AuditSubject } from '../audit-event-type.enum';
 
 @Schema({ timestamps: true })
 export class AuditEvent extends Document {
-  @Prop({ required: true, enum: AuditSubject })
+  @Prop({ required: true, enum: AuditSubject, type: String })
   subject: AuditSubject;
 
-  @Prop({ required: true, enum: AuditEventType })
+  @Prop({ required: true, enum: AuditEventType, type: String })
   eventType: AuditEventType;
 
   @Prop({ required: true })

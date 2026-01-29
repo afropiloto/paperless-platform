@@ -8,8 +8,9 @@ data:
   PORT: "3001"
   REDIS_HOST: "redis-service"
   REDIS_PORT: "6379"
-  MONGODB_URI: "mongodb://mongodb-service:27017/tradedocs"
-  
+  # Note: MONGODB_URI (which includes credentials in production) is managed via Secret, not ConfigMap
+  # The application will read MONGODB_URI from the Secret defined in secret.yaml
+ 
   # Worker Configuration
   ONBOARDING_CHECKS_CONCURRENCY: "10"
   EMAIL_PROCESSING_CONCURRENCY: "5"

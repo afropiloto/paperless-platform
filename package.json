@@ -76,7 +76,7 @@
     "mime-types": "^3.0.2",
     "mongodb": "^7.0.0",
     "mongoose": "^9.1.5",
-    "multer": "1.4.5-lts.2",
+    "multer": "^2.0.2",
     "otplib": "^13.1.1",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
@@ -136,8 +136,21 @@
     "rootDir": "src",
     "testRegex": ".*\\.spec\\.ts$",
     "transform": {
-      "^.+\\.(t|j)s$": "ts-jest"
+      "^.+\\.(t|j)s$": ["ts-jest", {
+        "tsconfig": {
+          "paths": {
+            "src/*": ["src/*"]
+          }
+        },
+        "useESM": false
+      }]
     },
+    "moduleNameMapper": {
+      "^src/(.*)$": "<rootDir>/$1"
+    },
+    "transformIgnorePatterns": [
+      "node_modules/(?!(@scure|otplib|@otplib|qrcode)/)"
+    ],
     "collectCoverageFrom": [
       "**/*.(t|j)s"
     ],

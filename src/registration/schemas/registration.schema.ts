@@ -14,7 +14,7 @@ export class RegistrationDocumentDetails {
   @Prop({required: true})
   originalFilename: string;
 
-  @Prop({required: true, enum: RegistrationDocumentType})
+  @Prop({ required: true, enum: RegistrationDocumentType, type: String })
   documentType: RegistrationDocumentType;
 
   @Prop({required: true})
@@ -23,7 +23,7 @@ export class RegistrationDocumentDetails {
   @Prop({required: true})
   size: number;
 
-  @Prop({required: true, enum: RegistrationDocumentStatus, default: RegistrationDocumentStatus.AWAITING_VIRUS_SCAN})
+  @Prop({ required: true, enum: RegistrationDocumentStatus, type: String, default: RegistrationDocumentStatus.AWAITING_VIRUS_SCAN })
   status: RegistrationDocumentStatus;
 }
 
@@ -84,7 +84,7 @@ export class Registration extends Document {
   @Prop({required: true, type: RegistrationContactDetailsSchema})
   contact: RegistrationContactDetails;
 
-  @Prop({required: true, enum: RegistrationStatus, default: RegistrationStatus.READY_FOR_ONBOARDING})
+  @Prop({ required: true, enum: RegistrationStatus, type: String, default: RegistrationStatus.READY_FOR_ONBOARDING })
   status: RegistrationStatus;
 
   @Prop({required: false, type: [RegistrationDocumentDetailsSchema], default: []})

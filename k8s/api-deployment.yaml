@@ -70,6 +70,12 @@ spec:
   ports:
   - port: 80
     targetPort: 3001
+  # Service type options:
+  # - ClusterIP: Internal only (use with Ingress for external access)
+  # - LoadBalancer: External access via cloud provider load balancer
+  # - NodePort: External access via node IP (not recommended for production)
+  # For frontend apps in same namespace, they can use: http://trade-docs-api-service:80
+  # For frontend apps in different namespace: http://trade-docs-api-service.trade-docs-platform.svc.cluster.local
   type: LoadBalancer
 ---
 apiVersion: autoscaling/v2
