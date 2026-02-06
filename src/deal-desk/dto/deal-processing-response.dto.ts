@@ -130,7 +130,7 @@ export class DealPromissoryNoteDetailsDto {
   @Type(() => PromissoryNoteContentDto)
   content?: PromissoryNoteContentDto;
 
-  @ApiProperty({ description: 'Status of the promissory note' })
+  @ApiProperty({ description: 'Status of the promissory note', enum: Object.values(TradeDocumentStatus) })
   @Expose()
   @IsEnum(TradeDocumentStatus)
   status: TradeDocumentStatus;
@@ -155,7 +155,7 @@ export class DealPromissoryNoteDetailsDto {
 export class FundingDecisionResponseDto {
   @ApiProperty({
     description: 'The funding decision',
-    enum: ['Awaiting Decision', 'Approved', 'Rejected'],
+    enum: Object.values(FundingDecisionType),
     example: 'Approved',
   })
   @Expose()
@@ -206,7 +206,7 @@ export class DealProcessingResponseDto {
 
   @ApiProperty({
     description: 'Current status of the deal processing',
-    enum: ['New', 'In Progress', 'Awaiting Decision', 'Approved', 'Rejected'],
+    enum: Object.values(DealProcessingStatus),
     example: 'In Progress',
   })
   @Expose()
@@ -324,7 +324,7 @@ export class DealProcessingSummaryResponseDto {
 
   @ApiProperty({
     description: 'Current status of the deal processing',
-    enum: ['New', 'In Progress', 'Awaiting Decision', 'Approved', 'Rejected'],
+    enum: Object.values(DealProcessingStatus),
     example: 'In Progress',
   })
   @Expose()
@@ -389,7 +389,7 @@ export class DealProcessingSummaryResponseDto {
 
   @ApiProperty({
     description: 'Funding decision',
-    enum: ['Awaiting Decision', 'Approved', 'Rejected'],
+    enum: Object.values(FundingDecisionType),
     example: 'Approved',
   })
   @Expose()

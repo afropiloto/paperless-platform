@@ -1,10 +1,12 @@
 import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-//import * as speakeasy from 'speakeasy';
 import * as QRCode from 'qrcode';
-import * as otplib from 'otplib';
-
-const authenticator = (otplib as any).authenticator;
+import {
+  generateSecret,
+  generateURI,
+  generateSync,
+  verifySync,
+} from 'otplib';
 
 export interface MfaSetupResponse {
   secret: string;
@@ -20,22 +22,16 @@ export interface MfaVerificationResult {
 @Injectable()
 export class MfaService {
   private readonly logger = new Logger(MfaService.name);
-  
-  constructor(private readonly configService: ConfigService) {
-    const window = this.configService.get<number>('auth.mfa.window');
-    const algorithm = this.configService.get<string>('auth.mfa.algorithm') ?? 'sha1';
-    const digits = this.configService.get<number>('auth.mfa.digits');
-    const period = this.configService.get<number>('auth.mfa.period');
 
-    authenticator.options = {
-      digits,
-      step: period,
-      algorithm: (typeof algorithm === 'string' ? algorithm : 'sha1').toLowerCase() as never,
-      window
-    }
-
-
+  private get totpOptions() {
+    const algorithm = (this.configService.get<string>('auth.mfa.algorithm') ?? 'sha1').toLowerCase() as 'sha1' | 'sha256' | 'sha512';
+    const digits = this.configService.get<number>('auth.mfa.digits') ?? 6;
+    const period = this.configService.get<number>('auth.mfa.period') ?? 30;
+    const window = this.configService.get<number>('auth.mfa.window') ?? 0;
+    return { algorithm, digits, period, epochTolerance: window };
   }
+
+  constructor(private readonly configService: ConfigService) {}
 
   /**
    * Check if MFA is globally enabled
@@ -45,20 +41,11 @@ export class MfaService {
   }
 
   /**
-   * Generate a new TOTP secret using speakeasy
+   * Generate a new TOTP secret
    */
   generateSecret(): string {
     const secretLength = this.configService.get<number>('auth.mfa.secretLength') || 20;
-    return authenticator.generateSecret(secretLength);
-    // const secret = speakeasy.generateSecret({
-    //   name: this.configService.get<string>('auth.mfa.issuer') || 'Trade Documents Platform',
-    //   length: secretLength,
-    // });
-    //
-    // if (!secret.base32) {
-    //   throw new Error('Failed to generate TOTP secret');
-    // }
-    //return secret.base32;
+    return generateSecret({ length: secretLength });
   }
 
   /**
@@ -67,27 +54,28 @@ export class MfaService {
   generateBackupCodes(count: number = 10): string[] {
     const codes: string[] = [];
     for (let i = 0; i < count; i++) {
-      // Generate 10-character alphanumeric codes with better entropy
-      const code = authenticator.generateSecret(5)
-      codes.push(code);
+      codes.push(generateSecret({ length: 5 }));
     }
     return codes;
   }
 
   /**
-   * Generate QR code URL for authenticator apps using speakeasy format
+   * Generate QR code URL for authenticator apps
    */
   async generateQrCodeUrl(
     secret: string,
     email: string,
     issuer: string = 'Trade Documents Platform'
   ): Promise<string> {
-    
-
-    
-    const uri = authenticator.keyuri(email, issuer, secret )
-    //const otpauthUrl = speakeasy.otpauthURL(otpAuthUrlOptions);
-    
+    const opts = this.totpOptions;
+    const uri = generateURI({
+      issuer,
+      label: email,
+      secret,
+      algorithm: opts.algorithm,
+      digits: opts.digits,
+      period: opts.period,
+    });
     try {
       return QRCode.toDataURL(uri);
     } catch (error) {
@@ -139,7 +127,16 @@ export class MfaService {
         return false;
       }
 
-      return authenticator.verify({token, secret});
+      const opts = this.totpOptions;
+      const result = verifySync({
+        secret,
+        token,
+        algorithm: opts.algorithm,
+        digits: opts.digits,
+        period: opts.period,
+        epochTolerance: opts.epochTolerance,
+      });
+      return result.valid;
 
       // const totpVerificationDetails: TotpVerifyOptions = {
       //   secret: secret,
@@ -253,7 +250,13 @@ export class MfaService {
         throw new Error('Invalid secret format');
       }
 
-      return authenticator.generate(secret);
+      const opts = this.totpOptions;
+      return generateSync({
+        secret,
+        algorithm: opts.algorithm,
+        digits: opts.digits,
+        period: opts.period,
+      });
 
       // return speakeasy.totp({
       //   secret: secret,

@@ -68,6 +68,7 @@
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.3",
     "dotenv": "^17.2.3",
+    "ethers": "5.8.0",
     "ethers-v5": "npm:ethers@^5.8.0",
     "ethers-v6": "npm:ethers@^6.16.0",
     "express": "^5.2.1",
@@ -92,6 +93,8 @@
     "uuid": "^13.0.0"
   },
   "devDependencies": {
+    "@swc/cli": "^0.8.0",
+    "@swc/core": "^1.7.0",
     "@eslint/js": "^9.39.2",
     "@nestjs/cli": "^11.0.16",
     "@nestjs/schematics": "^11.0.9",
@@ -126,6 +129,16 @@
     "tsconfig-paths": "^4.2.0",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.53.1"
+  },
+  "pnpm": {
+    "overrides": {
+      "ethers": "npm:ethers@5.8.0"
+    },
+    "peerDependencyRules": {
+      "allowedVersions": {
+        "ethers": "5.8.0"
+      }
+    }
   },
   "jest": {
     "moduleFileExtensions": [

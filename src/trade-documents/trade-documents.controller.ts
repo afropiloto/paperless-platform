@@ -7,20 +7,24 @@ import {
   HttpStatus,
   Logger,
   Param,
+  ParseEnumPipe,
   ParseFilePipeBuilder,
   Patch,
   Post,
   Put,
   Query,
   Res,
-  UploadedFile, UseGuards,
+  UploadedFile,
+  UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiBody,
-  ApiConsumes, ApiHeader,
+  ApiConsumes,
+  ApiHeader,
   ApiOperation,
+  ApiParam,
   ApiQuery,
   ApiResponse,
   ApiTags,
@@ -79,6 +83,7 @@ export class TradeDocumentsController {
     status: 404,
     description: 'Trade Document details could not be found',
   })
+  @ApiParam({ name: 'fileVariant', enum: Object.values(TradeDocumentFileVariant), description: 'File variant (ORIGINAL, ISSUED, TRADE_TRUST)' })
   @ApiResponse({
     status: 403,
     description: 'Not authorized to retrieve Trade Document details',
@@ -86,14 +91,14 @@ export class TradeDocumentsController {
   async getTradeDocumentFileById(
     @Param('accountId') accountId: string,
     @Param('documentId') documentId: string,
-    @Param('fileVariant') fileVariant: TradeDocumentFileVariant,
+    @Param('fileVariant', new ParseEnumPipe(TradeDocumentFileVariant)) fileVariant: string,
     @Res() res: Response,
   ) {
     const { stream, headers } =
       await this.tradeDocumentsService.getTradeDocumentFileStream(
         accountId,
         documentId,
-        fileVariant,
+        fileVariant as TradeDocumentFileVariant,
       );
     res.set(headers);
 

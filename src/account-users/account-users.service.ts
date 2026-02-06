@@ -17,7 +17,7 @@ import {
 } from './dtos';
 import { AccountUsersSearchResultsDto } from './dtos';
 import { PermissionsValidationService } from './services/permissions-validation.service';
-import { AccountsService } from '../accounts/accounts.service';
+import type { AccountsService } from '../accounts/accounts.service';
 import { AccountUserStatus, AuthMethod } from './schemas';
 import { PasswordService } from '../auth/services/password.service';
 
@@ -28,7 +28,7 @@ export class AccountUsersService {
   constructor(
     private readonly accountUsersRepository: AccountUsersRepository,
     private readonly permissionsValidationService: PermissionsValidationService,
-    @Inject(forwardRef(() => AccountsService))
+    @Inject(forwardRef(() => require('../accounts/accounts.service').AccountsService))
     private readonly accountService: AccountsService,
     private readonly passwordService: PasswordService
   ) {}

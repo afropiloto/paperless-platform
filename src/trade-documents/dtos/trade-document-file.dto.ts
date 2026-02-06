@@ -25,7 +25,7 @@ export class TradeDocumentFileDTO {
   @IsString()
   size: number;
 
-  @ApiProperty({description: "Status of File"})
+  @ApiProperty({ description: 'Status of File', enum: Object.values(TradeDocumentFileStatus) })
   @Expose()
   @IsEnum(TradeDocumentFileStatus)
   status: TradeDocumentFileStatus;

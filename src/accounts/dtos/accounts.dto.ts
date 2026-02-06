@@ -100,7 +100,7 @@ export class AccountDetailsDto {
   @Type(() => CompanyContactDetailsDto)
   contact: CompanyContactDetailsDto;
 
-  @ApiProperty({description: "Status of the account"})
+  @ApiProperty({ description: 'Status of the account', enum: Object.values(AccountStatus) })
   @Expose()
   @IsEnum(AccountStatus)
   status: AccountStatus;
@@ -135,20 +135,20 @@ export class AccountCreationDto {
   @Type(() => CompanyContactDetailsDto)
   contact: CompanyContactDetailsDto;
 
-  @ApiProperty({description: "List of modules that the account has access to"})
+  @ApiProperty({ description: 'List of modules that the account has access to', enum: Object.values(ApplicationModule) })
   @Expose()
   @IsArray()
   @IsEnum(ApplicationModule)
-  applicationModules: ApplicationModule[]
+  applicationModules: ApplicationModule[];
 
-  @ApiProperty({description: "The current state of the account"})
+  @ApiProperty({ description: 'The current state of the account', enum: Object.values(AccountStatus) })
   @Expose()
   @IsEnum(AccountStatus)
   status: AccountStatus;
 }
 
-export class AccountStatusUpdateDto{
-  @ApiProperty({description: 'Name for the Account'})
+export class AccountStatusUpdateDto {
+  @ApiProperty({ description: 'Status of the account', enum: Object.values(AccountStatus) })
   @IsEnum(AccountStatus)
   @IsString()
   status: AccountStatus;

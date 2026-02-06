@@ -1,5 +1,5 @@
 import { Processor, WorkerHost } from '@nestjs/bullmq';
-import { Logger, Inject } from '@nestjs/common';
+import { Inject, Logger } from '@nestjs/common';
 import { Job } from 'bullmq';
 import { OnboardingCheckEventData } from '../types/onboarding-checks.types';
 import { OnboardingQueues } from '../../constants/app.constants';
@@ -15,9 +15,12 @@ export class OnboardingChecksRouter extends WorkerHost {
   private readonly logger = new Logger(OnboardingChecksRouter.name);
 
   constructor(
-    @Inject() private readonly duplicateRegistrationCheckService: DuplicateRegistrationCheckService,
-    @Inject() private readonly emailUniquenessCheckService: EmailUniquenessCheckService,
-    @Inject() private readonly walletUniquenessCheckService: WalletUniquenessCheckService,
+    @Inject(DuplicateRegistrationCheckService)
+    private readonly duplicateRegistrationCheckService: DuplicateRegistrationCheckService,
+    @Inject(EmailUniquenessCheckService)
+    private readonly emailUniquenessCheckService: EmailUniquenessCheckService,
+    @Inject(WalletUniquenessCheckService)
+    private readonly walletUniquenessCheckService: WalletUniquenessCheckService,
     private readonly configurationService: ConfigurationService,
   ) {
     super();

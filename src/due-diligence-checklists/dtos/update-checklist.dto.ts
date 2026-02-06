@@ -38,7 +38,7 @@ export class ChecklistItemUpdateDto {
 
   @ApiProperty({
     description: 'New status for the checklist item',
-    enum: ChecklistItemStatus,
+    enum: Object.values(ChecklistItemStatus),
     required: false,
     example: ChecklistItemStatus.SATISFACTORY
   })

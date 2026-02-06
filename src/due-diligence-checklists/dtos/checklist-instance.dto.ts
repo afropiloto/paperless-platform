@@ -45,7 +45,7 @@ export class ChecklistItemInstanceDto {
 
   @ApiProperty({
     description: 'Type of checklist item (manual or automated)',
-    enum: CheckType,
+    enum: Object.values(CheckType),
     example: CheckType.MANUAL
   })
   @Expose()
@@ -84,9 +84,9 @@ export class ChecklistInstanceDto {
   @Transform(({ value }) => value?.toString(), { toPlainOnly: true })
   _id: string;
 
-  @ApiProperty({description: "Type of checklist"})
+  @ApiProperty({ description: 'Type of checklist', enum: Object.values(DueDiligenceChecklistType) })
   @Expose()
-  type: DueDiligenceChecklistType
+  type: DueDiligenceChecklistType;
 
   @ApiProperty({description: "Version number of the checklist instance"})
   @Expose()

@@ -44,7 +44,7 @@ export class SearchQueryDto {
   @IsString()
   orderBy?: string = 'updatedAt';
 
-  @ApiProperty({ description: 'Direction to sort by. Either \'asc\' or \'desc\'' })
+  @ApiProperty({ description: 'Direction to sort by. Either \'asc\' or \'desc\'', enum: Object.values(SortDirection) })
   @ApiPropertyOptional({ default: SortDirection.DESC })
   @IsOptional()
   @IsEnum(SortDirection, {

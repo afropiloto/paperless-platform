@@ -18,7 +18,7 @@ export class UserPermissionDto {
 
   @ApiProperty({ 
     description: 'User role in the module', 
-    enum: Role
+    enum: Object.values(Role)
   })
   @IsEnum(Role)
   @Expose()
@@ -81,7 +81,7 @@ export class CreateAccountUserDto {
 
   @ApiPropertyOptional({ 
     description: 'User status', 
-    enum: AccountUserStatus,
+    enum: Object.values(AccountUserStatus),
     default: AccountUserStatus.ACTIVE 
   })
   @IsOptional()
@@ -91,7 +91,7 @@ export class CreateAccountUserDto {
 
   @ApiPropertyOptional({ 
     description: 'Authentication method', 
-    enum: AuthMethod,
+    enum: Object.values(AuthMethod),
     default: AuthMethod.SIWE 
   })
   @IsOptional()
@@ -187,7 +187,7 @@ export class UpdateAccountUserDto {
 
   @ApiPropertyOptional({ 
     description: 'User status', 
-    enum: AccountUserStatus 
+    enum: Object.values(AccountUserStatus)
   })
   @IsOptional()
   @IsEnum(AccountUserStatus)
@@ -307,14 +307,14 @@ export class AccountUserResponseDto {
 
   @ApiProperty({ 
     description: 'User status', 
-    enum: AccountUserStatus 
+    enum: Object.values(AccountUserStatus)
   })
   @Expose()
   status: AccountUserStatus;
 
   @ApiPropertyOptional({ 
     description: 'Authentication method', 
-    enum: AuthMethod,
+    enum: Object.values(AuthMethod),
     default: AuthMethod.SIWE
   })
   @Expose()
@@ -410,14 +410,14 @@ export class AccountUserSecurityDetailsDto {
 
   @ApiProperty({ 
     description: 'User status', 
-    enum: AccountUserStatus 
+    enum: Object.values(AccountUserStatus)
   })
   @Expose()
   status: AccountUserStatus;
 
   @ApiPropertyOptional({ 
     description: 'Authentication method', 
-    enum: AuthMethod,
+    enum: Object.values(AuthMethod),
     default: AuthMethod.SIWE
   })
   @Expose()

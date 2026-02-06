@@ -4,13 +4,17 @@ import {
   Delete,
   Get,
   Param,
+  ParseEnumPipe,
   Post,
   Query,
-  Res, UseGuards,
+  Res,
+  UseGuards,
 } from '@nestjs/common';
 import {
-  ApiBearerAuth, ApiHeader,
+  ApiBearerAuth,
+  ApiHeader,
   ApiOperation,
+  ApiParam,
   ApiQuery,
   ApiResponse,
   ApiTags,
@@ -127,6 +131,7 @@ export class ShareLinksController {
     description:
       'Downloads a specific file variant (ORIGINAL, ISSUED, TRADE_TRUST) of a trade document using a share link ID. Validates expiry and email restrictions if set.',
   })
+  @ApiParam({ name: 'variant', enum: Object.values(TradeDocumentFileVariant), description: 'File variant (ORIGINAL, ISSUED, TRADE_TRUST)' })
   @ApiResponse({
     status: 200,
     description: 'File streamed successfully',
@@ -150,13 +155,13 @@ export class ShareLinksController {
   })
   async accessShareLinkFile(
     @Param('linkId') linkId: string,
-    @Param('variant') variant: TradeDocumentFileVariant,
+    @Param('variant', new ParseEnumPipe(TradeDocumentFileVariant)) variant: string,
     @Query() accessDto: AccessShareLinkDto,
     @Res() res: Response,
   ): Promise<void> {
     const { stream, headers } = await this.shareLinksService.accessShareLinkFile(
       linkId,
-      variant,
+      variant as TradeDocumentFileVariant,
       accessDto.email,
     );
     

@@ -18,7 +18,7 @@ export class SignerDetailsDto {
   @Expose()
   name?: string;
 
-  @ApiProperty({description: "Role of the signer", example: "ISSUER", enum: DocumentSigningRole})
+  @ApiProperty({description: "Role of the signer", example: "ISSUER", enum: Object.values(DocumentSigningRole)})
   @IsEnum(DocumentSigningRole)
   @Expose()
   role: DocumentSigningRole;
@@ -96,7 +96,7 @@ export class UpdateSigningDetailsDto {
   @Type(() => DocumentSigningEventContractDetails)
   contractDetails?: DocumentSigningEventContractDetails;
 
-  @ApiProperty({description: "Last known status of the document signing", enum: DocumentSigningStatus})
+  @ApiProperty({description: "Last known status of the document signing", enum: Object.values(DocumentSigningStatus)})
   @IsEnum(DocumentSigningStatus)
   @IsOptional()
   @Expose()
@@ -157,7 +157,7 @@ export class DocumentSigningDetailsDto {
   @Expose()
   updatedAt: Date;
 
-  @ApiProperty({description: "Last known status of the document signing", example: "PENDING", enum: DocumentSigningStatus})
+  @ApiProperty({description: "Last known status of the document signing", example: "PENDING", enum: Object.values(DocumentSigningStatus)})
   @IsEnum(DocumentSigningStatus)
   @Expose()
   lastKnownStatus: DocumentSigningStatus;

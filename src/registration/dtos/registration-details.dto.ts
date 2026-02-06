@@ -105,11 +105,11 @@ export class RegistrationDocumentDto {
   @Expose()
   size: number;
 
-  @ApiProperty({ description: 'Type of Registration Document' })
+  @ApiProperty({ description: 'Type of Registration Document', enum: Object.values(RegistrationDocumentType) })
   @Expose()
   documentType: RegistrationDocumentType;
 
-  @ApiProperty({ description: 'Current Status of the Document' })
+  @ApiProperty({ description: 'Current Status of the Document', enum: Object.values(RegistrationDocumentStatus) })
   @Expose()
   status: RegistrationDocumentStatus;
 
@@ -134,7 +134,7 @@ export class RegistrationDetailsDto {
   @Expose()
   contact: RegistrationContactDetailsDto
 
-  @ApiProperty({description: 'Current status of the Registration' })
+  @ApiProperty({ description: 'Current status of the Registration', enum: Object.values(RegistrationStatus) })
   @Expose()
   status: RegistrationStatus;
 

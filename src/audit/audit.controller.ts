@@ -1,5 +1,5 @@
-import { Controller, Get, Logger, Param, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiHeader, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { Controller, Get, Logger, Param, ParseEnumPipe, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth, ApiHeader, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { AuditService } from './audit.service';
 import { AuditEventDto } from './dtos/audit-event.dto';
 import { AuditSubject } from './audit-event-type.enum';
@@ -26,16 +26,19 @@ export class AuditController {
   
   @Get(':subject/:resourceId')
   @ApiOperation({ summary: 'Returns a list of audit events for a resource' })
+  @ApiParam({ name: 'subject', enum: Object.values(AuditSubject), description: 'Audit subject type' })
   @ApiResponse({ status: 200, description: 'Audit Events retrieved' })
   @ApiResponse({
     status: 401,
     description: 'Not authorized to retrieve audit events for this resource',
   })
   async getAccountById(
-    @Param('subject') subject: AuditSubject,
+    @Param('subject', new ParseEnumPipe(AuditSubject)) subject: string,
     @Param('resourceId') identifier: string,
   ): Promise<AuditEventDto[]> {
     return await this.auditService.getResourceAuditEventsBySubject({
-      subject, identifier});
+      subject: subject as AuditSubject,
+      identifier,
+    });
   }
 }

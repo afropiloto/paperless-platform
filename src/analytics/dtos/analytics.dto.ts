@@ -15,12 +15,12 @@ export class RecentTradeDocumentDto {
   @IsString()
   documentReference: string;
 
-  @ApiProperty({ description: 'Document Status', enum: TradeDocumentStatus })
+  @ApiProperty({ description: 'Document Status', enum: Object.values(TradeDocumentStatus) })
   @Expose()
   @IsEnum(TradeDocumentStatus)
   status: TradeDocumentStatus;
 
-  @ApiProperty({ description: 'Document Type', enum: TradeDocumentType })
+  @ApiProperty({ description: 'Document Type', enum: Object.values(TradeDocumentType) })
   @Expose()
   @IsEnum(TradeDocumentType)
   documentType: TradeDocumentType;
@@ -47,7 +47,7 @@ export class RecentTradeFinanceDealDto {
   @IsString()
   dealReference: string;
 
-  @ApiProperty({ description: 'Deal Status', enum: TradeFinanceDealStatus })
+  @ApiProperty({ description: 'Deal Status', enum: Object.values(TradeFinanceDealStatus) })
   @Expose()
   @IsEnum(TradeFinanceDealStatus)
   dealStatus: TradeFinanceDealStatus;

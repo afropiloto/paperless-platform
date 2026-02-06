@@ -1,6 +1,6 @@
-import { IsOptional, IsString } from 'class-validator';
+import { ApiPropertyOptional } from '@nestjs/swagger';
+import { IsEnum, IsOptional, IsString } from 'class-validator';
 import { TradeDocumentStatus } from '../../types/trade-documents.types';
-
 
 export class TradeDocumentProtectedAttributesUpdateDto {
   @IsString()
@@ -9,10 +9,11 @@ export class TradeDocumentProtectedAttributesUpdateDto {
 
   @IsString()
   @IsOptional()
-  verifiableDocumentHash?: string
+  verifiableDocumentHash?: string;
 
-  @IsString()
+  @ApiPropertyOptional({ description: 'Document status', enum: Object.values(TradeDocumentStatus) })
   @IsOptional()
+  @IsEnum(TradeDocumentStatus)
   status?: TradeDocumentStatus;
 
   @IsString()

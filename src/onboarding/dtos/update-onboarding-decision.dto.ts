@@ -5,7 +5,7 @@ import { ApiProperty } from '@nestjs/swagger';
 
 
 export class UpdateOnboardingDecisionDto {
-  @ApiProperty({description: "The decision status to capture", example: "APPROVED", enum: OnboardingDecision})
+  @ApiProperty({description: "The decision status to capture", example: "APPROVED", enum: Object.values(OnboardingDecision)})
   @Prop()
   @IsEnum(OnboardingDecision)
   decision: OnboardingDecision;

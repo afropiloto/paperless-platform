@@ -1,5 +1,5 @@
-import { Body, Controller, Get, HttpStatus, Logger, Param, ParseIntPipe, Patch, Post, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiBody, ApiHeader, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';;
+import { Body, Controller, Get, HttpStatus, Logger, Param, ParseEnumPipe, ParseIntPipe, Patch, Post, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth, ApiBody, ApiHeader, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 
 import { CreateChecklistDto } from './dtos/create-checklist.dto';
 import { DueDiligenceChecklistsService } from './due-diligence-checklists.service';
@@ -35,8 +35,8 @@ export class DueDiligenceChecklistsController {
   @ApiParam({
     name: 'checklistType',
     description: 'The type of the checklist to retrieve',
-    type: 'string',
-    example: "ONBOARDING",
+    enum: Object.values(DueDiligenceChecklistType),
+    example: 'ONBOARDING',
   })
   @ApiBody({ type: CreateChecklistDto })
   @ApiResponse({
@@ -48,10 +48,11 @@ export class DueDiligenceChecklistsController {
     status: HttpStatus.BAD_REQUEST,
     description: 'Invalid input data.',
   })
-  async createChecklist(@Param('checklistType') checklistType: DueDiligenceChecklistType,
+  async createChecklist(
+    @Param('checklistType', new ParseEnumPipe(DueDiligenceChecklistType)) checklistType: string,
     @Body() createDto: CreateChecklistDto,
   ): Promise<ChecklistResponseDto> {
-    return this.checklistService.createChecklist(checklistType, createDto);
+    return this.checklistService.createChecklist(checklistType as DueDiligenceChecklistType, createDto);
   }
 
   @Get(':checklistType/latest')
@@ -59,8 +60,8 @@ export class DueDiligenceChecklistsController {
   @ApiParam({
     name: 'checklistType',
     description: 'The type of the checklist to retrieve',
-    type: 'string',
-    example: "ONBOARDING",
+    enum: Object.values(DueDiligenceChecklistType),
+    example: 'ONBOARDING',
   })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -71,8 +72,10 @@ export class DueDiligenceChecklistsController {
     status: HttpStatus.NOT_FOUND,
     description: 'No checklist found.',
   })
-  async getLatestChecklist(@Param('checklistType') checklistType: DueDiligenceChecklistType): Promise<ChecklistResponseDto> {
-    return this.checklistService.getLatestChecklist(checklistType);
+  async getLatestChecklist(
+    @Param('checklistType', new ParseEnumPipe(DueDiligenceChecklistType)) checklistType: string,
+  ): Promise<ChecklistResponseDto> {
+    return this.checklistService.getLatestChecklist(checklistType as DueDiligenceChecklistType);
   }
 
   @Get(':checklistType/:version')
@@ -86,8 +89,8 @@ export class DueDiligenceChecklistsController {
   @ApiParam({
     name: 'checklistType',
     description: 'The type of the checklist to retrieve',
-    type: 'string',
-    example: "ONBOARDING",
+    enum: Object.values(DueDiligenceChecklistType),
+    example: 'ONBOARDING',
   })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -99,11 +102,10 @@ export class DueDiligenceChecklistsController {
     description: 'Checklist not found for the specified version.',
   })
   async getChecklistByVersion(
-    @Param('checklistType') checklistType: DueDiligenceChecklistType,
+    @Param('checklistType', new ParseEnumPipe(DueDiligenceChecklistType)) checklistType: string,
     @Param('version', ParseIntPipe) version: number,
-
   ): Promise<ChecklistResponseDto> {
-    return this.checklistService.getChecklistByVersion(checklistType, version);
+    return this.checklistService.getChecklistByVersion(checklistType as DueDiligenceChecklistType, version);
   }
 
   @Get(':checklistType')
@@ -111,16 +113,18 @@ export class DueDiligenceChecklistsController {
   @ApiParam({
     name: 'checklistType',
     description: 'The type of the checklist to retrieve',
-    type: 'string',
-    example: "ONBOARDING",
+    enum: Object.values(DueDiligenceChecklistType),
+    example: 'ONBOARDING',
   })
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'Returns all due-diligence-checklists of the specified type',
     type: [ChecklistResponseDto],
   })
-  async getAllChecklists(@Param('checklistType') checklistType: DueDiligenceChecklistType,): Promise<ChecklistResponseDto[]> {
-    return this.checklistService.getAllChecklists(checklistType);
+  async getAllChecklists(
+    @Param('checklistType', new ParseEnumPipe(DueDiligenceChecklistType)) checklistType: string,
+  ): Promise<ChecklistResponseDto[]> {
+    return this.checklistService.getAllChecklists(checklistType as DueDiligenceChecklistType);
   }
 
 

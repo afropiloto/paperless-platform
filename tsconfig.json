@@ -12,9 +12,9 @@
     "outDir": "./dist",
     "baseUrl": "./",
     "paths": {
-      "src/*": [
-        "src/*"
-      ]
+      "src/*": ["src/*"],
+      "@tradetrust-tt/token-registry": ["./src/typings/token-registry.d.ts"],
+      "@tradetrust-tt/token-registry/*": ["./src/typings/token-registry.d.ts"]
     },
     "incremental": true,
     "skipLibCheck": true,

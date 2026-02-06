@@ -43,7 +43,7 @@ export class DocumentSigningContractService {
   private readonly provider: ethers.providers.JsonRpcProvider;
   private readonly logger = new Logger(DocumentSigningContractService.name);
 
-  constructor(@Inject() private configService: ConfigService) {
+  constructor(@Inject(ConfigService) private configService: ConfigService) {
 
     this.rpcUrl = this.configService.get<string>("DOCUMENT_SIGNING_RPC_URL")
     this.provider = new ethers.providers.JsonRpcProvider(this.rpcUrl)

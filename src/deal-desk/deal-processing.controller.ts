@@ -165,13 +165,13 @@ export class DealProcessingController {
   })
   async updateFundingDecision(
     @Param('id') id: string,
-    @Body() body: { decision: FundingDecisionType; note: string; user: string },
+    @Body() body: { decision: string; note: string; user: string },
   ): Promise<DealProcessingResponseDto> {
 
     const dealProcessing =
       await this.dealProcessingService.updateFundingDecision(
         id,
-        body.decision,
+        body.decision as FundingDecisionType,
         body.note,
         body.user ? body.user : 'unknown',
       );

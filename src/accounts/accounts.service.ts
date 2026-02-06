@@ -15,14 +15,14 @@ import { AccountsRepository } from './accounts.repository';
 import { isValidObjectId } from 'mongoose';
 import { SearchQueryDto } from '../common/dtos/search.dto';
 import { AccountStatus } from './types/account.types';
-import { AccountUsersService } from '../account-users/account-users.service';
+import type { AccountUsersService } from '../account-users/account-users.service';
 import { AccountUserStatus } from '../account-users/schemas';
 
 @Injectable()
 export class AccountsService {
   private readonly logger = new Logger(AccountsService.name);
   constructor(
-    @Inject(forwardRef(() => AccountUsersService))
+    @Inject(forwardRef(() => require('../account-users/account-users.service').AccountUsersService))
     private readonly accountUsersService: AccountUsersService,
     private readonly accountsRepository: AccountsRepository) {}
 

@@ -11,14 +11,14 @@ export class ChecklistItem {
 
   @Prop({
     type: String,
-    enum: ChecklistItemStatus,
+    enum: Object.values(ChecklistItemStatus),
     default: ChecklistItemStatus.NOT_STARTED,
   })
   status: ChecklistItemStatus;
 
   @Prop({
     type: String,
-    enum: CheckType,
+    enum: Object.values(CheckType),
     required: true,
   })
   checkType: CheckType;
@@ -39,7 +39,11 @@ export class Section {
 
 @Schema({timestamps: true})
 export  class DueDiligenceChecklistInstance {
-  @Prop({ required: true, enum: DueDiligenceChecklistType })
+  @Prop({
+    type: String,
+    required: true,
+    enum: Object.values(DueDiligenceChecklistType),
+  })
   checklistType: DueDiligenceChecklistType;
 
   @Prop({ required: true, type: Number})

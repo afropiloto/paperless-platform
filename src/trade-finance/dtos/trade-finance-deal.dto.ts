@@ -82,7 +82,7 @@ export class TradeFinanceDealDto {
 
   @ApiProperty({
     description: 'Current status of the trade finance deal',
-    enum: TradeFinanceDealStatus,
+    enum: Object.values(TradeFinanceDealStatus),
     example: TradeFinanceDealStatus.IN_PROGRESS,
   })
   @Expose()

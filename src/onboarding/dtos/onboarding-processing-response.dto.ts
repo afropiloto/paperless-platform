@@ -17,7 +17,7 @@ export enum PromissoryNoteState {
 export class OnboardingDecisionResponseDto {
   @ApiProperty({
     description: 'The onboarding decision',
-    enum: ['PENDING', 'APPROVED', 'REJECTED'],
+    enum: Object.values(OnboardingDecision),
     example: 'APPROVED'
   })
   @Expose()
@@ -62,7 +62,7 @@ export class OnboardingProcessingResponseDto {
 
   @ApiProperty({
     description: 'Current status of the deal processing',
-    enum: ['New', 'In Progress', 'Awaiting Decision', 'Approved', 'Rejected'],
+    enum: Object.values(OnboardingStatus),
     example: 'In Progress'
   })
   @Expose()

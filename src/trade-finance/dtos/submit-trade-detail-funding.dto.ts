@@ -5,7 +5,7 @@ import { TradeDetailFundingAction } from '../types/trade-finance.types';
 
 export class SubmitTradeDetailFundingDto {
   @ApiProperty({
-    enum: TradeDetailFundingAction,
+    enum: Object.values(TradeDetailFundingAction),
     description: 'The action to perform on the trade detail funding',
     example: TradeDetailFundingAction.FUNDING_REQUEST,
   })

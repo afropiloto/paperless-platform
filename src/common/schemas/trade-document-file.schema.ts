@@ -19,7 +19,7 @@ export class TradeDocumentFile extends Document {
   @Prop({required: true})
   size: number;
 
-  @Prop({required: true, enum: TradeDocumentFileStatus})
+  @Prop({required: true, type: String, enum: Object.values(TradeDocumentFileStatus)})
   status: TradeDocumentFileStatus;
 }
 

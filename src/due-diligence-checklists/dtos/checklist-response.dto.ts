@@ -20,7 +20,7 @@ export class ChecklistItemResponseDto {
 
   @ApiProperty({
     description: 'Type of checklist item (manual or automated)',
-    enum: CheckType,
+    enum: Object.values(CheckType),
     example: CheckType.MANUAL
   })
   @Expose()

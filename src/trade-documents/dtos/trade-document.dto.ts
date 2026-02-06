@@ -229,7 +229,7 @@ export class TradeDocumentClaimantsDto {
 }
 
 export class IssueDetailsDto {
-  @ApiProperty({ description: 'Issue Document Class' })
+  @ApiProperty({ description: 'Issue Document Class', enum: Object.values(TradeTrustDocumentClass) })
   @Expose()
   @IsEnum(TradeTrustDocumentClass)
   documentClass?: TradeTrustDocumentClass;
@@ -840,13 +840,13 @@ export class TradeDocumentDto {
   @IsString()
   documentReference: string;
 
-  @ApiProperty({ description: 'Trade Document Type' })
+  @ApiProperty({ description: 'Trade Document Type', enum: Object.values(TradeDocumentType) })
   @IsEnum(TradeDocumentType)
   @IsNotEmpty()
   @Expose()
   documentType: TradeDocumentType;
 
-  @ApiProperty({ description: 'Current Document Status' })
+  @ApiProperty({ description: 'Current Document Status', enum: Object.values(TradeDocumentStatus) })
   @Expose()
   @IsEnum(TradeDocumentStatus)
   status: TradeDocumentStatus;
@@ -929,7 +929,7 @@ export class CreateTradeDocumentFromFileDto {
   @IsNotEmpty()
   documentReference: string;
 
-  @ApiProperty({ description: 'Trade Document Type' })
+  @ApiProperty({ description: 'Trade Document Type', enum: Object.values(TradeDocumentType) })
   @IsEnum(TradeDocumentType)
   @IsNotEmpty()
   documentType: TradeDocumentType;
@@ -959,7 +959,7 @@ export class UpsertTradeDocumentDto {
   @IsOptional()
   documentReference?: string;
 
-  @ApiProperty({ description: 'Trade Document Type' })
+  @ApiProperty({ description: 'Trade Document Type', enum: Object.values(TradeDocumentType) })
   @Expose()
   @IsEnum(TradeDocumentType)
   @IsOptional()

@@ -248,11 +248,11 @@ export class DocumentSigningController {
   })
   async updateLastKnownStatus(
     @Param('id') id: string,
-    @Body('lastKnownStatus') lastKnownStatus: DocumentSigningStatus,
+    @Body('lastKnownStatus') lastKnownStatus: string,
   ): Promise<DocumentSigningDetailsDto> {
     return await this.documentSigningService.updateLastKnownStatus(
       id,
-      lastKnownStatus,
+      lastKnownStatus as DocumentSigningStatus,
     );
   }
 
