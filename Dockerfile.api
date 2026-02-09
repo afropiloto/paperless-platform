@@ -28,14 +28,16 @@ RUN npm install -g pnpm@latest && \
 
 # Security: Install dependencies with security flags
 # --frozen-lockfile ensures reproducible builds
-# --no-audit speeds up build (audit should be done in CI/CD)
-RUN pnpm install --frozen-lockfile --no-audit
+RUN pnpm install --frozen-lockfile
 
 # Security: Copy source code (ensure .dockerignore is comprehensive)
 COPY . .
 
 # Build the application
 RUN pnpm run build
+
+# Prune to production dependencies only (avoids slow chown in production stage)
+RUN pnpm prune --prod
 
 # Production stage
 # Security: Using same specific base image version
@@ -52,38 +54,17 @@ ENV npm_config_update_notifier=false \
 # Set working directory
 WORKDIR /app
 
-# Security: Copy package files for production dependencies
-COPY package*.json pnpm-lock.yaml ./
-
-# Security: Install pnpm only in production stage (needed for pnpm install)
-# Consider removing after install if not needed at runtime
-RUN npm install -g pnpm@latest && \
-    pnpm --version
-
-# Security: Install production dependencies only with security flags
-RUN pnpm install --frozen-lockfile --prod --no-audit && \
-    # Security: Remove npm and pnpm after installation to reduce attack surface
-    npm uninstall -g pnpm && \
-    # Security: Clean npm cache
-    npm cache clean --force && \
-    # Security: Remove package manager files
-    rm -rf /tmp/* /var/cache/apk/* /root/.npm /root/.pnpm-store
-
-# Security: Copy built application from builder stage
-COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/public ./public
-
-# Security: Create non-root user with specific UID/GID
+# Security: Create non-root user first so COPY --chown avoids slow RUN chown
 RUN addgroup -g 1001 -S nodejs && \
     adduser -S nestjs -u 1001 -G nodejs
 
-# Security: Set proper ownership and permissions
-# Only give write access where necessary (e.g., logs, temp files)
-RUN chown -R nestjs:nodejs /app && \
-    # Security: Remove unnecessary permissions
-    chmod -R 755 /app && \
-    # Security: Ensure dist and public are readable
-    chmod -R 644 /app/dist /app/public 2>/dev/null || true
+# Copy package files (needed for Node module resolution)
+COPY --chown=nestjs:nodejs package*.json pnpm-lock.yaml ./
+
+# Copy production node_modules and built app from builder (correct owner, no slow chown)
+COPY --chown=nestjs:nodejs --from=builder /app/node_modules ./node_modules
+COPY --chown=nestjs:nodejs --from=builder /app/dist ./dist
+COPY --chown=nestjs:nodejs --from=builder /app/public ./public
 
 # Security: Switch to non-root user before exposing filesystem
 USER nestjs

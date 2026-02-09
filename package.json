@@ -39,7 +39,14 @@
     "script:seed-module-permissions": "ts-node ./scripts/seed-module-permissions.ts",
     "script:seed-account-user": "ts-node ./scripts/seed-account-user.ts",
     "script:seed-due-diligence-checklists": "ts-node ./scripts/seed-due-diligence-checklists.ts",
-    "script:add-onboarding-check": "dotenv -e .env -- npx ts-node ./scripts/add-onboarding-check.ts"
+    "script:add-onboarding-check": "dotenv -e .env -- npx ts-node ./scripts/add-onboarding-check.ts",
+    "docker:build:api": "docker build -f Dockerfile.api -t trade-docs-api .",
+    "docker:build:worker": "docker build -f Dockerfile.worker -t trade-docs-worker .",
+    "docker:build": "pnpm run docker:build:api && pnpm run docker:build:worker",
+    "docker:up:api": "docker-compose up api --build",
+    "docker:up:worker": "docker-compose up worker --build",
+    "docker:up:api:detached": "docker-compose up api --build -d",
+    "docker:up:worker:detached": "docker-compose up worker --build -d"
   },
   "dependencies": {
     "@getbrevo/brevo": "^3.0.1",
