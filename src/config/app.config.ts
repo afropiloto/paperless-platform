@@ -6,7 +6,7 @@ export default () => ({
     supportEmail: process.env.APP_SUPPORT_EMAIL || 'support@paperless.com',
   },
   server: {
-    port: process.env.MONGODB_URI || 3002,
+    port: process.env.PORT || 3002,
   },
   database: {
     connectionString: process.env.MONGODB_URI,
