@@ -15,13 +15,13 @@ export class NewOnboardingQueueProcessor extends WorkerHost {
   private readonly logger = new Logger(NewOnboardingQueueProcessor.name);
 
   constructor(
-    @Inject()
+    @Inject(AuditService)
     private readonly auditService: AuditService,
-    @Inject()
+    @Inject(RegistrationService)
     private readonly registrationService: RegistrationService,
-    @Inject()
+    @Inject(OnboardingService)
     private readonly onboardingService: OnboardingService,
-    @Inject()
+    @Inject(OnboardingChecksService)
     private readonly onboardingChecksService: OnboardingChecksService,
   ) {super()}
 

@@ -17,7 +17,9 @@ export class AuthEmailProcessor extends WorkerHost {
   constructor(
     @Inject(EMAIL_CLIENT_SERVICE)
     private readonly emailClient: EmailClientInterface,
+    @Inject(EmailTemplatesService)
     private readonly emailTemplates: EmailTemplatesService,
+    @Inject(ConfigService)
     private readonly configService: ConfigService,
   ) {
     super();

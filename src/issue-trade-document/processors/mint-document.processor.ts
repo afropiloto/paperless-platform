@@ -1,7 +1,7 @@
 import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { Job } from 'bullmq';
 import { IssueJobData } from '../../common/event-flows/issue-event-flow';
-import { Logger } from '@nestjs/common';
+import { Inject, Logger } from '@nestjs/common';
 import { TradeDocumentsService } from '../../trade-documents/trade-documents.service';
 import { TradeTrustService } from '../../trade-trust/trade-trust.service';
 import { AuditService } from '../../audit/audit.service';
@@ -14,8 +14,11 @@ export class MintDocumentProcessor extends WorkerHost {
   private readonly logger = new Logger(MintDocumentProcessor.name);
 
   constructor(
+    @Inject(TradeDocumentsService)
     private readonly tradeDocumentsService: TradeDocumentsService,
+    @Inject(TradeTrustService)
     private readonly tradeTrustService: TradeTrustService,
+    @Inject(AuditService)
     private readonly auditService: AuditService,) {
     super();
   }

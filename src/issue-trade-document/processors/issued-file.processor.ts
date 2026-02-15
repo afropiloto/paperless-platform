@@ -24,11 +24,15 @@ export class IssuedFileProcessor extends WorkerHost {
   private readonly logger = new Logger(IssuedFileProcessor.name);
 
   constructor(
+    @Inject(ConfigService)
     private readonly configService: ConfigService,
+    @Inject(TradeDocumentsService)
     private readonly tradeDocumentsService: TradeDocumentsService,
     @Inject(FILE_STORAGE_SERVICE)
     private readonly fileStorageService: FileStorageService,
+    @Inject(AccountsService)
     private readonly accountsService: AccountsService,
+    @Inject(AuditService)
     private readonly auditService: AuditService,
   ) {
     super();

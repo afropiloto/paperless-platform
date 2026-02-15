@@ -30,15 +30,15 @@ export class CreateDocumentSigningEventProcessor extends WorkerHost {
   );
 
   constructor(
-    @Inject()
+    @Inject(DocumentSigningService)
     private readonly documentSigningService: DocumentSigningService,
-    @Inject()
+    @Inject(TradeDocumentsService)
     private readonly tradeDocumentService: TradeDocumentsService,
-    @Inject()
+    @Inject(DocumentSigningContractService)
     private readonly documentSigningContractService: DocumentSigningContractService,
     @Inject(FILE_STORAGE_SERVICE)
     private readonly fileStorageService: FileStorageService,
-    @Inject()
+    @Inject(AuditService)
     private readonly auditService: AuditService,
   ) {
     super();

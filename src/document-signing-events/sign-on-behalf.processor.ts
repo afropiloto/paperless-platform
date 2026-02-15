@@ -1,5 +1,5 @@
 import { Processor, WorkerHost } from '@nestjs/bullmq';
-import { Logger } from '@nestjs/common';
+import { Inject, Logger } from '@nestjs/common';
 import { Job } from 'bullmq';
 import { DocumentSigningService } from '../document-signing/document-signing.service';
 import { AuditService } from '../audit/audit.service';
@@ -19,9 +19,13 @@ export class SignOnBehalfOfPaperless extends WorkerHost {
   );
 
   constructor(
+    @Inject(DocumentSigningService)
     private readonly documentSigningService: DocumentSigningService,
+    @Inject(TradeDocumentsService)
     private readonly tradeDocumentService: TradeDocumentsService,
+    @Inject(DocumentSigningContractService)
     private readonly documentSigningContractService: DocumentSigningContractService,
+    @Inject(AuditService)
     private readonly auditService: AuditService,
   ) {
     super();

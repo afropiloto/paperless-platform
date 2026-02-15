@@ -11,9 +11,9 @@ import { AuditEventType, AuditSubject } from '../audit/audit-event-type.enum';
 export class FundingRequestProcessor extends WorkerHost {
   private readonly logger = new Logger(FundingRequestProcessor.name);
   constructor(
-    @Inject()
+    @Inject(AuditService)
     private readonly auditService: AuditService,
-    @Inject()
+    @Inject(DealProcessingService)
     private readonly dealProcessingService: DealProcessingService,
   ) {
     super();

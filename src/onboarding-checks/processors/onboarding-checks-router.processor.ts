@@ -21,6 +21,7 @@ export class OnboardingChecksRouter extends WorkerHost {
     private readonly emailUniquenessCheckService: EmailUniquenessCheckService,
     @Inject(WalletUniquenessCheckService)
     private readonly walletUniquenessCheckService: WalletUniquenessCheckService,
+    @Inject(ConfigurationService)
     private readonly configurationService: ConfigurationService,
   ) {
     super();

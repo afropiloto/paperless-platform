@@ -18,13 +18,13 @@ export class NewAccountsProcessor extends WorkerHost {
   private readonly logger = new Logger(NewAccountsProcessor.name);
 
   constructor(
-    @Inject()
+    @Inject(AuditService)
     private readonly auditService: AuditService,
-    @Inject()
+    @Inject(RegistrationService)
     private readonly registrationService: RegistrationService,
-    @Inject()
+    @Inject(AccountsService)
     private readonly accountService: AccountsService,
-    @Inject()
+    @Inject(AccountUsersService)
     private readonly accountUsersService: AccountUsersService,
   ) {
     super();

@@ -4,7 +4,7 @@ import {
   DATA_EXTRACTION_GRAIP_CALLBACK_EVENT,
   DATA_EXTRACTION_QUEUE_NAME,
 } from '../constants/app.constants';
-import { Logger } from '@nestjs/common';
+import { Inject, Logger } from '@nestjs/common';
 import { Job, Queue } from 'bullmq';
 import { DataExtractionJob, ExtendAIDataExtractionCallBackJob } from './data-extraction.types';
 import { ConfigService } from '@nestjs/config';
@@ -24,9 +24,13 @@ export class DataExtractionExtendAiProcessor extends WorkerHost {
   constructor(
     @InjectQueue(DATA_EXTRACTION_QUEUE_NAME)
     private readonly dataExtractionQueue: Queue,
+    @Inject(ShareLinksService)
     private readonly shareLinkService: ShareLinksService,
+    @Inject(ConfigService)
     private readonly configService: ConfigService,
+    @Inject(TradeDocumentsService)
     private readonly tradeDocumentsService: TradeDocumentsService,
+    @Inject(AuditService)
     private readonly auditService: AuditService,
   ) {
     super();

@@ -1,6 +1,6 @@
 import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { Job } from 'bullmq';
-import { Logger } from '@nestjs/common';
+import { Inject, Logger } from '@nestjs/common';
 import { TradeDocumentsService } from '../../trade-documents/trade-documents.service';
 import { AuditService } from '../../audit/audit.service';
 import { IssueDetailsDto } from '../../trade-documents/dtos/trade-document.dto';
@@ -14,7 +14,9 @@ export class FinaliseIssueProcessor extends WorkerHost {
   private readonly logger = new Logger(FinaliseIssueProcessor.name);
 
   constructor(
+    @Inject(TradeDocumentsService)
     private readonly tradeDocumentsService: TradeDocumentsService,
+    @Inject(AuditService)
     private readonly auditService: AuditService,) {
     super();
   }

@@ -21,10 +21,13 @@ export class TtFileProcessor extends WorkerHost {
   private readonly logger = new Logger(TtFileProcessor.name);
 
   constructor(
+    @Inject(TradeDocumentsService)
     private readonly tradeDocumentsService: TradeDocumentsService,
     @Inject(FILE_STORAGE_SERVICE)
     private readonly fileStorageService: FileStorageService,
+    @Inject(TradeTrustService)
     private readonly tradeTrustService: TradeTrustService,
+    @Inject(AuditService)
     private readonly auditService: AuditService,) {
     super();
   }
