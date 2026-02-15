@@ -57,12 +57,12 @@ const DEFAULT_ACCOUNT_DATA = {
       state: 'Harju County 10616',
       country: 'Estonia'
     },
-    website: 'https://www.paperless.money'
+    website: 'https://www.paperlesslabs.xyz'
   },
   contact: {
     name: 'Lee  Tarone',
     position: 'CEO',
-    emailAddress: 'lee@paperless.money',
+    emailAddress: 'lee@paperlesslabs.xyz',
     phone: '+44 20 1234 5678'
   },
   applicationModules: [
@@ -79,7 +79,7 @@ const DEFAULT_ACCOUNT_DATA = {
 const DEFAULT_ACCOUNT_USERS_DATA = [
   {
     name: 'Lee Tarone',
-    emailAddress: 'lee@paperless.money',
+    emailAddress: 'lee@paperlesslabs.xyz',
     walletAddress: WALLET_ADDRESS,
     status: AccountUserStatus.ACTIVE,
     permissions: [
@@ -101,7 +101,7 @@ const DEFAULT_ACCOUNT_USERS_DATA = [
   },
   {
     name: 'Bill Matthews',
-    emailAddress: 'bill@paperless.money',
+    emailAddress: 'bill@paperlesslabs.xyz',
     walletAddress: WALLET_ADDRESS,
     status: AccountUserStatus.ACTIVE,
     permissions: [

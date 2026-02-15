@@ -1,16 +1,20 @@
 /**
  * PM2 ecosystem file for trade-docs-platform (Debian Linux).
+ *
+ * Uses bash to run pnpm (pnpm is a shell script; Node would try to parse it as JS).
+ *
  * Usage:
- *   pnpm run build && pm2 start ecosystem.config.cjs
+ *   pm2 start ecosystem.config.cjs
  *   pm2 stop all && pm2 start ecosystem.config.cjs
  */
 module.exports = {
   apps: [
     {
       name: 'trade-docs-api',
-      script: 'dist/main-api.js',
+      script: '-c',
+      args: 'pnpm run start:api',
+      interpreter: '/bin/bash',
       cwd: __dirname,
-      interpreter: 'node',
       instances: 1,
       exec_mode: 'fork',
       env: { NODE_ENV: 'production' },
@@ -18,9 +22,10 @@ module.exports = {
     },
     {
       name: 'trade-docs-worker',
-      script: 'dist/main-worker.js',
+      script: '-c',
+      args: 'pnpm run start:worker',
+      interpreter: '/bin/bash',
       cwd: __dirname,
-      interpreter: 'node',
       instances: 1,
       exec_mode: 'fork',
       env: { NODE_ENV: 'production' },
