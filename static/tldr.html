@@ -392,6 +392,181 @@ section {
 }
 .token-cell p { font-size: 0.78rem; line-height: 1.6; color: var(--muted); }
 
+/* ── TRACTION TIMELINE ── */
+#traction { background: var(--bg); border-top: 1px solid var(--rule); }
+#traction h2 {
+  font-family: 'IBM Plex Mono', monospace;
+  font-weight: 800;
+  font-size: clamp(2rem, 4vw, 3rem);
+  margin-bottom: 12px;
+}
+#traction .sub { color: var(--muted); font-size: 1rem; margin-bottom: 40px; max-width: 55ch; }
+.timeline {
+  display: flex; flex-direction: column; gap: 0;
+  border-left: 2px solid var(--turq);
+  margin-left: 8px;
+}
+.tl-item {
+  display: grid;
+  grid-template-columns: 100px 1fr;
+  gap: clamp(16px, 3vw, 32px);
+  padding: 0 0 32px 28px;
+  position: relative;
+}
+.tl-item::before {
+  content: '';
+  position: absolute; left: -7px; top: 4px;
+  width: 12px; height: 12px;
+  background: var(--turq); border-radius: 50%;
+  box-shadow: 0 0 0 4px var(--bg);
+}
+.tl-item:last-child { padding-bottom: 0; }
+.tl-year {
+  font-family: 'IBM Plex Mono', monospace;
+  font-weight: 800; font-size: 0.9rem; color: var(--turq);
+}
+.tl-body h3 {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.85rem; font-weight: 700;
+  margin-bottom: 6px;
+}
+.tl-body p { font-size: 0.86rem; line-height: 1.65; color: var(--muted); }
+.tl-body p strong { color: var(--ink); }
+.tl-body .milestone {
+  display: inline-block; margin-top: 8px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.62rem; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--turq); background: var(--mid); padding: 4px 10px;
+}
+
+/* ── UNIT ECONOMICS ── */
+#economics { background: var(--dim); }
+#economics h2 {
+  font-family: 'IBM Plex Mono', monospace;
+  font-weight: 800;
+  font-size: clamp(2rem, 4vw, 3rem);
+  margin-bottom: 12px;
+}
+#economics .sub { color: var(--muted); font-size: 1rem; margin-bottom: 40px; max-width: 55ch; }
+.econ-compare {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2px;
+}
+.econ-col { background: var(--bg); padding: clamp(24px, 3vw, 40px); }
+.econ-col.before { border-top: 4px solid #C45C5C; }
+.econ-col.after { border-top: 4px solid var(--turq); }
+.econ-col h3 {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.72rem; letter-spacing: 0.16em; text-transform: uppercase;
+  margin-bottom: 24px;
+}
+.econ-col.before h3 { color: #C45C5C; }
+.econ-col.after h3 { color: var(--turq); }
+.econ-row {
+  display: flex; justify-content: space-between; align-items: baseline;
+  padding: 14px 0; border-bottom: 1px solid var(--rule);
+  gap: 16px;
+}
+.econ-row:last-child { border-bottom: none; }
+.econ-row .label { font-size: 0.82rem; color: var(--muted); flex: 1; }
+.econ-row .val {
+  font-family: 'IBM Plex Mono', monospace;
+  font-weight: 700; font-size: 0.95rem; text-align: right; white-space: nowrap;
+}
+.econ-col.before .val { color: #8B4444; }
+.econ-col.after .val { color: var(--turq); }
+.econ-footnote {
+  margin-top: 24px;
+  font-size: 0.78rem; color: var(--muted); line-height: 1.6;
+  font-family: 'IBM Plex Mono', monospace;
+}
+
+/* ── COMPETITIVE MATRIX ── */
+#compete { background: var(--ink); color: #D8EEEA; }
+#compete h2 {
+  font-family: 'IBM Plex Mono', monospace;
+  font-weight: 800;
+  font-size: clamp(2rem, 4vw, 3rem);
+  margin-bottom: 12px;
+}
+#compete .sub { color: rgba(216,238,234,0.6); font-size: 1rem; margin-bottom: 32px; max-width: 55ch; }
+.matrix-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.matrix {
+  width: 100%; border-collapse: collapse;
+  font-size: 0.8rem; min-width: 640px;
+}
+.matrix th, .matrix td {
+  padding: 14px 16px;
+  text-align: left;
+  border-bottom: 1px solid rgba(0,158,142,0.2);
+}
+.matrix th {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.65rem; letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--turq2); background: rgba(0,158,142,0.1);
+}
+.matrix th:first-child { color: rgba(216,238,234,0.5); }
+.matrix td:first-child {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.72rem; font-weight: 600;
+  color: rgba(216,238,234,0.85);
+}
+.matrix td { color: rgba(216,238,234,0.6); line-height: 1.45; }
+.matrix .us {
+  background: rgba(0,158,142,0.15);
+  color: #fff; font-weight: 500;
+}
+.matrix .win { color: var(--turq2); }
+.matrix .lose { color: rgba(216,238,234,0.35); }
+.matrix .mid { color: rgba(216,238,234,0.55); }
+
+/* ── CONTACT CTA ── */
+#contact {
+  background: linear-gradient(135deg, var(--turq) 0%, #007A6E 100%);
+  color: var(--bg);
+  text-align: center;
+  padding: clamp(64px, 10vh, 100px) clamp(20px, 6vw, 80px);
+}
+#contact h2 {
+  font-family: 'IBM Plex Mono', monospace;
+  font-weight: 800;
+  font-size: clamp(2rem, 5vw, 3.5rem);
+  margin-bottom: 16px; color: var(--bg);
+}
+#contact .sub {
+  font-size: 1.05rem; opacity: 0.85; margin-bottom: 36px;
+  max-width: 42ch; margin-left: auto; margin-right: auto; line-height: 1.6;
+}
+.cta-row {
+  display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;
+}
+.btn {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.72rem; letter-spacing: 0.14em; text-transform: uppercase;
+  font-weight: 700; padding: 16px 28px;
+  border: none; cursor: pointer; text-decoration: none;
+  display: inline-flex; align-items: center; gap: 8px;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.btn:hover { transform: translateY(-2px); text-decoration: none; }
+.btn-primary {
+  background: var(--bg); color: var(--turq);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+}
+.btn-primary:hover { color: var(--turq); }
+.btn-secondary {
+  background: transparent; color: var(--bg);
+  border: 2px solid rgba(248,255,254,0.5);
+}
+.btn-secondary:hover { color: var(--bg); border-color: var(--bg); }
+.btn-print-nav {
+  background: var(--mid); color: var(--turq);
+  border: 1px solid var(--rule); padding: 6px 12px;
+  font-size: 0.58rem;
+}
+.btn-print-nav:hover { background: var(--turq); color: var(--bg); }
+
 /* ── FOOTER ── */
 footer {
   width: 100%;
@@ -427,10 +602,38 @@ footer p {
   .now-row .label { border-right: none; border-bottom: 1px solid rgba(0,158,142,0.2); padding-bottom: 12px; }
   .ask-grid { grid-template-columns: 1fr; }
   .token-row { grid-template-columns: 1fr; }
+  .econ-compare { grid-template-columns: 1fr; }
+  .tl-item { grid-template-columns: 80px 1fr; }
   .nav-links { display: none; }
 }
 @media (max-width: 600px) {
   .stat-strip, .edge-grid, .team-grid { grid-template-columns: 1fr; }
+}
+
+/* ── PRINT / PDF EXPORT ── */
+@media print {
+  @page { margin: 1.2cm; size: A4 landscape; }
+  * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+  html, body { background: #fff !important; overflow: visible !important; }
+  .nav, .scroll-hint, .no-print, .btn-print-nav { display: none !important; }
+  section {
+    page-break-inside: avoid;
+    padding: 28px 0 !important;
+    min-height: auto !important;
+  }
+  #intro { min-height: auto !important; padding-top: 20px !important; }
+  #intro::before { display: none; }
+  body::before, body::after { display: none; }
+  .reveal { opacity: 1 !important; transform: none !important; }
+  .team-photo { height: 180px !important; }
+  #contact { background: var(--turq) !important; }
+  #compete, #fix, #now { background: var(--ink) !important; color: #D8EEEA !important; }
+  footer { page-break-inside: avoid; border-top: 2px solid var(--rule); }
+  footer::after {
+    content: 'Confidential — Paperless Labs — printed ' attr(data-date);
+    display: block; font-size: 8pt; color: #666; margin-top: 8px;
+  }
+  a[href^="http"]::after, a[href^="mailto"]::after { content: none; }
 }
 </style>
 </head>
@@ -440,13 +643,16 @@ footer p {
   <div class="nav-logo">PAPERLESS</div>
   <div class="nav-links">
     <a href="#intro">intro</a>
-    <a href="#fix">the fix</a>
-    <a href="#explode">market</a>
+    <a href="#fix">fix</a>
     <a href="#edge">edge</a>
-    <a href="#now">why now</a>
+    <a href="#traction">traction</a>
+    <a href="#economics">economics</a>
+    <a href="#compete">vs</a>
     <a href="#team">team</a>
     <a href="#ask">ask</a>
+    <a href="#contact">contact</a>
   </div>
+  <button class="btn btn-print-nav no-print" onclick="window.print()" type="button">PDF ↓</button>
   <div class="nav-badge">angel · 2026</div>
 </nav>
 
@@ -616,7 +822,176 @@ footer p {
   </div>
 </section>
 
-<!-- ═══ 06 TEAM ═══ -->
+<!-- ═══ 06 TRACTION TIMELINE ═══ -->
+<section id="traction">
+  <div class="section-inner reveal">
+    <span class="section-tag">traction</span>
+    <h2>corridor by corridor.<br>already moving.</h2>
+    <p class="sub">Not a roadmap slide. Real payments, real corridors, real institutional partnerships — compounding into global scale.</p>
+    <div class="timeline">
+      <div class="tl-item">
+        <div class="tl-year">2021</div>
+        <div class="tl-body">
+          <h3>Founded · first corridors live</h3>
+          <p>Launched payment rails <strong>China &amp; Turkey → Poland &amp; Germany.</strong> Real exporters, real importers, real settlement — day one.</p>
+          <span class="milestone">corridors: CN · TR → PL · DE</span>
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-year">2022–23</div>
+        <div class="tl-body">
+          <h3>Volume scales · zero losses hold</h3>
+          <p>Payment book grows to <strong>$100M+ annual run rate.</strong> Underwriting discipline proven across commodity cycles. No defaults. No write-offs.</p>
+          <span class="milestone">$100M+ run rate</span>
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-year">2024</div>
+        <div class="tl-body">
+          <h3>$200M annual volume</h3>
+          <p><strong>$200M/year</strong> across live corridors. Five years operating history. TrustVC doc verification + stablecoin settlement stack built in-house.</p>
+          <span class="milestone">$200M · 0 losses</span>
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-year">2025</div>
+        <div class="tl-body">
+          <h3>Institutional positioning</h3>
+          <p><strong>UN paperless trade speakers.</strong> UNCITRAL/MLETR embedded. World Economic Forum. ADGM AIM regulatory sandbox. Trade alliance relationships that open corridor doors.</p>
+          <span class="milestone">UN · UNCITRAL · WEF · ADGM</span>
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-year">2026</div>
+        <div class="tl-body">
+          <h3>AI layer + global expansion</h3>
+          <p>Deploy AI doc-to-payment automation across owned corridors. <strong>US · LATAM · EU · MENA</strong> expansion via alliance partnerships. Angel round. Token infrastructure on-chain.</p>
+          <span class="milestone">AI deploy · $2M raise</span>
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-year">2027+</div>
+        <div class="tl-body">
+          <h3>Every global corridor</h3>
+          <p>Network effects kick in. Same rail handles freight, P&amp;I, customs, bunker, canal, warehouse. <strong>Compliance cost → near zero per payment.</strong> The long tail of trade finance finally works at scale.</p>
+          <span class="milestone">global network</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ 07 UNIT ECONOMICS ═══ -->
+<section id="economics">
+  <div class="section-inner reveal">
+    <span class="section-tag">unit economics</span>
+    <h2>the math that<br>kills small payments.</h2>
+    <p class="sub">Compliance cost doesn't scale down. That's why bunker invoices and port fees get ignored. We flip the curve.</p>
+    <div class="econ-compare">
+      <div class="econ-col before">
+        <h3>before paperless</h3>
+        <div class="econ-row"><span class="label">Compliance cost per payment</span><span class="val">$150 – $400</span></div>
+        <div class="econ-row"><span class="label">Settlement time</span><span class="val">3 – 45 days</span></div>
+        <div class="econ-row"><span class="label">Min viable payment</span><span class="val">~$50K+</span></div>
+        <div class="econ-row"><span class="label">Doc + payment linked?</span><span class="val">no</span></div>
+        <div class="econ-row"><span class="label">Small trade payments</span><span class="val">uneconomic</span></div>
+        <div class="econ-row"><span class="label">Human touches per ship</span><span class="val">50+</span></div>
+      </div>
+      <div class="econ-col after">
+        <h3>with paperless</h3>
+        <div class="econ-row"><span class="label">Compliance cost per payment</span><span class="val">~$2 – $8</span></div>
+        <div class="econ-row"><span class="label">Settlement time</span><span class="val">~90 seconds</span></div>
+        <div class="econ-row"><span class="label">Min viable payment</span><span class="val">any size</span></div>
+        <div class="econ-row"><span class="label">Doc + payment linked?</span><span class="val">always (DvP)</span></div>
+        <div class="econ-row"><span class="label">Small trade payments</span><span class="val">viable</span></div>
+        <div class="econ-row"><span class="label">Human touches per ship</span><span class="val">0</span></div>
+      </div>
+    </div>
+    <p class="econ-footnote">→ AI amortizes compliance across volume. Invoice travels with payment. Marginal cost drops with every ship. That's how you unlock 100K+ payments per voyage.</p>
+  </div>
+</section>
+
+<!-- ═══ 08 COMPETITIVE MATRIX ═══ -->
+<section id="compete">
+  <div class="section-inner reveal">
+    <span class="section-tag">competitive</span>
+    <h2>banks. tradfi. defi.<br>we're the only full stack.</h2>
+    <p class="sub">Everyone touches one piece. Nobody binds trade docs to instant compliant settlement at scale.</p>
+    <div class="matrix-wrap">
+      <table class="matrix">
+        <thead>
+          <tr>
+            <th></th>
+            <th>Banks</th>
+            <th>TradFi</th>
+            <th>DeFi</th>
+            <th class="us">Paperless</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Trade doc verification</td>
+            <td class="mid">Manual review</td>
+            <td class="mid">Partial OCR</td>
+            <td class="lose">None</td>
+            <td class="us win">AI + MLETR/UNCITRAL</td>
+          </tr>
+          <tr>
+            <td>Settlement speed</td>
+            <td class="lose">3–45 days</td>
+            <td class="mid">1–3 days</td>
+            <td class="win">Minutes</td>
+            <td class="us win">~90 seconds</td>
+          </tr>
+          <tr>
+            <td>Regulatory compliance</td>
+            <td class="win">Full</td>
+            <td class="win">Full</td>
+            <td class="lose">Weak / none</td>
+            <td class="us win">UNCITRAL embedded</td>
+          </tr>
+          <tr>
+            <td>Invoice + payment bound</td>
+            <td class="lose">Separate</td>
+            <td class="lose">Separate</td>
+            <td class="lose">No trade docs</td>
+            <td class="us win">DvP · one packet</td>
+          </tr>
+          <tr>
+            <td>Small payments (&lt;$10K)</td>
+            <td class="lose">Uneconomic</td>
+            <td class="lose">Rarely</td>
+            <td class="win">Yes</td>
+            <td class="us win">Yes · compliant</td>
+          </tr>
+          <tr>
+            <td>Supply chain coverage</td>
+            <td class="mid">Wire only</td>
+            <td class="mid">Invoice finance</td>
+            <td class="lose">Crypto only</td>
+            <td class="us win">Freight · customs · P&amp;I · fuel</td>
+          </tr>
+          <tr>
+            <td>Live trade volume proof</td>
+            <td class="win">Yes</td>
+            <td class="win">Yes</td>
+            <td class="mid">Limited</td>
+            <td class="us win">$200M · 0 losses</td>
+          </tr>
+          <tr>
+            <td>Global corridor access</td>
+            <td class="mid">Slow onboarding</td>
+            <td class="mid">Relationship-led</td>
+            <td class="lose">No trade rails</td>
+            <td class="us win">UN · WEF · alliances</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ 09 TEAM ═══ -->
 <section id="team">
   <div class="section-inner reveal">
     <span class="section-tag">why us</span>
@@ -682,7 +1057,20 @@ footer p {
   </div>
 </section>
 
-<footer>
+<!-- ═══ 11 CONTACT ═══ -->
+<section id="contact">
+  <div class="section-inner reveal">
+    <h2>let's talk.</h2>
+    <p class="sub">Angel round open. Deck too long? This is the whole thing. Book 20 minutes or email us directly.</p>
+    <div class="cta-row">
+      <a class="btn btn-primary" href="https://calendly.com/paperless-labs/investors" target="_blank" rel="noopener">Book a call ↗</a>
+      <a class="btn btn-secondary" href="mailto:investors@paperless.finance?subject=Paperless%20Investor%20Inquiry">investors@paperless.finance</a>
+      <button class="btn btn-secondary no-print" type="button" onclick="window.print()">Save as PDF ↓</button>
+    </div>
+  </div>
+</section>
+
+<footer data-date="">
   <p>paperless.money · investors@paperless.finance · lee@paperless.money</p>
   <div class="conf">confidential</div>
 </footer>
@@ -692,6 +1080,7 @@ const obs = new IntersectionObserver(entries => {
   entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('on'); });
 }, { threshold: 0.12 });
 document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+document.querySelector('footer').dataset.date = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 </script>
 </body>
 </html>
