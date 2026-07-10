@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ATTN — Social Media Attention Index</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <div class="app">
+    <header class="header">
+      <div class="header-left">
+        <div class="logo">
+          <span class="logo-mark">ATTN</span>
+          <span class="logo-sub">Attention Index</span>
+        </div>
+        <p class="tagline">The S&amp;P 500 of social media attention</p>
+      </div>
+      <div class="header-right">
+        <div class="status-pill" id="status-pill">
+          <span class="status-dot"></span>
+          <span id="status-text">Connecting…</span>
+        </div>
+        <button class="btn-refresh" id="btn-refresh" title="Recalculate index">↻ Recalculate</button>
+      </div>
+    </header>
+
+    <section class="ticker-hero">
+      <div class="ticker-main">
+        <div class="ticker-symbol">ATTN</div>
+        <div class="ticker-value" id="index-value">—</div>
+        <div class="ticker-change" id="index-change">
+          <span class="change-value">—</span>
+          <span class="change-period">today</span>
+        </div>
+      </div>
+      <div class="ticker-stats">
+        <div class="stat">
+          <span class="stat-label">24h</span>
+          <span class="stat-value" id="change-24h">—</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">7d</span>
+          <span class="stat-value" id="change-7d">—</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">Constituents</span>
+          <span class="stat-value" id="constituent-count">—</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">Anomalies</span>
+          <span class="stat-value anomaly-count" id="anomaly-count">—</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">Last calc</span>
+          <span class="stat-value mono" id="last-calc">—</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">Provenance</span>
+          <span class="stat-value mono truncate" id="provenance-hash" title="">—</span>
+        </div>
+      </div>
+    </section>
+
+    <div id="anomaly-banner" class="anomaly-banner hidden"></div>
+
+    <main class="grid">
+      <section class="card card-chart">
+        <div class="card-header">
+          <h2>Index Performance</h2>
+          <div class="chart-tabs">
+            <button class="tab active" data-days="30">30D</button>
+            <button class="tab" data-days="14">14D</button>
+            <button class="tab" data-days="7">7D</button>
+          </div>
+        </div>
+        <div class="chart-wrap">
+          <canvas id="index-chart"></canvas>
+        </div>
+      </section>
+
+      <section class="card card-subindices">
+        <div class="card-header"><h2>Sector Sub-Indices</h2></div>
+        <div class="subindices-grid" id="subindices-grid"></div>
+      </section>
+
+      <section class="card card-constituents">
+        <div class="card-header">
+          <h2>Constituent Basket</h2>
+          <span class="badge" id="methodology-version">v—</span>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Symbol</th>
+                <th>Name</th>
+                <th>Sector</th>
+                <th>Platform</th>
+                <th class="num">Weight</th>
+                <th class="num">Score</th>
+                <th class="num">Mentions</th>
+                <th class="num">Engagement</th>
+                <th class="num">Bot Risk</th>
+                <th>Flags</th>
+              </tr>
+            </thead>
+            <tbody id="constituents-body"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="card card-methodology">
+        <div class="card-header"><h2>Scoring Methodology</h2></div>
+        <div class="methodology-content" id="methodology-content"></div>
+      </section>
+
+      <section class="card card-audit">
+        <div class="card-header"><h2>Regulatory Audit Trail</h2></div>
+        <div class="audit-list" id="audit-list"></div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <p>ATTN Composite Index · Methodology v<span id="footer-version">—</span> · Base = 1,000 · For monitoring &amp; regulatory transparency</p>
+    </footer>
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>

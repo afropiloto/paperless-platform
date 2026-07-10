@@ -20,6 +20,7 @@ async function bootstrap() {
   
   // Add static file serving for .well-known directory
   app.use('/.well-known', express.static(join(__dirname, '..', 'public')));
+  app.use('/attention-index', express.static(join(__dirname, '..', 'public', 'attention-index')));
   
   app.enableCors();
   app.use(bodyParser.json({ limit: '10mb' }));
