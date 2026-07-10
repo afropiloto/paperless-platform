@@ -52,6 +52,16 @@ export const MODULE_PERMISSIONS_SEED = [
     ],
     active: true,
   },
+  {
+    module: 'Paperless-mLETR-DvP',
+    description: 'mLETR Delivery vs Payment settlement with stablecoin payments',
+    allowableRoles: [
+      { role: 'Agent', description: 'Can create and view DvP settlements' },
+      { role: 'Supervisor', description: 'Can initiate agentic settlement and confirm payments' },
+      { role: 'Manager', description: 'Can execute DvP settlement and cancel pending settlements' },
+    ],
+    active: true,
+  },
 ];
 
 

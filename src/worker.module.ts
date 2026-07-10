@@ -24,6 +24,8 @@ import { DealDeskModule } from './deal-desk/deal-desk.module';
 import { TradeFinanceModule } from './trade-finance/tradeFinance.module';
 import { DocumentSigningModule } from './document-signing/document-signing.module';
 import { ShareLinksModule } from './share-links/share-links.module';
+import { MletrDvpModule } from './mletr-dvp/mletr-dvp.module';
+import { MletrDvpEventsModule } from './mletr-dvp-events/mletr-dvp-events.module';
 
 @Module({
   imports: [
@@ -52,6 +54,8 @@ import { ShareLinksModule } from './share-links/share-links.module';
     TradeFinanceModule,
     DocumentSigningModule,
     ShareLinksModule,
+    MletrDvpModule,
+    MletrDvpEventsModule,
   ],
 })
 export class WorkerModule {}

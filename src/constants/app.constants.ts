@@ -62,3 +62,18 @@ export enum OnboardingQueues {
 export enum OnboardingEvents {
   NEW_REGISTRATION = 'new-registration',
 }
+
+// mLETR DvP Settlement
+export enum DvpSettlementQueues {
+  SETTLEMENT_QUEUE = 'dvp-settlement-queue',
+}
+
+export enum DvpSettlementEvent {
+  INITIATE = 'INITIATE',
+  AGENT_REVIEW = 'AGENT_REVIEW',
+  MONITOR_PAYMENT = 'MONITOR_PAYMENT',
+  EXECUTE_DOCUMENT_TRANSFER = 'EXECUTE_DOCUMENT_TRANSFER',
+  RELEASE_PAYMENT = 'RELEASE_PAYMENT',
+  COMPLETE_SETTLEMENT = 'COMPLETE_SETTLEMENT',
+  FAIL_SETTLEMENT = 'FAIL_SETTLEMENT',
+}

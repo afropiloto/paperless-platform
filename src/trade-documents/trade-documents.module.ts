@@ -22,6 +22,6 @@ import { ApiKeyAuthModule } from 'src/api-key-auth/api-key-auth.module';
   ],
   controllers: [TradeDocumentsController],
   providers: [TradeDocumentsService, TradeDocumentsRepository],
-  exports: [TradeDocumentsService]
+  exports: [TradeDocumentsService, TradeDocumentsRepository]
 })
 export class TradeDocumentsModule {}

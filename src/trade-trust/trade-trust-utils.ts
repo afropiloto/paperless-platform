@@ -11,6 +11,8 @@ export function getTradeTrustDocumentClass(
       return TradeTrustDocumentClass.TRANSFERABLE;
     case TradeDocumentType.PROMISSORY_NOTE.toLowerCase():
       return TradeTrustDocumentClass.TRANSFERABLE;
+    case TradeDocumentType.BILL_OF_LADING.toLowerCase():
+      return TradeTrustDocumentClass.TRANSFERABLE;
     case TradeDocumentType.OTHER.toLowerCase():
       return TradeTrustDocumentClass.VERIFIABLE;
     default:
