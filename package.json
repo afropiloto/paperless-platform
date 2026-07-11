@@ -1,0 +1,22 @@
+{
+  "name": "@810/attn-index",
+  "private": true,
+  "version": "1.0.0",
+  "description": "ATTN — Social Media Attention Index (S&P 500 for social attention)",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch server.ts",
+    "start": "node --import tsx server.ts",
+    "test": "tsx --test src/scoring/attention-scoring.engine.test.ts",
+    "lint": "tsc --noEmit"
+  },
+  "dependencies": {
+    "express": "^4.22.1"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.25",
+    "@types/node": "^22.19.17",
+    "tsx": "^4.21.0",
+    "typescript": "~5.8.2"
+  }
+}
