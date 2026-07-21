@@ -4,6 +4,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { BullModule } from '@nestjs/bullmq';
 import appConfig from '../config/app.config';
 import environmentConfig from '../config/environment.config';
+import localAgentConfig from '../local-agent/config/local-agent.config';
 import { ConfigurationService } from '../config/configuration.service';
 import { ProcessorConfigService } from '../config/processor-config.service';
 import { ConfigurationValidationService } from '../config/configuration-validation.service';
@@ -13,7 +14,7 @@ import { ConfigurationValidationService } from '../config/configuration-validati
     ConfigModule.forRoot({
       isGlobal: true,
       cache: true,
-      load: [appConfig, environmentConfig],
+      load: [appConfig, environmentConfig, localAgentConfig],
     }),
     MongooseModule.forRootAsync({
       useFactory: (configService: ConfigService) => ({

@@ -24,6 +24,7 @@ import { DealDeskModule } from './deal-desk/deal-desk.module';
 import { TradeFinanceModule } from './trade-finance/tradeFinance.module';
 import { DocumentSigningModule } from './document-signing/document-signing.module';
 import { ShareLinksModule } from './share-links/share-links.module';
+import { LocalAgentEventsModule } from './local-agent-events/local-agent-events.module';
 
 @Module({
   imports: [
@@ -52,6 +53,7 @@ import { ShareLinksModule } from './share-links/share-links.module';
     TradeFinanceModule,
     DocumentSigningModule,
     ShareLinksModule,
+    LocalAgentEventsModule,
   ],
 })
 export class WorkerModule {}
