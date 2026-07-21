@@ -42,6 +42,8 @@
     "script:seed-account-user": "ts-node ./scripts/seed-account-user.ts",
     "script:seed-due-diligence-checklists": "ts-node ./scripts/seed-due-diligence-checklists.ts",
     "script:add-onboarding-check": "dotenv -e .env -- npx ts-node ./scripts/add-onboarding-check.ts",
+    "agent": "dotenv -e .env -- ts-node -r tsconfig-paths/register ./scripts/local-agent-cli.ts",
+    "agent:status": "dotenv -e .env -- ts-node -r tsconfig-paths/register ./scripts/local-agent-cli.ts --status",
     "docker:build:api": "docker build -f Dockerfile.api -t trade-docs-api .",
     "docker:build:worker": "docker build -f Dockerfile.worker -t trade-docs-worker .",
     "docker:build": "pnpm run docker:build:api && pnpm run docker:build:worker",
@@ -82,6 +84,7 @@
     "ethers-v6": "npm:ethers@^6.16.0",
     "express": "^5.2.1",
     "extend-ai": "^0.0.15",
+    "google-auth-library": "^10.9.0",
     "jsonld": "^9.0.0",
     "mime-types": "^3.0.2",
     "mongodb": "^7.0.0",
@@ -102,12 +105,12 @@
     "uuid": "^13.0.0"
   },
   "devDependencies": {
-    "@swc/cli": "^0.8.0",
-    "@swc/core": "^1.7.0",
     "@eslint/js": "^9.39.2",
     "@nestjs/cli": "^11.0.16",
     "@nestjs/schematics": "^11.0.9",
     "@nestjs/testing": "^11.1.12",
+    "@swc/cli": "^0.8.0",
+    "@swc/core": "^1.7.0",
     "@types/bcrypt": "^6.0.0",
     "@types/body-parser": "^1.19.6",
     "@types/clamav.js": "^0.12.4",
@@ -158,14 +161,19 @@
     "rootDir": "src",
     "testRegex": ".*\\.spec\\.ts$",
     "transform": {
-      "^.+\\.(t|j)s$": ["ts-jest", {
-        "tsconfig": {
-          "paths": {
-            "src/*": ["src/*"]
-          }
-        },
-        "useESM": false
-      }]
+      "^.+\\.(t|j)s$": [
+        "ts-jest",
+        {
+          "tsconfig": {
+            "paths": {
+              "src/*": [
+                "src/*"
+              ]
+            }
+          },
+          "useESM": false
+        }
+      ]
     },
     "moduleNameMapper": {
       "^src/(.*)$": "<rootDir>/$1"

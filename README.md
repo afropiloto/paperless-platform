@@ -135,6 +135,21 @@ These records have the form
 
 
 
+## Development
+
+See [docs/DEVELOPMENT_SETUP.md](docs/DEVELOPMENT_SETUP.md) for local setup.
+
+### Local Agent (PA / PM / CMO / Twin)
+
+Multi-role agent with GCP Vertex (or mock/Gemini), memory tools, and build/task automation.
+
+```bash
+pnpm agent:status
+pnpm agent --role pm -- "Create task: review onboarding checks"
+```
+
+Full guide: [docs/LOCAL_AGENT.md](docs/LOCAL_AGENT.md)
+
 ## Redis Queue Deployment
 ToDO
 
