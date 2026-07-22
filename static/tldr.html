@@ -314,10 +314,12 @@ section {
 }
 #team .sub { color: var(--muted); font-size: 1rem; margin-bottom: 36px; max-width: 55ch; }
 .team-photo {
-  width: 100%; height: clamp(200px, 35vh, 420px);
-  object-fit: cover; object-position: center 20%;
+  width: 100%; height: auto;
+  max-height: min(70vh, 720px);
+  object-fit: contain; object-position: center center;
   display: block; margin-bottom: 2px;
   border-bottom: 4px solid var(--turq);
+  background: var(--mid);
 }
 .team-grid {
   display: grid;
@@ -626,7 +628,7 @@ footer p {
   #intro::before { display: none; }
   body::before, body::after { display: none; }
   .reveal { opacity: 1 !important; transform: none !important; }
-  .team-photo { height: 180px !important; }
+  .team-photo { height: auto !important; max-height: none !important; object-fit: contain !important; }
   #contact { background: var(--turq) !important; }
   #compete, #fix, #now { background: var(--ink) !important; color: #D8EEEA !important; }
   footer { page-break-inside: avoid; border-top: 2px solid var(--rule); }
