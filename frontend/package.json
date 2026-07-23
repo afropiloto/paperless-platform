@@ -9,7 +9,9 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@privy-io/react-auth": "^3.35.1",
     "clsx": "^2.1.1",
+    "ethers": "^5.8.0",
     "framer-motion": "^12.42.2",
     "lucide-react": "^1.26.0",
     "next": "16.2.11",
