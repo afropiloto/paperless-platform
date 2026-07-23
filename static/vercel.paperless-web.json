@@ -3,6 +3,8 @@
   "trailingSlash": false,
   "rewrites": [
     { "source": "/tldr", "destination": "/tldr.html" },
+    { "source": "/dashboard", "destination": "/dashboard.html" },
+    { "source": "/financials", "destination": "/dashboard.html" },
     { "source": "/\\$paper", "destination": "/paper.html" },
     { "source": "/%24paper", "destination": "/paper.html" },
     { "source": "/paper", "destination": "/paper.html" }
