@@ -403,7 +403,24 @@ section {
   font-size: clamp(2rem, 4vw, 3rem);
   margin-bottom: 12px;
 }
-#roadmap .sub { color: var(--muted); font-size: 1rem; margin-bottom: 40px; max-width: 55ch; }
+#roadmap .sub { color: var(--muted); font-size: 1rem; margin-bottom: 40px; max-width: 58ch; }
+.roadmap-kpis {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 2px;
+  margin-bottom: 40px;
+}
+.rkpi {
+  background: var(--mid);
+  padding: clamp(18px, 2.5vw, 28px);
+  border-top: 3px solid var(--turq);
+}
+.rkpi .n {
+  font-family: 'IBM Plex Mono', monospace;
+  font-weight: 800; font-size: clamp(1.4rem, 3vw, 2rem);
+  color: var(--turq); line-height: 1; margin-bottom: 8px;
+}
+.rkpi .l { font-size: 0.75rem; color: var(--muted); line-height: 1.4; }
 .timeline {
   display: flex; flex-direction: column; gap: 0;
   border-left: 2px solid var(--turq);
@@ -411,7 +428,7 @@ section {
 }
 .tl-item {
   display: grid;
-  grid-template-columns: 100px 1fr;
+  grid-template-columns: 120px 1fr;
   gap: clamp(16px, 3vw, 32px);
   padding: 0 0 32px 28px;
   position: relative;
@@ -426,21 +443,55 @@ section {
 .tl-item:last-child { padding-bottom: 0; }
 .tl-year {
   font-family: 'IBM Plex Mono', monospace;
-  font-weight: 800; font-size: 0.9rem; color: var(--turq);
+  font-weight: 800; font-size: 0.78rem; color: var(--turq);
+  letter-spacing: 0.04em; text-transform: uppercase;
 }
 .tl-body h3 {
   font-family: 'IBM Plex Mono', monospace;
-  font-size: 0.85rem; font-weight: 700;
-  margin-bottom: 6px;
+  font-size: 0.95rem; font-weight: 700;
+  margin-bottom: 8px;
 }
-.tl-body p { font-size: 0.86rem; line-height: 1.65; color: var(--muted); }
+.tl-body p { font-size: 0.88rem; line-height: 1.7; color: var(--muted); }
 .tl-body p strong { color: var(--ink); }
 .tl-body .milestone {
-  display: inline-block; margin-top: 8px;
+  display: inline-block; margin-top: 10px; margin-right: 6px;
   font-family: 'IBM Plex Mono', monospace;
   font-size: 0.62rem; letter-spacing: 0.1em; text-transform: uppercase;
   color: var(--turq); background: var(--mid); padding: 4px 10px;
 }
+.next-round {
+  margin-top: 40px;
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 2px;
+}
+.next-round-left {
+  background: var(--turq);
+  padding: clamp(28px, 4vw, 44px);
+  color: var(--bg);
+}
+.next-round-left .label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.62rem; letter-spacing: 0.18em; text-transform: uppercase;
+  opacity: 0.7; margin-bottom: 10px;
+}
+.next-round-left .amount {
+  font-family: 'IBM Plex Mono', monospace;
+  font-weight: 800; font-size: clamp(2.2rem, 5vw, 3.4rem);
+  line-height: 1; margin-bottom: 8px;
+}
+.next-round-left .sub { font-size: 0.88rem; line-height: 1.55; opacity: 0.85; }
+.next-round-right {
+  background: var(--mid);
+  padding: clamp(28px, 4vw, 44px);
+  display: flex; flex-direction: column; justify-content: center; gap: 12px;
+}
+.next-round-right .nr-item {
+  font-size: 0.86rem; color: var(--muted); line-height: 1.5;
+  display: flex; gap: 10px;
+}
+.next-round-right .nr-item::before { content: '→'; color: var(--turq); font-family: 'IBM Plex Mono', monospace; }
+.next-round-right .nr-item strong { color: var(--ink); }
 
 /* ── UNIT ECONOMICS ── */
 #economics { background: var(--dim); }
@@ -606,11 +657,13 @@ footer p {
   .ask-grid { grid-template-columns: 1fr; }
   .token-row { grid-template-columns: 1fr; }
   .econ-compare { grid-template-columns: 1fr; }
-  .tl-item { grid-template-columns: 80px 1fr; }
+  .tl-item { grid-template-columns: 90px 1fr; }
+  .roadmap-kpis { grid-template-columns: repeat(2, 1fr); }
+  .next-round { grid-template-columns: 1fr; }
   .nav-links { display: none; }
 }
 @media (max-width: 600px) {
-  .stat-strip, .edge-grid, .team-grid { grid-template-columns: 1fr; }
+  .stat-strip, .edge-grid, .team-grid, .roadmap-kpis { grid-template-columns: 1fr; }
 }
 
 /* ── PRINT / PDF EXPORT ── */
@@ -828,41 +881,70 @@ footer p {
 <!-- ═══ 06 ROADMAP ═══ -->
 <section id="roadmap">
   <div class="section-inner reveal">
-    <span class="section-tag">roadmap</span>
-    <h2>starts 2026.<br>scales from here.</h2>
-    <p class="sub">$200M live today. Zero losses. This is the plan to turn proven corridors into a global trade payment network.</p>
+    <span class="section-tag">roadmap · use of funds</span>
+    <h2>$2M gets us<br>to the next round.</h2>
+    <p class="sub">Not a vibe timeline. Exact deployment of the angel check → corridor + volume targets → <strong style="color:var(--ink)">$6M raise at $30M valuation</strong>.</p>
+
+    <div class="roadmap-kpis">
+      <div class="rkpi"><div class="n">$2M</div><div class="l">angel in · this round</div></div>
+      <div class="rkpi"><div class="n">$500M</div><div class="l">annual volume target · 12 months</div></div>
+      <div class="rkpi"><div class="n">$6M</div><div class="l">next raise · at $30M valuation</div></div>
+      <div class="rkpi"><div class="n">$1B</div><div class="l">volume ambition · year two</div></div>
+    </div>
+
     <div class="timeline">
       <div class="tl-item">
-        <div class="tl-year">2026</div>
+        <div class="tl-year">$2M buys</div>
         <div class="tl-body">
-          <h3>AI deploy · angel round · corridor expansion</h3>
-          <p>Close <strong>$2M angel round.</strong> Ship AI doc-to-payment automation across owned corridors. Open <strong>US · LATAM · EU · MENA</strong> via trade alliance partnerships. Bring payment book on-chain.</p>
-          <span class="milestone">AI live · $2M raise · token infra</span>
+          <h3>What this round actually ships</h3>
+          <p><strong>~45% AI + product</strong> — ETR verification agent live on production corridors. Doc-in → stablecoin-out in &lt;90s. <strong>~30% corridor expansion</strong> — open US · LATAM · EU · MENA via alliance intros (not cold sales). <strong>~15% token + liquidity rails</strong> — payment book on-chain. <strong>~10% ops / compliance</strong> — ADGM sandbox scale + UNCITRAL-aligned ops.</p>
+          <span class="milestone">AI live</span>
+          <span class="milestone">4+ new corridors</span>
+          <span class="milestone">token infra</span>
         </div>
       </div>
       <div class="tl-item">
-        <div class="tl-year">2027</div>
+        <div class="tl-year">12 months</div>
         <div class="tl-body">
-          <h3>Integrations at scale</h3>
-          <p>Plug in <strong>P&amp;I clubs, customs, freight forwarders, insurance, bunker fuel.</strong> Invoice travels with every payment across the full voyage stack. Onboard shippers via alliance warm intros — not cold sales.</p>
-          <span class="milestone">freight · customs · P&amp;I · fuel</span>
+          <h3>$200M → $500M annual volume</h3>
+          <p>Scale proven China/Turkey → EU rails. Add <strong>US import, LATAM export, MENA (ADGM), EU intra</strong>. Onboard shippers onto ETR → stablecoin atomic DvP. Hit <strong>$500M annual run rate</strong> with zero-loss underwriting intact. Voyage stack integrations: freight, P&amp;I, customs, bunker.</p>
+          <span class="milestone">$500M ARR volume</span>
+          <span class="milestone">US · LATAM · EU · MENA</span>
+          <span class="milestone">0 losses held</span>
         </div>
       </div>
       <div class="tl-item">
-        <div class="tl-year">2028</div>
+        <div class="tl-year">milestones</div>
         <div class="tl-body">
-          <h3>Network effects kick in</h3>
-          <p>More ships → more payments → more doc data → lower cost per payment → <strong>more corridors.</strong> Compliance cost drops to single digits. Small payments become the majority of volume, not the exception.</p>
-          <span class="milestone">flywheel · micro-payments</span>
+          <h3>Proof that unlocks Series A</h3>
+          <p>Live ETR settlement volume (not pilots). <strong>Multi-corridor density</strong> with alliance distribution. Unit economics: compliance cost per payment in single digits. Token burn + yield live on real cargo. Pipeline that makes <strong>$1B year-two volume</strong> obvious, not aspirational.</p>
+          <span class="milestone">atomic dvp live</span>
+          <span class="milestone">unit econ proven</span>
+          <span class="milestone">alliance distribution</span>
         </div>
       </div>
       <div class="tl-item">
-        <div class="tl-year">2029+</div>
+        <div class="tl-year">next round</div>
         <div class="tl-body">
-          <h3>Every global corridor</h3>
-          <p>Same rail handles <strong>100K+ payments per voyage</strong> — freight, insurance, fuel, customs, canal, warehouse. Trade alliances open every door. The long tail of supply chain finance finally works at global scale.</p>
-          <span class="milestone">global network</span>
+          <h3>$6M at $30M valuation</h3>
+          <p>Angel capital compounds into the raise that scales globally. <strong>$6M Series A / priced round at $30M</strong> — fuel corridor density, institutional integrations, and the jump from $500M → <strong>$1B annual volume</strong>. This $2M is the bridge. That $6M is the blast radius.</p>
+          <span class="milestone">$6M @ $30M</span>
+          <span class="milestone">$1B volume path</span>
         </div>
+      </div>
+    </div>
+
+    <div class="next-round">
+      <div class="next-round-left">
+        <div class="label">path to next round</div>
+        <div class="amount">$6M @ $30M</div>
+        <div class="sub">Raise after 12 months of $2M deployment.<br>$500M volume in → $1B ambition out.</div>
+      </div>
+      <div class="next-round-right">
+        <div class="nr-item"><strong>Today</strong> — $200M live · 0 losses · $2M angel</div>
+        <div class="nr-item"><strong>+12 mo</strong> — $500M volume · corridors live · ETR atomic</div>
+        <div class="nr-item"><strong>Next</strong> — $6M at $30M · scale to $1B</div>
+        <div class="nr-item"><strong>Why it clears</strong> — real volume, not slides</div>
       </div>
     </div>
   </div>
@@ -1016,15 +1098,15 @@ footer p {
     <span class="section-tag">the ask</span>
     <div class="ask-grid">
       <div class="ask-left">
-        <div class="label">angel round · 2026</div>
+        <div class="label">angel round · bridge to $6M @ $30M</div>
         <div class="amount">$2M</div>
-        <div class="sub">Deploy AI across corridors we already own.<br>Open the network. Bring the book on-chain.<br>This is the round before the market notices.</div>
+        <div class="sub">Buys the 12 months that unlock the next round.<br>$200M → $500M volume. Corridors live. ETR atomic.<br>Then $6M at $30M valuation.</div>
       </div>
       <div class="ask-right">
-        <div class="ask-item"><strong>AI deployment</strong> — US, LATAM, China, Turkey, EU corridors already live</div>
-        <div class="ask-item"><strong>Network expansion</strong> — onboard new exporters onto proven payment rails</div>
-        <div class="ask-item"><strong>Token infrastructure</strong> — payment book on-chain for liquidity + yield</div>
-        <div class="ask-item"><strong>Integrations</strong> — P&amp;I clubs, customs, freight, insurance, fuel</div>
+        <div class="ask-item"><strong>AI + ETR rails</strong> — ~45% · doc-in → stablecoin-out in production</div>
+        <div class="ask-item"><strong>Corridors</strong> — ~30% · US · LATAM · EU · MENA expansion</div>
+        <div class="ask-item"><strong>Token + liquidity</strong> — ~15% · payment book on-chain</div>
+        <div class="ask-item"><strong>Ops / compliance</strong> — ~10% · ADGM + UNCITRAL scale</div>
       </div>
     </div>
     <div class="token-row">
