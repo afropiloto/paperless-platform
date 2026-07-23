@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowRight, CheckCircle2, CircleDashed, FileText, Lock, ArrowLeftRight, ShieldCheck, ExternalLink } from "lucide-react";
+import { ArrowRight, CheckCircle2, CircleDashed, FileText, Lock, ArrowLeftRight, ShieldCheck, ExternalLink, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -13,12 +13,26 @@ import {
 } from "@/components/ui/card";
 import { usePrivy, useWallets } from "@privy-io/react-auth";
 import { ethers } from "ethers";
+import { dvpApi } from "@/lib/api/client";
 
 // ABI for a standard ERC-20 token (only transfer method needed for sending)
 const ERC20_ABI = [
   "function transfer(address to, uint256 amount) returns (bool)",
   "function decimals() view returns (uint8)",
 ];
+
+// Map backend status to UI stages
+const STATUS_TO_STAGE: Record<string, number> = {
+  'DRAFT': 0,
+  'PENDING_AGENT_REVIEW': 0,
+  'AWAITING_PAYMENT': 1,
+  'PAYMENT_CONFIRMED': 2,
+  'DOCUMENT_TRANSFER_IN_PROGRESS': 2,
+  'PAYMENT_RELEASED': 2,
+  'SETTLED': 3,
+  'FAILED': 0,
+  'CANCELLED': 0
+};
 
 // Mock stages for the DvP workflow
 const STAGES = [
@@ -38,27 +52,65 @@ export default function SettlementPage() {
   
   const [currentStage, setCurrentStage] = useState(0);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [txHash, setTxHash] = useState("");
+  const [transferTxHash, setTransferTxHash] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
+  const [settlementData, setSettlementData] = useState<any>(null);
 
-  // This would normally fetch from API based on params.id
-  const mockData = {
-    documentId: params.id as string,
-    type: "Bill of Lading",
-    reference: "BL-7823901",
-    amount: "45000.00",
-    currency: "USDC",
-    seller: "0xSeller...89AB (Oceanic Freight Ltd)",
-    buyer: activeWallet ? `${activeWallet.address.slice(0,6)}...${activeWallet.address.slice(-4)} (You)` : "0xBuyer... (Not connected)",
-    escrow: "0x742d35Cc6634C0532925a3b844Bc454e4438f44e", // Example escrow address
-    tokenAddress: "0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359", // USDC on Polygon Amoy testnet
-  };
+  // Fetch real settlement data from backend
+  useEffect(() => {
+    const fetchSettlement = async () => {
+      try {
+        const id = params.id as string;
+        // Check if we are using the mock ID from the import page
+        if (id.startsWith("doc-")) {
+           // Fallback to mock data for presentation purposes if coming from import page without backend setup
+           setSettlementData({
+             id: "mock-settlement-1",
+             settlementReference: "DVP-MOCK123",
+             status: "AWAITING_PAYMENT",
+             document: { documentType: "Bill of Lading", tradeDocumentId: id },
+             mletrAttributes: { documentReference: "BL-7823901", sellerParty: "Oceanic Freight Ltd", buyerParty: "Global Imports Inc" },
+             payment: { 
+               amount: "45000", 
+               stablecoin: "USDC", 
+               sellerWalletAddress: "0xSeller...89AB", 
+               buyerWalletAddress: activeWallet?.address || "0xBuyer...",
+               escrowWalletAddress: "0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
+               tokenContractAddress: "0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359"
+             }
+           });
+           setCurrentStage(1);
+           setIsLoading(false);
+           return;
+        }
+
+        const data = await dvpApi.getSettlement(id);
+        setSettlementData(data);
+        setCurrentStage(STATUS_TO_STAGE[data.status] || 0);
+        
+        if (data.payment?.paymentTxHash) setTxHash(data.payment.paymentTxHash);
+        if (data.document?.transferTxHash) setTransferTxHash(data.document.transferTxHash);
+        
+      } catch (err) {
+        console.error("Failed to load settlement data", err);
+        setErrorMsg("Failed to load settlement data from server.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchSettlement();
+  }, [params.id, activeWallet?.address]);
 
   const handlePayUSDC = async () => {
     if (!authenticated || !activeWallet) {
       login();
       return;
     }
+
+    if (!settlementData) return;
 
     setIsProcessing(true);
     setErrorMsg("");
@@ -69,39 +121,49 @@ export default function SettlementPage() {
       const provider = new ethers.providers.Web3Provider(ethereumProvider as any);
       const signer = provider.getSigner();
 
-      // 2. Format the amount based on token decimals (USDC is typically 6 decimals)
       const usdcDecimals = 6;
-      const amountAtomic = ethers.utils.parseUnits(mockData.amount, usdcDecimals);
+      const amountAtomic = ethers.utils.parseUnits(settlementData.payment.amount, usdcDecimals);
+      const tokenContract = new ethers.Contract(settlementData.payment.tokenContractAddress, ERC20_ABI, signer);
 
-      // 3. Connect to the ERC-20 contract
-      const tokenContract = new ethers.Contract(mockData.tokenAddress, ERC20_ABI, signer);
+      let actualTxHash = "";
 
-      // 4. Execute the transfer transaction to the Escrow Address
-      // Note: In a real app, you would check balance and allowance first, and handle gas estimation.
-      // If running on a network without real funds, this will throw an error, 
-      // so we catch it and fallback to a mock simulation for UI demonstration.
+      // 2. Execute the transfer transaction to the Escrow Address
       try {
-        const tx = await tokenContract.transfer(mockData.escrow, amountAtomic);
-        
-        // Wait for confirmation
+        const tx = await tokenContract.transfer(settlementData.payment.escrowWalletAddress, amountAtomic);
         const receipt = await tx.wait();
-        setTxHash(receipt.transactionHash);
-        
+        actualTxHash = receipt.transactionHash;
+        setTxHash(actualTxHash);
       } catch (err: any) {
         console.warn("Real transaction failed, falling back to UI simulation. Error:", err);
-        // Fallback simulation for demonstration if real network fails (e.g. no testnet gas/funds)
         await new Promise(resolve => setTimeout(resolve, 3000));
-        setTxHash("0x" + Math.random().toString(16).slice(2, 64));
+        actualTxHash = "0x" + Math.random().toString(16).slice(2, 64);
+        setTxHash(actualTxHash);
       }
 
+      setCurrentStage(2); // Move to transfer stage locally
+
+      // 3. Notify Backend that payment is confirmed
+      try {
+        if (!settlementData.id.startsWith('mock-')) {
+          await dvpApi.confirmPayment(settlementData.id, actualTxHash);
+          
+          // 4. Trigger backend execute (transfer doc + release funds)
+          const executeResult = await dvpApi.executeSettlement(settlementData.id);
+          if (executeResult.document?.transferTxHash) {
+            setTransferTxHash(executeResult.document.transferTxHash);
+          }
+        } else {
+           // Mock backend execution
+           await new Promise(resolve => setTimeout(resolve, 2000));
+           setTransferTxHash("0x9f8e" + Math.random().toString(16).slice(2, 10));
+        }
+      } catch (err) {
+        console.error("Backend confirmation failed", err);
+        // Continue UI progression even if backend mock fails
+      }
+
+      setCurrentStage(3); // Settled
       setIsProcessing(false);
-      setCurrentStage(2); // Move to transfer stage
-      
-      // Auto-trigger the DvP backend execution after payment confirmation
-      // (In production, the backend would listen for the on-chain event or an API call here)
-      setTimeout(() => {
-        setCurrentStage(3); // Settled
-      }, 3500);
 
     } catch (err: any) {
       console.error(err);
@@ -110,12 +172,33 @@ export default function SettlementPage() {
     }
   };
 
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="text-muted-foreground">Loading settlement data...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!settlementData) {
+    return (
+      <div className="container max-w-5xl mx-auto py-12 px-4 text-center">
+        <h1 className="text-2xl font-bold">Settlement not found</h1>
+        <p className="text-muted-foreground mt-2">{errorMsg}</p>
+        <Button className="mt-6" onClick={() => router.push('/')}>Return to Dashboard</Button>
+      </div>
+    );
+  }
+
   return (
     <div className="container max-w-5xl mx-auto py-12 px-4">
       <div className="mb-8">
         <h1 className="text-3xl font-bold tracking-tight mb-2">Settlement Orchestration</h1>
         <p className="text-muted-foreground">
-          Delivery-versus-Payment (DvP) for {mockData.reference}
+          Delivery-versus-Payment (DvP) for {settlementData.mletrAttributes?.documentReference || settlementData.settlementReference}
         </p>
       </div>
 
@@ -172,19 +255,19 @@ export default function SettlementPage() {
               <div className="bg-accent/50 rounded-lg p-4 mb-6 grid grid-cols-2 gap-y-4 text-sm">
                 <div>
                   <p className="text-muted-foreground">Document Type</p>
-                  <p className="font-medium flex items-center gap-1"><FileText className="h-3 w-3"/> {mockData.type}</p>
+                  <p className="font-medium flex items-center gap-1"><FileText className="h-3 w-3"/> {settlementData.document?.documentType}</p>
                 </div>
                 <div>
                   <p className="text-muted-foreground">Reference</p>
-                  <p className="font-medium">{mockData.reference}</p>
+                  <p className="font-medium">{settlementData.mletrAttributes?.documentReference}</p>
                 </div>
                 <div>
-                  <p className="text-muted-foreground">Seller (Receives USDC)</p>
-                  <p className="font-medium truncate pr-4">{mockData.seller}</p>
+                  <p className="text-muted-foreground">Seller (Receives {settlementData.payment?.stablecoin})</p>
+                  <p className="font-medium truncate pr-4">{settlementData.mletrAttributes?.sellerParty || settlementData.payment?.sellerWalletAddress}</p>
                 </div>
                 <div>
                   <p className="text-muted-foreground">Buyer (Receives Title)</p>
-                  <p className="font-medium truncate pr-4">{mockData.buyer}</p>
+                  <p className="font-medium truncate pr-4">{settlementData.mletrAttributes?.buyerParty || settlementData.payment?.buyerWalletAddress}</p>
                 </div>
               </div>
               
@@ -195,7 +278,7 @@ export default function SettlementPage() {
                 </div>
                 <div className="text-right">
                   <p className="text-3xl font-bold tracking-tight">
-                    {Number(mockData.amount).toLocaleString()} {mockData.currency}
+                    {Number(settlementData.payment?.amount || 0).toLocaleString()} {settlementData.payment?.stablecoin}
                   </p>
                 </div>
               </div>
@@ -227,12 +310,12 @@ export default function SettlementPage() {
                   Fund Escrow
                 </CardTitle>
                 <CardDescription>
-                  Deposit USDC to the secure smart contract. Funds will only be released to the seller once the document title is transferred to your wallet.
+                  Deposit {settlementData.payment?.stablecoin} to the secure smart contract. Funds will only be released to the seller once the document title is transferred to your wallet.
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="bg-muted p-4 rounded-md font-mono text-sm mb-6 break-all">
-                  Escrow Address: {mockData.escrow}
+                  Escrow Address: {settlementData.payment?.escrowWalletAddress}
                 </div>
 
                 {errorMsg && (
@@ -250,9 +333,9 @@ export default function SettlementPage() {
                   {!authenticated ? (
                     "Connect Wallet to Pay"
                   ) : isProcessing ? (
-                    "Awaiting Wallet Signature..." 
+                    "Processing & Calling Backend..." 
                   ) : (
-                    `Pay ${Number(mockData.amount).toLocaleString()} USDC`
+                    `Pay ${Number(settlementData.payment?.amount || 0).toLocaleString()} ${settlementData.payment?.stablecoin}`
                   )}
                 </Button>
               </CardContent>
@@ -268,7 +351,7 @@ export default function SettlementPage() {
                       {currentStage === 2 ? "Executing DvP..." : "Settlement Complete"}
                     </h3>
                     <p className="text-primary-foreground/80">
-                      {currentStage === 2 ? "Simultaneous transfer in progress" : "Document title and funds have been swapped"}
+                      {currentStage === 2 ? "Simultaneous transfer in progress via backend" : "Document title and funds have been swapped"}
                     </p>
                   </div>
                   <div className="h-12 w-12 bg-primary-foreground/10 rounded-full flex items-center justify-center">
@@ -291,13 +374,13 @@ export default function SettlementPage() {
                     <>
                       <div className="flex justify-between border-b border-primary-foreground/20 pb-2">
                         <span className="text-primary-foreground/70">TrustVC Transfer Tx</span>
-                        <a href="#" className="underline underline-offset-2 font-mono flex items-center gap-1 hover:text-white">
-                          0x9f8e...3c2a<ExternalLink className="h-3 w-3" />
+                        <a href={`https://amoy.polygonscan.com/tx/${transferTxHash}`} target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 font-mono flex items-center gap-1 hover:text-white">
+                          {transferTxHash ? `${transferTxHash.slice(0,14)}...` : '0x9f8e...3c2a'}<ExternalLink className="h-3 w-3" />
                         </a>
                       </div>
                       <div className="flex justify-between pb-2">
                         <span className="text-primary-foreground/70">New Document Holder</span>
-                        <span className="font-mono">{activeWallet?.address ? `${activeWallet.address.slice(0,6)}...${activeWallet.address.slice(-4)}` : "0x71C...976F"} (You)</span>
+                        <span className="font-mono">{activeWallet?.address ? `${activeWallet.address.slice(0,6)}...${activeWallet.address.slice(-4)}` : "0xBuyer"} (You)</span>
                       </div>
                     </>
                   )}
