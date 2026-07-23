@@ -26,6 +26,7 @@ import { DocumentSigningModule } from './document-signing/document-signing.modul
 import { ShareLinksModule } from './share-links/share-links.module';
 import { EmailClientModule } from './email-client/email-client.module';
 import { JwtConfigModule } from './jwt/jwt-config.module';
+import { MletrDvpModule } from './mletr-dvp/mletr-dvp.module';
 
 @Module({
   imports: [
@@ -55,6 +56,7 @@ import { JwtConfigModule } from './jwt/jwt-config.module';
     DocumentSigningModule,
     ShareLinksModule,
     EmailClientModule,
+    MletrDvpModule,
   ],
   controllers: [AppController],
   providers: [],

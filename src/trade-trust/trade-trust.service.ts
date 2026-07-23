@@ -70,6 +70,95 @@ export class TradeTrustService {
     return {receipt: receipt.transactionHash, chainId: chainId, contractAddress: tokenRegistryAddress}
   }
 
+  async transferHolder(
+    tokenId: string,
+    newHolderAddress: string,
+  ): Promise<{ transactionHash: string; chainId: number; contractAddress: string }> {
+    const chainId: CHAIN_ID = this.configService.get<string>('CHAIN_ID') as CHAIN_ID ?? CHAIN_ID.stabilitytestnet;
+    const chainInfo = SUPPORTED_CHAINS[chainId];
+    const tokenRegistryAddress = this.configService.get<string>('TOKEN_REGISTRY_ADDRESS');
+    const { TradeTrustToken__factory } = v5Contracts;
+
+    const JsonRpcProvider = ethers.version.startsWith('6.')
+      ? (ethers as any).JsonRpcProvider
+      : (ethers as any).providers.JsonRpcProvider;
+
+    const provider = new JsonRpcProvider(chainInfo.rpcUrl);
+    const unconnectedWallet = new Wallet(this.configService.get<string>('ISSUER_WALLET_KEY'));
+    const wallet = unconnectedWallet.connect(provider);
+    const tokenRegistry = new ethers.Contract(
+      tokenRegistryAddress,
+      TradeTrustToken__factory.abi,
+      wallet,
+    );
+
+    let tx;
+    if (chainInfo.gasStation) {
+      const gasFees = await chainInfo.gasStation();
+      tx = await tokenRegistry.transferHolder(tokenId, newHolderAddress, {
+        maxFeePerGas: gasFees!.maxFeePerGas?.toBigInt() ?? 0,
+        maxPriorityFeePerGas: gasFees!.maxPriorityFeePerGas?.toBigInt() ?? 0,
+      });
+    } else {
+      tx = await tokenRegistry.transferHolder(tokenId, newHolderAddress);
+    }
+    const receipt = await tx.wait();
+
+    this.logger.log({
+      message: 'Document holder transferred via TrustVC token registry',
+      tokenId,
+      newHolderAddress,
+      txHash: receipt.transactionHash,
+    });
+
+    return {
+      transactionHash: receipt.transactionHash,
+      chainId,
+      contractAddress: tokenRegistryAddress,
+    };
+  }
+
+  async transferBeneficiary(
+    tokenId: string,
+    newBeneficiaryAddress: string,
+  ): Promise<{ transactionHash: string; chainId: number; contractAddress: string }> {
+    const chainId: CHAIN_ID = this.configService.get<string>('CHAIN_ID') as CHAIN_ID ?? CHAIN_ID.stabilitytestnet;
+    const chainInfo = SUPPORTED_CHAINS[chainId];
+    const tokenRegistryAddress = this.configService.get<string>('TOKEN_REGISTRY_ADDRESS');
+    const { TradeTrustToken__factory } = v5Contracts;
+
+    const JsonRpcProvider = ethers.version.startsWith('6.')
+      ? (ethers as any).JsonRpcProvider
+      : (ethers as any).providers.JsonRpcProvider;
+
+    const provider = new JsonRpcProvider(chainInfo.rpcUrl);
+    const unconnectedWallet = new Wallet(this.configService.get<string>('ISSUER_WALLET_KEY'));
+    const wallet = unconnectedWallet.connect(provider);
+    const tokenRegistry = new ethers.Contract(
+      tokenRegistryAddress,
+      TradeTrustToken__factory.abi,
+      wallet,
+    );
+
+    let tx;
+    if (chainInfo.gasStation) {
+      const gasFees = await chainInfo.gasStation();
+      tx = await tokenRegistry.transferBeneficiary(tokenId, newBeneficiaryAddress, {
+        maxFeePerGas: gasFees!.maxFeePerGas?.toBigInt() ?? 0,
+        maxPriorityFeePerGas: gasFees!.maxPriorityFeePerGas?.toBigInt() ?? 0,
+      });
+    } else {
+      tx = await tokenRegistry.transferBeneficiary(tokenId, newBeneficiaryAddress);
+    }
+    const receipt = await tx.wait();
+
+    return {
+      transactionHash: receipt.transactionHash,
+      chainId,
+      contractAddress: tokenRegistryAddress,
+    };
+  }
+
 
   async signVerifiableDocument(wrappedContent: string) {
     const signerWallet = new Wallet(this.configService.get<string>('ISSUER_WALLET_KEY'));

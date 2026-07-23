@@ -37,11 +37,11 @@ export class TradeDocumentsService {
   private canPerformDataExtraction(documentType: string): boolean {
     switch (documentType?.toLowerCase()) {
       case TradeDocumentType.INVOICE:
-        return false;
+      case TradeDocumentType.BILL_OF_LADING:
       case TradeDocumentType.BILL_OF_EXCHANGE:
       case TradeDocumentType.PROMISSORY_NOTE:
-      case TradeDocumentType.OTHER:
-        return false;
+      case TradeDocumentType.WAREHOUSE_RECEIPT:
+        return true;
       default:
         return false;
     }
@@ -282,6 +282,13 @@ export class TradeDocumentsService {
       currentStatus,
     );
 
+    if (performDataExtraction && fileVariant === TradeDocumentFileVariant.ORIGINAL) {
+      await this.submitForDataExtraction(
+        accountId,
+        tradeDocumentId,
+        tradeDocument.documentType,
+      );
+    }
 
     // Write Audit Log
     await this.auditService.log({
