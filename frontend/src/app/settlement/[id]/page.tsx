@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowRight, CheckCircle2, CircleDashed, FileText, Lock, ArrowLeftRight, ShieldCheck, ExternalLink, Loader2 } from "lucide-react";
+import { FileText, Sun, UserCircle2, ShieldCheck, Check, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -34,14 +34,6 @@ const STATUS_TO_STAGE: Record<string, number> = {
   'CANCELLED': 0
 };
 
-// Mock stages for the DvP workflow
-const STAGES = [
-  { id: "agent", label: "Agent Review", desc: "mLETR compliance & terms" },
-  { id: "payment", label: "USDC Escrow", desc: "Buyer deposits funds" },
-  { id: "transfer", label: "DvP Execution", desc: "Atomic transfer & release" },
-  { id: "settled", label: "Settled", desc: "Transaction complete" }
-];
-
 export default function SettlementPage() {
   const params = useParams();
   const router = useRouter();
@@ -64,20 +56,20 @@ export default function SettlementPage() {
       try {
         const id = params.id as string;
         // Check if we are using the mock ID from the import page
-        if (id.startsWith("doc-")) {
-           // Fallback to mock data for presentation purposes if coming from import page without backend setup
+        if (id.startsWith("doc-") || id.startsWith("SET-")) {
+           // Fallback to mock data for presentation purposes
            setSettlementData({
-             id: "mock-settlement-1",
-             settlementReference: "DVP-MOCK123",
+             id: "TRD-2025-05-0001",
+             settlementReference: "TRD-2025-05-0001",
              status: "AWAITING_PAYMENT",
              document: { documentType: "Bill of Lading", tradeDocumentId: id },
-             mletrAttributes: { documentReference: "BL-7823901", sellerParty: "Oceanic Freight Ltd", buyerParty: "Global Imports Inc" },
+             mletrAttributes: { documentReference: "BOL-2025-05-0001.pdf", sellerParty: "Oceanic Commodities Ltd.", buyerParty: "Global Trade Partners LLC" },
              payment: { 
                amount: "45000", 
                stablecoin: "USDC", 
                sellerWalletAddress: "0xSeller...89AB", 
                buyerWalletAddress: activeWallet?.address || "0xBuyer...",
-               escrowWalletAddress: "0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
+               escrowWalletAddress: "0xf3a7B2c4D9e6F5a7C1d2E3b4A5f6B7c8D9e0F1a",
                tokenContractAddress: "0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359"
              }
            });
@@ -116,7 +108,6 @@ export default function SettlementPage() {
     setErrorMsg("");
 
     try {
-      // 1. Get ethers provider from Privy wallet
       const ethereumProvider = await activeWallet.getEthereumProvider();
       const provider = new ethers.providers.Web3Provider(ethereumProvider as any);
       const signer = provider.getSigner();
@@ -127,7 +118,6 @@ export default function SettlementPage() {
 
       let actualTxHash = "";
 
-      // 2. Execute the transfer transaction to the Escrow Address
       try {
         const tx = await tokenContract.transfer(settlementData.payment.escrowWalletAddress, amountAtomic);
         const receipt = await tx.wait();
@@ -142,24 +132,19 @@ export default function SettlementPage() {
 
       setCurrentStage(2); // Move to transfer stage locally
 
-      // 3. Notify Backend that payment is confirmed
       try {
-        if (!settlementData.id.startsWith('mock-')) {
+        if (!settlementData.id.startsWith('mock-') && !settlementData.id.startsWith('TRD-')) {
           await dvpApi.confirmPayment(settlementData.id, actualTxHash);
-          
-          // 4. Trigger backend execute (transfer doc + release funds)
           const executeResult = await dvpApi.executeSettlement(settlementData.id);
           if (executeResult.document?.transferTxHash) {
             setTransferTxHash(executeResult.document.transferTxHash);
           }
         } else {
-           // Mock backend execution
            await new Promise(resolve => setTimeout(resolve, 2000));
            setTransferTxHash("0x9f8e" + Math.random().toString(16).slice(2, 10));
         }
       } catch (err) {
         console.error("Backend confirmation failed", err);
-        // Continue UI progression even if backend mock fails
       }
 
       setCurrentStage(3); // Settled
@@ -172,151 +157,172 @@ export default function SettlementPage() {
     }
   };
 
+  const copyToClipboard = () => {
+    navigator.clipboard.writeText(settlementData?.payment?.escrowWalletAddress || "");
+  };
+
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="flex flex-col items-center gap-4">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <p className="text-muted-foreground">Loading settlement data...</p>
-        </div>
-      </div>
-    );
+    return <div className="p-12 text-center text-muted-foreground">Loading settlement...</div>;
   }
 
   if (!settlementData) {
-    return (
-      <div className="container max-w-5xl mx-auto py-12 px-4 text-center">
-        <h1 className="text-2xl font-bold">Settlement not found</h1>
-        <p className="text-muted-foreground mt-2">{errorMsg}</p>
-        <Button className="mt-6" onClick={() => router.push('/')}>Return to Dashboard</Button>
-      </div>
-    );
+    return <div className="p-12 text-center text-destructive">Settlement not found. {errorMsg}</div>;
   }
 
+  const STAGES_CONFIG = [
+    {
+      title: "Agent Review",
+      desc: "Documents verified and approved",
+      meta: "May 20, 2025 10:24 AM UTC"
+    },
+    {
+      title: "USDC Escrow",
+      desc: "Awaiting payment into escrow",
+      meta: "In progress"
+    },
+    {
+      title: "DvP Execution",
+      desc: "Payment vs. Delivery execution",
+      meta: "Pending"
+    },
+    {
+      title: "Settled",
+      desc: "Trade settled on-chain",
+      meta: "Pending"
+    }
+  ];
+
   return (
-    <div className="container max-w-5xl mx-auto py-12 px-4">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold tracking-tight mb-2">Settlement Orchestration</h1>
-        <p className="text-muted-foreground">
-          Delivery-versus-Payment (DvP) for {settlementData.mletrAttributes?.documentReference || settlementData.settlementReference}
-        </p>
+    <div className="flex flex-col min-h-screen">
+      {/* Header */}
+      <div className="flex items-center justify-between px-10 py-6 border-b">
+        <div className="flex items-center gap-3">
+          <div className="bg-background border rounded-md p-1.5 shadow-sm">
+            <ShieldCheck className="h-5 w-5" />
+          </div>
+          <h1 className="text-xl font-semibold">Trade Settlement</h1>
+        </div>
+        <div className="flex items-center gap-4">
+          <div className="px-4 py-1.5 border rounded-full text-sm font-medium bg-background shadow-sm">
+            Trade ID: {settlementData.settlementReference}
+          </div>
+          <Button variant="ghost" size="icon">
+            <Sun className="h-5 w-5 text-muted-foreground" />
+          </Button>
+        </div>
       </div>
 
-      <div className="grid md:grid-cols-3 gap-8">
-        {/* Left Column - Workflow Status */}
-        <div className="md:col-span-1 space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Settlement Status</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-6">
-                {STAGES.map((stage, idx) => {
-                  const isCompleted = idx < currentStage || (idx === 3 && currentStage === 3);
-                  const isActive = idx === currentStage && currentStage !== 3;
-                  
-                  return (
-                    <div key={stage.id} className="flex gap-4">
-                      <div className="mt-0.5 flex flex-col items-center">
-                        {isCompleted ? (
-                          <CheckCircle2 className="h-5 w-5 text-primary" />
-                        ) : isActive ? (
-                          <CircleDashed className="h-5 w-5 text-primary animate-spin-slow" />
-                        ) : (
-                          <div className="h-5 w-5 rounded-full border-2 border-muted" />
-                        )}
-                        {idx !== STAGES.length - 1 && (
-                          <div className={`w-0.5 h-10 mt-1 ${isCompleted ? 'bg-primary' : 'bg-muted'}`} />
-                        )}
-                      </div>
-                      <div>
-                        <p className={`font-medium ${isActive ? 'text-foreground' : isCompleted ? 'text-foreground' : 'text-muted-foreground'}`}>
-                          {stage.label}
-                        </p>
-                        <p className="text-sm text-muted-foreground">{stage.desc}</p>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </CardContent>
-          </Card>
+      <div className="flex-1 grid md:grid-cols-[1fr_1.5fr] max-w-6xl w-full mx-auto mt-10">
+        
+        {/* Left Column: Stepper */}
+        <div className="pr-12 relative">
+          <div className="absolute left-4 top-4 bottom-24 w-0.5 bg-gray-200" />
+          
+          <div className="space-y-12">
+            {STAGES_CONFIG.map((stage, idx) => {
+              const isCompleted = currentStage > idx;
+              const isActive = currentStage === idx;
+              const isPending = currentStage < idx;
+
+              return (
+                <div key={idx} className="relative flex gap-6 z-10">
+                  <div className={`mt-0.5 flex h-8 w-8 items-center justify-center rounded-full border-2 bg-background 
+                    ${isCompleted ? 'border-primary bg-primary text-primary-foreground' : 
+                      isActive ? 'border-primary' : 'border-gray-300'}`}
+                  >
+                    {isCompleted && <Check className="h-4 w-4" />}
+                    {isActive && <div className="h-2.5 w-2.5 rounded-full bg-primary" />}
+                  </div>
+                  <div>
+                    <h3 className={`font-semibold text-lg ${isPending ? 'text-muted-foreground' : ''}`}>
+                      {stage.title}
+                    </h3>
+                    <p className={`text-sm mt-1 ${isPending ? 'text-muted-foreground/60' : 'text-muted-foreground'}`}>
+                      {stage.desc}
+                    </p>
+                    <p className={`text-xs mt-2 font-medium ${isPending ? 'text-muted-foreground/40' : 'text-muted-foreground/70'}`}>
+                      {isActive ? 'In progress' : isCompleted ? stage.meta : 'Pending'}
+                    </p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
 
-        {/* Right Column - Action Area */}
-        <div className="md:col-span-2 space-y-6">
-          
-          <Card>
-            <CardHeader>
-              <CardTitle>Trade Details</CardTitle>
-              <CardDescription>Extracted by AI Agent and verified against mLETR</CardDescription>
+        {/* Right Column: Cards */}
+        <div className="space-y-6">
+          <Card className="shadow-sm">
+            <CardHeader className="flex flex-row items-center justify-between pb-4">
+              <CardTitle className="text-xl">Trade Details</CardTitle>
+              <FileText className="h-5 w-5 text-muted-foreground" />
             </CardHeader>
-            <CardContent>
-              <div className="bg-accent/50 rounded-lg p-4 mb-6 grid grid-cols-2 gap-y-4 text-sm">
-                <div>
-                  <p className="text-muted-foreground">Document Type</p>
-                  <p className="font-medium flex items-center gap-1"><FileText className="h-3 w-3"/> {settlementData.document?.documentType}</p>
+            <CardContent className="space-y-6">
+              {/* Doc details */}
+              <div className="flex items-center justify-between pb-4 border-b">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 border rounded-md bg-gray-50/50">
+                    <FileText className="h-6 w-6 text-muted-foreground" />
+                  </div>
+                  <div>
+                    <p className="font-semibold">{settlementData.document?.documentType}</p>
+                    <p className="text-sm text-muted-foreground">{settlementData.mletrAttributes?.documentReference}</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-muted-foreground">Reference</p>
-                  <p className="font-medium">{settlementData.mletrAttributes?.documentReference}</p>
+                <Button variant="outline" size="sm">View</Button>
+              </div>
+
+              {/* Parties */}
+              <div className="flex items-center justify-between pb-4 border-b">
+                <div className="flex items-center gap-4">
+                  <div className="p-2 border rounded-full bg-gray-50/50">
+                    <UserCircle2 className="h-5 w-5 text-muted-foreground" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Seller</p>
+                    <p className="font-semibold">{settlementData.mletrAttributes?.sellerParty}</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-muted-foreground">Seller (Receives {settlementData.payment?.stablecoin})</p>
-                  <p className="font-medium truncate pr-4">{settlementData.mletrAttributes?.sellerParty || settlementData.payment?.sellerWalletAddress}</p>
-                </div>
-                <div>
-                  <p className="text-muted-foreground">Buyer (Receives Title)</p>
-                  <p className="font-medium truncate pr-4">{settlementData.mletrAttributes?.buyerParty || settlementData.payment?.buyerWalletAddress}</p>
+                <div className="text-sm text-muted-foreground flex items-center gap-1">
+                  Singapore
                 </div>
               </div>
-              
-              <div className="flex items-center justify-between border-t pt-4">
-                <div>
-                  <p className="font-medium text-lg">Settlement Amount</p>
-                  <p className="text-muted-foreground text-sm">Required in Smart Escrow</p>
+
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="p-2 border rounded-full bg-gray-50/50">
+                    <UserCircle2 className="h-5 w-5 text-muted-foreground" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Buyer</p>
+                    <p className="font-semibold">{settlementData.mletrAttributes?.buyerParty}</p>
+                  </div>
                 </div>
-                <div className="text-right">
-                  <p className="text-3xl font-bold tracking-tight">
-                    {Number(settlementData.payment?.amount || 0).toLocaleString()} {settlementData.payment?.stablecoin}
-                  </p>
+                <div className="text-sm text-muted-foreground flex items-center gap-1">
+                  New York, USA
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          {/* Action Card based on state */}
-          {currentStage === 0 && (
-            <Card>
-              <CardContent className="pt-6 flex flex-col items-center justify-center text-center py-12">
-                <ShieldCheck className="h-12 w-12 text-primary mb-4" />
-                <h3 className="text-lg font-bold mb-2">Agent Review Complete</h3>
-                <p className="text-muted-foreground mb-6 max-w-md">
-                  The document has been verified as a compliant Electronic Transferable Record. Proceed to fund the escrow.
-                </p>
-                <Button size="lg" onClick={() => setCurrentStage(1)}>
-                  Proceed to Payment
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-              </CardContent>
-            </Card>
-          )}
-
           {currentStage === 1 && (
-            <Card className="border-primary shadow-sm">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Lock className="h-5 w-5" />
-                  Fund Escrow
-                </CardTitle>
-                <CardDescription>
-                  Deposit {settlementData.payment?.stablecoin} to the secure smart contract. Funds will only be released to the seller once the document title is transferred to your wallet.
-                </CardDescription>
+            <Card className="shadow-sm border-gray-200">
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-xl">Fund Escrow</CardTitle>
+                <ShieldCheck className="h-5 w-5 text-muted-foreground" />
               </CardHeader>
-              <CardContent>
-                <div className="bg-muted p-4 rounded-md font-mono text-sm mb-6 break-all">
-                  Escrow Address: {settlementData.payment?.escrowWalletAddress}
+              <CardContent className="pt-2">
+                <p className="text-sm text-muted-foreground mb-2">Escrow Wallet Address</p>
+                <div className="flex items-center justify-between p-3 bg-gray-50 border rounded-md mb-4">
+                  <span className="font-mono text-sm">{settlementData.payment?.escrowWalletAddress}</span>
+                  <button onClick={copyToClipboard} className="text-muted-foreground hover:text-foreground">
+                    <Copy className="h-4 w-4" />
+                  </button>
                 </div>
+                
+                <p className="text-sm text-muted-foreground mb-6">
+                  Send exactly {Number(settlementData.payment?.amount || 0).toLocaleString()} {settlementData.payment?.stablecoin} to the address above to fund escrow.
+                </p>
 
                 {errorMsg && (
                   <div className="mb-4 p-3 bg-destructive/10 text-destructive text-sm rounded-md border border-destructive/20">
@@ -326,14 +332,15 @@ export default function SettlementPage() {
 
                 <Button 
                   size="lg" 
-                  className="w-full" 
+                  className="w-full text-base py-6 font-semibold shadow-md"
                   onClick={handlePayUSDC}
                   disabled={isProcessing}
                 >
+                  <span className="mr-2 border border-primary-foreground/30 rounded-full w-5 h-5 flex items-center justify-center text-xs">$</span>
                   {!authenticated ? (
                     "Connect Wallet to Pay"
                   ) : isProcessing ? (
-                    "Processing & Calling Backend..." 
+                    "Awaiting Wallet Signature..." 
                   ) : (
                     `Pay ${Number(settlementData.payment?.amount || 0).toLocaleString()} ${settlementData.payment?.stablecoin}`
                   )}
@@ -343,52 +350,29 @@ export default function SettlementPage() {
           )}
 
           {currentStage >= 2 && (
-            <Card className="bg-primary text-primary-foreground">
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between mb-6">
-                  <div>
-                    <h3 className="text-xl font-bold mb-1">
-                      {currentStage === 2 ? "Executing DvP..." : "Settlement Complete"}
-                    </h3>
-                    <p className="text-primary-foreground/80">
-                      {currentStage === 2 ? "Simultaneous transfer in progress via backend" : "Document title and funds have been swapped"}
-                    </p>
-                  </div>
-                  <div className="h-12 w-12 bg-primary-foreground/10 rounded-full flex items-center justify-center">
-                    {currentStage === 2 ? (
-                      <ArrowLeftRight className="h-6 w-6 animate-pulse" />
-                    ) : (
-                      <CheckCircle2 className="h-6 w-6" />
-                    )}
-                  </div>
-                </div>
-
-                <div className="space-y-3 text-sm">
-                  <div className="flex justify-between border-b border-primary-foreground/20 pb-2">
-                    <span className="text-primary-foreground/70">Payment Tx</span>
-                    <a href={`https://amoy.polygonscan.com/tx/${txHash}`} target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 font-mono flex items-center gap-1 hover:text-white">
-                      {txHash.slice(0, 14)}...<ExternalLink className="h-3 w-3" />
-                    </a>
+            <Card className="shadow-sm border-gray-200 bg-gray-50/30">
+              <CardHeader>
+                <CardTitle className="text-xl">
+                  {currentStage === 2 ? "Executing DvP..." : "Settlement Complete"}
+                </CardTitle>
+                <CardDescription>
+                  {currentStage === 2 ? "Atomic transfer and payment release in progress." : "Trade documents and funds successfully swapped."}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                 <div className="flex justify-between items-center py-2 border-b">
+                    <span className="text-muted-foreground text-sm">Payment Tx</span>
+                    <span className="font-mono text-sm bg-white border px-2 py-1 rounded">{txHash.slice(0, 16)}...</span>
                   </div>
                   {currentStage === 3 && (
-                    <>
-                      <div className="flex justify-between border-b border-primary-foreground/20 pb-2">
-                        <span className="text-primary-foreground/70">TrustVC Transfer Tx</span>
-                        <a href={`https://amoy.polygonscan.com/tx/${transferTxHash}`} target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 font-mono flex items-center gap-1 hover:text-white">
-                          {transferTxHash ? `${transferTxHash.slice(0,14)}...` : '0x9f8e...3c2a'}<ExternalLink className="h-3 w-3" />
-                        </a>
-                      </div>
-                      <div className="flex justify-between pb-2">
-                        <span className="text-primary-foreground/70">New Document Holder</span>
-                        <span className="font-mono">{activeWallet?.address ? `${activeWallet.address.slice(0,6)}...${activeWallet.address.slice(-4)}` : "0xBuyer"} (You)</span>
-                      </div>
-                    </>
+                    <div className="flex justify-between items-center py-2 border-b">
+                      <span className="text-muted-foreground text-sm">Transfer Tx</span>
+                      <span className="font-mono text-sm bg-white border px-2 py-1 rounded">{transferTxHash.slice(0, 16)}...</span>
+                    </div>
                   )}
-                </div>
               </CardContent>
             </Card>
           )}
-
         </div>
       </div>
     </div>
