@@ -5,7 +5,7 @@ import { Upload, UserCircle2, Lock, FileText, ArrowRight, Check } from "lucide-r
 import Link from "next/link";
 import { WalletConnect } from "@/components/layout/wallet-connect";
 
-const MOCK_SETTLEMENTS = [
+export const MOCK_SETTLEMENTS = [
   {
     id: "SET-2024-0057",
     shipmentId: "SH-2024-0142",
