@@ -1,0 +1,14 @@
+{
+  "cleanUrls": false,
+  "trailingSlash": false,
+  "rewrites": [
+    { "source": "/tldr", "destination": "/tldr.html" },
+    { "source": "/\\$paper", "destination": "/paper.html" },
+    { "source": "/%24paper", "destination": "/paper.html" },
+    { "source": "/paper", "destination": "/paper.html" }
+  ],
+  "redirects": [
+    { "source": "/\\$paper/", "destination": "/\\$paper", "permanent": false },
+    { "source": "/%24paper/", "destination": "/%24paper", "permanent": false }
+  ]
+}
